@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'core/constants/app_theme.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/router/app_router.dart';
 
@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'ReadX',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
     );
   }
