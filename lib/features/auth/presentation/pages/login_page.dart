@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../bloc/auth_bloc.dart';
@@ -275,9 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  // TODO: navigate to register
-                                },
+                                onPressed: () => context.go('/register'),
                                 child: const Text(
                                   'Create an account',
                                   style: TextStyle(
