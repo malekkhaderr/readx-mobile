@@ -12,6 +12,8 @@ abstract class AuthRemoteDataSource {
     required String lastName,
     required String email,
     required String password,
+    required String gender,
+    required DateTime birthDate,
   });
 
   Future<void> logout();
@@ -47,6 +49,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String lastName,
     required String email,
     required String password,
+    required String gender,
+    required DateTime birthDate,
   }) async {
     try {
       final response = await dioClient.dio.post(
@@ -56,6 +60,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'lastName': lastName,
           'email': email,
           'password': password,
+          'gender': gender,
+          'birthDate': birthDate.toIso8601String(),
         },
       );
       return UserModel.fromJson(response.data);

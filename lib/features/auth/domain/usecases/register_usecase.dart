@@ -13,12 +13,16 @@ class RegisterUseCase {
     required String lastName,
     required String email,
     required String password,
+    required String gender,
+    required DateTime birthDate,
   }) {
     return repository.register(
       firstName: firstName,
       lastName: lastName,
       email: email,
       password: password,
+      gender: gender,
+      birthDate: birthDate,
     );
   }
 }

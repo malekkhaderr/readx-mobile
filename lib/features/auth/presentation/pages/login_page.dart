@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:readx/core/widgets/animated_owl.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../bloc/auth_bloc.dart';
@@ -20,11 +21,24 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _submitted = false;
+  final _passwordFocusNode = FocusNode();
+  bool _isCoveringEyes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordFocusNode.addListener(() {
+      setState(() {
+        _isCoveringEyes = _passwordFocusNode.hasFocus;
+      });
+    });
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -100,11 +114,16 @@ class _LoginPageState extends State<LoginPage> {
                             color: AppColors.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.book,
-                            color: AppColors.primary,
-                            size: 40,
+                          child: AnimatedOwl(
+                            size: 120,
+                            isCoveringEyes: _isCoveringEyes,
                           ),
+                          // child: const AppOwl(size: 80), // login & register
+                          // child: const Icon(
+                          //   Icons.book,
+                          //   color: AppColors.primary,
+                          //   size: 40,
+                          // ),
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -184,6 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 20),
+
                           // ── Password ───────────────────────
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -201,6 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
+                            focusNode: _passwordFocusNode,
                             autovalidateMode:
                                 AutovalidateMode.onUserInteraction,
                             onChanged: (_) {
@@ -272,7 +293,7 @@ class _LoginPageState extends State<LoginPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text(
-                                'New to ReadX? ',
+                                'New to Readora? ',
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(

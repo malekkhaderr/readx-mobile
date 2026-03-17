@@ -46,7 +46,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_submitted) return null;
     if (value == null || value.trim().isEmpty) return 'Email is required';
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value.trim())) return 'Enter a valid email address';
+    if (!emailRegex.hasMatch(value.trim()))
+      return 'Enter a valid email address';
     return null;
   }
 
@@ -54,10 +55,14 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_submitted) return null;
     if (value == null || value.isEmpty) return 'Password is required';
     if (value.length < 8) return 'Password must be at least 8 characters';
-    if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Password must contain at least one uppercase letter';
-    if (!RegExp(r'[a-z]').hasMatch(value)) return 'Password must contain at least one lowercase letter';
-    if (!RegExp(r'[0-9]').hasMatch(value)) return 'Password must contain at least one number';
-    if (!RegExp(r'[!@#\$&*~%^()_\-+=<>?]').hasMatch(value)) return 'Password must contain at least one special character';
+    if (!RegExp(r'[A-Z]').hasMatch(value))
+      return 'Password must contain at least one uppercase letter';
+    if (!RegExp(r'[a-z]').hasMatch(value))
+      return 'Password must contain at least one lowercase letter';
+    if (!RegExp(r'[0-9]').hasMatch(value))
+      return 'Password must contain at least one number';
+    if (!RegExp(r'[!@#\$&*~%^()_\-+=<>?]').hasMatch(value))
+      return 'Password must contain at least one special character';
     return null;
   }
 
@@ -71,9 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-            ),
+            colorScheme: const ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -95,6 +98,8 @@ class _RegisterPageState extends State<RegisterPage> {
           lastName: _lastNameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          gender: _selectedGender!,
+          birthDate: _selectedBirthDate!,
         ),
       );
     }
@@ -124,7 +129,6 @@ class _RegisterPageState extends State<RegisterPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-
                   // ── Header ───────────────────────────────
                   Container(
                     width: double.infinity,
@@ -151,11 +155,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             color: AppColors.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.book,
-                            color: AppColors.primary,
-                            size: 40,
-                          ),
+                          child: const AppOwl(size: 80),
+                          // child: const Icon(
+                          //   Icons.book,
+                          //   color: AppColors.primary,
+                          //   size: 40,
+                          // ),
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -186,7 +191,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-
                           // ── Title ──────────────────────────
                           const Text(
                             'Start Your Journey',
@@ -198,7 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Join ReadX and start your reading adventure.',
+                            'Join Readora and start your reading adventure.',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textGrey,
@@ -217,14 +221,19 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _firstNameController,
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                             onChanged: (_) {
                               if (_submitted) _formKey.currentState!.validate();
                             },
-                            validator: (v) => _validateRequired(v, 'First name'),
+                            validator: (v) =>
+                                _validateRequired(v, 'First name'),
                             decoration: const InputDecoration(
                               hintText: 'Enter your first name',
-                              prefixIcon: Icon(Icons.person, color: AppColors.textGrey),
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: AppColors.textGrey,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -240,14 +249,18 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _lastNameController,
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                             onChanged: (_) {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: (v) => _validateRequired(v, 'Last name'),
                             decoration: const InputDecoration(
                               hintText: 'Enter your last name',
-                              prefixIcon: Icon(Icons.person_outline, color: AppColors.textGrey),
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: AppColors.textGrey,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -264,14 +277,18 @@ class _RegisterPageState extends State<RegisterPage> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                             onChanged: (_) {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: _validateEmail,
                             decoration: const InputDecoration(
                               hintText: 'Enter your email',
-                              prefixIcon: Icon(Icons.email, color: AppColors.textGrey),
+                              prefixIcon: Icon(
+                                Icons.email,
+                                color: AppColors.textGrey,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -288,14 +305,18 @@ class _RegisterPageState extends State<RegisterPage> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                             onChanged: (_) {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: _validatePassword,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock, color: AppColors.textGrey),
+                              prefixIcon: const Icon(
+                                Icons.lock,
+                                color: AppColors.textGrey,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
@@ -334,7 +355,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                     margin: EdgeInsets.only(
                                       right: gender == 'Male' ? 8 : 0,
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? AppColors.primary
@@ -347,7 +370,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       ),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           gender == 'Male'
@@ -409,7 +433,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: _submitted && _selectedBirthDate == null
+                                  color:
+                                      _submitted && _selectedBirthDate == null
                                       ? AppColors.error
                                       : AppColors.divider,
                                 ),
@@ -459,13 +484,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                     : () => _onRegisterPressed(context, state),
                                 child: state is AuthLoading
                                     ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
                                     : const Text('Create Account'),
                               );
                             },
@@ -493,12 +518,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
                           const SizedBox(height: 20),
-
                         ],
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),

@@ -43,6 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       lastName: event.lastName,
       email: event.email,
       password: event.password,
+      gender: event.gender,
+      birthDate: event.birthDate,
     );
     result.fold(
       (failure) => emit(AuthError(failure.message)),

@@ -67,3 +67,55 @@ class AppTheme {
     );
   }
 }
+
+class AppOwl extends StatefulWidget {
+  final double size;
+  const AppOwl({super.key, this.size = 140});
+
+  @override
+  State<AppOwl> createState() => _AppOwlState();
+}
+
+class _AppOwlState extends State<AppOwl> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+
+    _bounceAnimation = Tween<double>(
+      begin: 0,
+      end: -12,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _bounceAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _bounceAnimation.value),
+          child: child,
+        );
+      },
+      child: Image.asset(
+        'assets/images/owl.png',
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
