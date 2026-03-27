@@ -254,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                // TODO: navigate to reset password
+                                context.go('/forgot-password');
                               },
                               child: const Text(
                                 'Forgot Password?',

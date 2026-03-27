@@ -121,8 +121,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               );
             }
-            if (state is AuthAuthenticated) {
-              // TODO: navigate to home
+            if (state is AuthRegistered) {
+              context.go('/otp', extra: state.email);
             }
           },
           child: SafeArea(
