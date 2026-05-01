@@ -43,9 +43,9 @@ class PasswordResetSent extends AuthState {
 }
 
 class AuthRegistered extends AuthState {
-  final String email;
-  const AuthRegistered(this.email);
+  final UserEntity user;
+  const AuthRegistered(this.user);
 
   @override
-  List<Object> get props => [email];
+  List<Object> get props => [user];
 }

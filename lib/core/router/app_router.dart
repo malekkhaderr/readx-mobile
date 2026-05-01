@@ -5,6 +5,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/auth/presentation/pages/otp_page.dart';
 import '../../features/auth/presentation/pages/new_password_page.dart';
+import 'package:flutter/material.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -28,7 +29,7 @@ class AppRouter {
       GoRoute(
         path: '/otp',
         builder: (context, state) {
-          final email = state.extra as String? ?? 'test@example.com';
+          final email = state.extra is String ? state.extra as String : '';
           return OtpPage(email: email, isPasswordReset: false);
         },
       ),
@@ -41,16 +42,20 @@ class AppRouter {
       GoRoute(
         path: '/reset-otp',
         builder: (context, state) {
-          final email = state.extra as String? ?? 'test@example.com';
+          final email = state.extra is String ? state.extra as String : '';
           return OtpPage(email: email, isPasswordReset: true);
         },
       ),
       GoRoute(
         path: '/new-password',
         builder: (context, state) {
-          final email = state.extra as String? ?? 'test@example.com';
+          final email = state.extra is String ? state.extra as String : '';
           return NewPasswordPage(email: email);
         },
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const Scaffold(body: Center(child: Text('Home Page'))),
       ),
     ],
   );

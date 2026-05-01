@@ -11,6 +11,38 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.remoteDataSource);
 
   @override
+  Future<Either<Failure, UserEntity>> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+    required int gender,
+    required DateTime birthDate,
+  }) async {
+    try {
+      final user = await remoteDataSource.register(
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+        gender: gender,
+        birthDate: birthDate,
+      );
+      return Right(user);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, UserEntity>> login({
     required String email,
     required String password,
@@ -27,32 +59,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
-    }
-  }
-
-  @override
-  Future<Either<Failure, UserEntity>> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-    required String gender,
-    required DateTime birthDate,
-  }) async {
-    try {
-      final user = await remoteDataSource.register(
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: password,
-        gender: gender,
-        birthDate: birthDate,
-      );
-      return Right(user);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -63,6 +71,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -73,6 +83,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

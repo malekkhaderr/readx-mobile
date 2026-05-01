@@ -20,12 +20,17 @@ class _RegisterPageState extends State<RegisterPage> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _submitted = false;
-  String? _selectedGender;
+  int? _selectedGender; // 0 = Male, 1 = Female
   DateTime? _selectedBirthDate;
 
-  final List<String> _genders = ['Male', 'Female'];
+  final List<Map<String, dynamic>> _genders = [
+    {'label': 'Male', 'value': 0},
+    {'label': 'Female', 'value': 1},
+  ];
 
   @override
   void dispose() {
@@ -33,6 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -63,6 +69,13 @@ class _RegisterPageState extends State<RegisterPage> {
       return 'Password must contain at least one number';
     if (!RegExp(r'[!@#\$&*~%^()_\-+=<>?]').hasMatch(value))
       return 'Password must contain at least one special character';
+    return null;
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (!_submitted) return null;
+    if (value == null || value.isEmpty) return 'Please confirm your password';
+    if (value != _passwordController.text) return 'Passwords do not match';
     return null;
   }
 
@@ -98,6 +111,7 @@ class _RegisterPageState extends State<RegisterPage> {
           lastName: _lastNameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          confirmPassword: _confirmPasswordController.text,
           gender: _selectedGender!,
           birthDate: _selectedBirthDate!,
         ),
@@ -122,7 +136,7 @@ class _RegisterPageState extends State<RegisterPage> {
               );
             }
             if (state is AuthRegistered) {
-              context.go('/otp', extra: state.email);
+              context.go('/otp', extra: state.user.email);
             }
           },
           child: SafeArea(
@@ -156,11 +170,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             shape: BoxShape.circle,
                           ),
                           child: const AppOwl(size: 80),
-                          // child: const Icon(
-                          //   Icons.book,
-                          //   color: AppColors.primary,
-                          //   size: 40,
-                          // ),
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -325,9 +334,51 @@ class _RegisterPageState extends State<RegisterPage> {
                                   color: AppColors.textGrey,
                                 ),
                                 onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // ── Confirm Password ───────────────
+                          const Text(
+                            'Confirm Password',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            onChanged: (_) {
+                              if (_submitted) _formKey.currentState!.validate();
+                            },
+                            validator: _validateConfirmPassword,
+                            decoration: InputDecoration(
+                              hintText: '••••••••',
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: AppColors.textGrey,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: AppColors.textGrey,
+                                ),
+                                onPressed: () {
+                                  setState(
+                                    () => _obscureConfirmPassword =
+                                        !_obscureConfirmPassword,
+                                  );
                                 },
                               ),
                             ),
@@ -345,15 +396,19 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 8),
                           Row(
                             children: _genders.map((gender) {
-                              final isSelected = _selectedGender == gender;
+                              final isSelected =
+                                  _selectedGender == gender['value'];
                               return Expanded(
                                 child: GestureDetector(
                                   onTap: () {
-                                    setState(() => _selectedGender = gender);
+                                    setState(
+                                      () => _selectedGender =
+                                          gender['value'] as int,
+                                    );
                                   },
                                   child: Container(
                                     margin: EdgeInsets.only(
-                                      right: gender == 'Male' ? 8 : 0,
+                                      right: gender['value'] == 0 ? 8 : 0,
                                     ),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 14,
@@ -374,7 +429,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Icon(
-                                          gender == 'Male'
+                                          gender['value'] == 0
                                               ? Icons.male
                                               : Icons.female,
                                           color: isSelected
@@ -384,7 +439,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          gender,
+                                          gender['label'] as String,
                                           style: TextStyle(
                                             color: isSelected
                                                 ? Colors.white

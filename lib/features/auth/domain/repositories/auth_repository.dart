@@ -13,7 +13,8 @@ abstract class AuthRepository {
     required String lastName,
     required String email,
     required String password,
-    required String gender,
+    required String confirmPassword,
+    required int gender,
     required DateTime birthDate,
   });
 

@@ -3,8 +3,8 @@ class ApiConstants {
       'https://graduation-project-backend-j3bw.onrender.com/api';
 
   // Auth
-  static const String register = '/user/create';
-  static const String login = '/auth/login';
+  static const String register = '/users/create';
+  static const String login = '/users/login';
   static const String logout = '/auth/logout';
   static const String resetPassword = '/auth/reset-password';
 

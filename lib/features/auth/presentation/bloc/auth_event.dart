@@ -22,7 +22,8 @@ class RegisterEvent extends AuthEvent {
   final String lastName;
   final String email;
   final String password;
-  final String gender;
+  final String confirmPassword;
+  final int gender;
   final DateTime birthDate;
 
   const RegisterEvent({
@@ -30,6 +31,7 @@ class RegisterEvent extends AuthEvent {
     required this.lastName,
     required this.email,
     required this.password,
+    required this.confirmPassword,
     required this.gender,
     required this.birthDate,
   });
@@ -40,6 +42,7 @@ class RegisterEvent extends AuthEvent {
     lastName,
     email,
     password,
+    confirmPassword,
     gender,
     birthDate,
   ];

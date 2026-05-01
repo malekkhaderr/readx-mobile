@@ -8,10 +8,14 @@ import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../network/dio_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
+
   // ─── Core ───────────────────────────────────────────
   sl.registerLazySingleton<DioClient>(() => DioClient());
 
@@ -38,6 +42,6 @@ Future<void> init() async {
 
   // Data Source
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl()),
+    () => AuthRemoteDataSourceImpl(dioClient: sl(), sharedPreferences: sl()),
   );
 }
