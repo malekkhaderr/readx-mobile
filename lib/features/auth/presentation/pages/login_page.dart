@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
             if (state is AuthAuthenticated) {
-              // TODO: navigate to home
+              context.go('/home');
             }
           },
           child: SafeArea(
