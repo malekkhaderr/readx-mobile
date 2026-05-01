@@ -4,18 +4,81 @@ class AppColors {
   // Primary
   static const Color primary = Color(0xFF7B61FF);
   static const Color primaryLight = Color(0xFFEDE9FF);
+  static const Color primaryDark = Color(0xFF5B42D0);
 
   // Background
   static const Color background = Color(0xFFF5F3EF);
   static const Color surface = Color(0xFFFFFFFF);
+  static const Color cardBackground = Color(0xFFFFFBF5);
+  static const Color ivory = Color(0xFFFAF8F5);
 
   // Text
   static const Color textDark = Color(0xFF1A1A2E);
   static const Color textGrey = Color(0xFF9E9E9E);
+  static const Color textLight = Color(0xFFBDBDBD);
+
+  // Accent / Status
+  static const Color accent = Color(0xFFFF6B6B);
+  static const Color gold = Color(0xFFFFD700);
+  static const Color successGreen = Color(0xFF4CAF50);
+  static const Color warningOrange = Color(0xFFFF9800);
+
+  // Gradients
+  static const Color gradientStart = Color(0xFF7B61FF);
+  static const Color gradientEnd = Color(0xFF9D8AFF);
 
   // Other
   static const Color divider = Color(0xFFE0E0E0);
   static const Color error = Color(0xFFE53935);
+  static const Color shimmer = Color(0xFFE8E3FF);
+}
+
+class AppTextStyles {
+  static const TextStyle heading1 = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textDark,
+    height: 1.3,
+  );
+
+  static const TextStyle heading2 = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textDark,
+    height: 1.3,
+  );
+
+  static const TextStyle heading3 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle body = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textDark,
+    height: 1.5,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textGrey,
+  );
+
+  static const TextStyle label = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textGrey,
+    letterSpacing: 0.5,
+  );
+
+  static const TextStyle button = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
 }
 
 class AppTheme {

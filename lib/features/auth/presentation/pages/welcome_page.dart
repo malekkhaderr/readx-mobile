@@ -10,7 +10,9 @@ class WelcomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             // ── Top Section (Owl + clouds) ───────────────
             Expanded(
@@ -130,6 +132,34 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+            // ── Dev Skip Button ──────────────────────────
+            Positioned(
+              top: 8,
+              right: 12,
+              child: GestureDetector(
+                onTap: () => context.go('/home'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Text(
+                    '⚡ DEV SKIP',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
               ),
             ),
