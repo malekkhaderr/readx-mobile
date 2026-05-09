@@ -10,6 +10,7 @@ class ApiConstants {
 
   // Users
   static const String users = '/users';
+  static const String me = '/users/me';
 
   // Books
   static const String books = '/books';

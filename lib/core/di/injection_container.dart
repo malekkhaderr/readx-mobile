@@ -7,6 +7,11 @@ import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/profile/data/datasources/profile_remote_datasource.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/get_me_usecase.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +23,12 @@ Future<void> init() async {
 
   // ─── Core ───────────────────────────────────────────
   sl.registerLazySingleton<DioClient>(() => DioClient());
+
+  // Restore auth token from cache so profile loads without re-login
+  final cachedToken = sharedPreferences.getString('CACHED_AUTH_TOKEN');
+  if (cachedToken != null && cachedToken.isNotEmpty) {
+    sl<DioClient>().setAuthToken(cachedToken);
+  }
 
   // ─── Auth ────────────────────────────────────────────
 
@@ -44,4 +55,25 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(dioClient: sl(), sharedPreferences: sl()),
   );
+
+  // ─── Profile ─────────────────────────────────────────
+
+  // Bloc
+  sl.registerFactory(() => ProfileBloc(getMeUseCase: sl()));
+
+  // Use Case
+  sl.registerLazySingleton(() => GetMeUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(sl()));
+
+  // Data Source
+  sl.registerLazySingleton<ProfileRemoteDataSource>(
+    () => ProfileRemoteDataSourceImpl(
+      dioClient: sl(),
+      sharedPreferences: sl(),
+    ),
+  );
 }
+

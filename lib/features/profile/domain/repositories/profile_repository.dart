@@ -1,0 +1,7 @@
+import 'package:dartz/dartz.dart';
+import '../../../../core/errors/failures.dart';
+import '../entities/user_profile_entity.dart';
+
+abstract class ProfileRepository {
+  Future<Either<Failure, UserProfileEntity>> getMe();
+}
