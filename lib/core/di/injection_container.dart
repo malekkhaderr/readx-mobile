@@ -59,7 +59,7 @@ Future<void> init() async {
   // ─── Profile ─────────────────────────────────────────
 
   // Bloc
-  sl.registerFactory(() => ProfileBloc(getMeUseCase: sl()));
+  sl.registerLazySingleton(() => ProfileBloc(getMeUseCase: sl()));
 
   // Use Case
   sl.registerLazySingleton(() => GetMeUseCase(sl()));

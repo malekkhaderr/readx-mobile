@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
+import '../../../profile/domain/entities/user_profile_entity.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -33,6 +37,11 @@ class _HomePageState extends State<HomePage> {
     final recommended = BookRepository.getRecommended();
     final libraryBooks = BookRepository.getLibraryBooks();
 
+    // Read profile data from the shared ProfileBloc
+    final profileState = context.watch<ProfileBloc>().state;
+    final UserProfileEntity? profile =
+        profileState is ProfileLoaded ? profileState.profile : null;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -42,13 +51,13 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              _GreetingHeader(),
+              _GreetingHeader(profile: profile),
               const SizedBox(height: 8),
               _DailyGoalCard(booksRead: libraryBooks.where((b) => b.progress >= 1.0).length),
               const SizedBox(height: 4),
               _StatsRow(
-                streakDays: 15,
-                booksRead: BookRepository.getCompletedBooksCount(),
+                streakDays: profile?.readerDashboard?.streakDays ?? 0,
+                booksRead: profile?.readerDashboard?.booksRead ?? BookRepository.getCompletedBooksCount(),
               ),
               const SizedBox(height: 4),
               if (currentRead != null)
@@ -74,6 +83,9 @@ class _HomePageState extends State<HomePage> {
 
 // ── Greeting Header ─────────────────────────────────────────
 class _GreetingHeader extends StatelessWidget {
+  final UserProfileEntity? profile;
+  const _GreetingHeader({this.profile});
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Morning';
@@ -83,6 +95,12 @@ class _GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firstName = profile?.firstName ?? '';
+    final levelLabel = profile?.readerDashboard?.levelLabel ?? '';
+    final hasAvatar = profile?.hasAvatar ?? false;
+    final avatarUrl = profile?.avatarImageUrl;
+    final avatarInitial = profile?.avatarInitial ?? '?';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
@@ -95,9 +113,14 @@ class _GreetingHeader extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 2),
             ),
-            child: ClipOval(
-              child: Image.asset('assets/images/owl.png', width: 44, height: 44, fit: BoxFit.cover),
-            ),
+            child: hasAvatar
+                ? ClipOval(
+                    child: Image.network(avatarUrl!, width: 44, height: 44, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(child: Text(avatarInitial, style: const TextStyle(fontSize: 18, color: AppColors.primary, fontWeight: FontWeight.bold)))),
+                  )
+                : ClipOval(
+                    child: Image.asset('assets/images/owl.png', width: 44, height: 44, fit: BoxFit.cover),
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -106,18 +129,23 @@ class _GreetingHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'Hoot! ${_getGreeting()}, Alex',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                    Flexible(
+                      child: Text(
+                        firstName.isNotEmpty
+                            ? 'Hoot! ${_getGreeting()}, $firstName'
+                            : 'Hoot! ${_getGreeting()}!',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     const Text('🌟', style: TextStyle(fontSize: 14)),
                   ],
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Level 12 Scholar Owl',
-                  style: TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+                Text(
+                  levelLabel.isNotEmpty ? levelLabel : 'Reader',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w500),
                 ),
               ],
             ),

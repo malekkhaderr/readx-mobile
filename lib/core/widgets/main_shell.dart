@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../constants/app_theme.dart';
+import '../di/injection_container.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/profile/presentation/bloc/profile_event.dart';
 
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -9,57 +13,60 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: navigationShell.currentIndex == 0,
-                  onTap: () => navigationShell.goBranch(0),
-                ),
-                _NavItem(
-                  icon: Icons.auto_stories_rounded,
-                  label: 'Library',
-                  isSelected: navigationShell.currentIndex == 1,
-                  onTap: () => navigationShell.goBranch(1),
-                ),
-                _NavItem(
-                  icon: Icons.store_rounded,
-                  label: 'Shop',
-                  isSelected: navigationShell.currentIndex == 2,
-                  onTap: () => navigationShell.goBranch(2),
-                ),
-                _NavItem(
-                  icon: Icons.format_quote_rounded,
-                  label: 'Quotes',
-                  isSelected: navigationShell.currentIndex == 3,
-                  onTap: () => navigationShell.goBranch(3),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: navigationShell.currentIndex == 4,
-                  onTap: () => navigationShell.goBranch(4),
-                ),
-              ],
+    return BlocProvider<ProfileBloc>.value(
+      value: sl<ProfileBloc>()..add(const LoadProfileEvent()),
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _NavItem(
+                    icon: Icons.home_rounded,
+                    label: 'Home',
+                    isSelected: navigationShell.currentIndex == 0,
+                    onTap: () => navigationShell.goBranch(0),
+                  ),
+                  _NavItem(
+                    icon: Icons.auto_stories_rounded,
+                    label: 'Library',
+                    isSelected: navigationShell.currentIndex == 1,
+                    onTap: () => navigationShell.goBranch(1),
+                  ),
+                  _NavItem(
+                    icon: Icons.store_rounded,
+                    label: 'Shop',
+                    isSelected: navigationShell.currentIndex == 2,
+                    onTap: () => navigationShell.goBranch(2),
+                  ),
+                  _NavItem(
+                    icon: Icons.format_quote_rounded,
+                    label: 'Quotes',
+                    isSelected: navigationShell.currentIndex == 3,
+                    onTap: () => navigationShell.goBranch(3),
+                  ),
+                  _NavItem(
+                    icon: Icons.person_rounded,
+                    label: 'Profile',
+                    isSelected: navigationShell.currentIndex == 4,
+                    onTap: () => navigationShell.goBranch(4),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

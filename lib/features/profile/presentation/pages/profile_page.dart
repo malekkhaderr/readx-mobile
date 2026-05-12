@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_theme.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
@@ -14,10 +13,8 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<ProfileBloc>()..add(const LoadProfileEvent()),
-      child: const _ProfileView(),
-    );
+    // ProfileBloc is provided by MainShell — no need to create a new one.
+    return const _ProfileView();
   }
 }
 
