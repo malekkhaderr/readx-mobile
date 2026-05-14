@@ -7,14 +7,36 @@ import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
 import '../../../shop/data/models/mock_shop_data.dart';
 import '../widgets/reward_store_sheet.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/di/injection_container.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ProfileBloc is provided by MainShell — no need to create a new one.
-    return const _ProfileView();
+    // ProfileBloc is provided by MainShell.
+    // We inject AuthBloc locally to handle logout actions.
+    return BlocProvider<AuthBloc>(
+      create: (_) => sl<AuthBloc>(),
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthUnauthenticated) {
+            // Once successfully logged out locally, redirect to welcome
+            context.go('/welcome');
+          } else if (state is AuthError) {
+            // Even on error, we log out locally now. But if we want to show a toast:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: const _ProfileView(),
+      ),
+    );
   }
 }
 
@@ -39,7 +61,7 @@ class _ProfileView extends StatelessWidget {
           if (state is ProfileLoaded) {
             return _ProfileBody(profile: state.profile);
           }
-          return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
         },
       ),
     );
@@ -205,6 +227,26 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 _EmptyDashboard(profile: profile),
 
               const SizedBox(height: 24),
+
+              // ── Logout Button ──────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Trigger logout event
+                    context.read<AuthBloc>().add(const LogoutEvent());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: const Text('Log Out', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -225,7 +267,7 @@ class _EmptyDashboard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Column(children: [
-        const Text('📚', style: TextStyle(fontSize: 48)),
+        const Text('📚', style: const TextStyle(fontSize: 48)),
         const SizedBox(height: 12),
         Text(profile.isAuthor ? 'Author Dashboard' : 'Start Your Reading Journey!',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark), textAlign: TextAlign.center),
@@ -505,7 +547,7 @@ class _TrophyItem extends StatelessWidget {
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             trophy.iconUrl != null
                 ? Image.network(trophy.iconUrl!, width: 64, height: 64, errorBuilder: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 48)))
-                : const Text('🏆', style: TextStyle(fontSize: 48)),
+                : const Text('🏆', style: const TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text(trophy.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
