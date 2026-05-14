@@ -17,6 +17,7 @@ import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
+import '../../features/home/data/datasources/books_service.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -96,5 +97,8 @@ Future<void> init() async {
   // Data Source
   sl.registerLazySingleton<HomeRemoteDataSource>(
       () => HomeRemoteDataSourceImpl(dioClient: sl()));
+      
+  sl.registerLazySingleton<BooksService>(
+      () => BooksService(dioClient: sl()));
 }
 
