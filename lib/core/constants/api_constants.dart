@@ -14,6 +14,7 @@ class ApiConstants {
 
   // Books
   static const String books = '/books';
+  static const String booksHome = '/books/home';
 
   // Quotes
   static const String quotes = '/quotes';

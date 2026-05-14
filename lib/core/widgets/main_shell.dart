@@ -5,6 +5,8 @@ import '../constants/app_theme.dart';
 import '../di/injection_container.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_event.dart';
+import '../../features/home/presentation/bloc/home_bloc.dart';
+import '../../features/home/presentation/bloc/home_event.dart';
 
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -13,8 +15,15 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ProfileBloc>.value(
-      value: sl<ProfileBloc>()..add(const LoadProfileEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ProfileBloc>.value(
+          value: sl<ProfileBloc>()..add(const LoadProfileEvent()),
+        ),
+        BlocProvider<HomeBloc>.value(
+          value: sl<HomeBloc>()..add(const LoadHomeEvent()),
+        ),
+      ],
       child: Scaffold(
         body: navigationShell,
         bottomNavigationBar: Container(

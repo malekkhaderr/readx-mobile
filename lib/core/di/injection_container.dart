@@ -12,6 +12,11 @@ import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/get_me_usecase.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/home/data/datasources/home_remote_datasource.dart';
+import '../../features/home/data/repositories/home_repository_impl.dart';
+import '../../features/home/domain/repositories/home_repository.dart';
+import '../../features/home/domain/usecases/get_home_usecase.dart';
+import '../../features/home/presentation/bloc/home_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -75,5 +80,21 @@ Future<void> init() async {
       sharedPreferences: sl(),
     ),
   );
+
+  // ─── Home ────────────────────────────────────────────
+
+  // Bloc
+  sl.registerLazySingleton(() => HomeBloc(getHomeUseCase: sl()));
+
+  // Use Case
+  sl.registerLazySingleton(() => GetHomeUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<HomeRepository>(
+      () => HomeRepositoryImpl(remoteDataSource: sl()));
+
+  // Data Source
+  sl.registerLazySingleton<HomeRemoteDataSource>(
+      () => HomeRemoteDataSourceImpl(dioClient: sl()));
 }
 
