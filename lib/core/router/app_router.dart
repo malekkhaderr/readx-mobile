@@ -15,6 +15,8 @@ import '../../features/reader/presentation/pages/reading_page.dart';
 import '../../features/home/presentation/pages/book_details_page.dart';
 import '../widgets/main_shell.dart';
 import '../../features/shop/presentation/pages/shop_reader_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../constants/app_theme.dart';
 
 // Global key for navigator (needed for push from within shell)
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -149,6 +151,16 @@ class AppRouter {
           final chapter = int.tryParse(state.pathParameters['chapter'] ?? '1') ?? 1;
           return ReadingPage(bookId: bookId, chapterNumber: chapter);
         },
+      ),
+
+      // ── Notifications (full-screen, no bottom nav) ────
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(child: const NotificationsPage()),
+        ),
       ),
     ],
   );
