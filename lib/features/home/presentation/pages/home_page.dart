@@ -15,6 +15,7 @@ import '../bloc/home_state.dart';
 import '../../data/models/home_response_model.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -238,10 +239,11 @@ class _GreetingHeader extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('No new notifications'),
-                    duration: Duration(seconds: 1)),
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const NotificationsPage(),
               );
             },
             child: Container(

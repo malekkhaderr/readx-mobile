@@ -134,11 +134,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> logout() async {
+    // 1. Always clear tokens locally first to ensure safe logout
+    await sharedPreferences.remove('CACHED_AUTH_TOKEN');
+    dioClient.clearAuthToken();
+
+    // 2. Attempt to notify the server
     try {
       await dioClient.dio.post(ApiConstants.logout);
-    } on DioException catch (e) {
-      _handleDioException(e);
-      rethrow;
+    } catch (e) {
+      // Suppress any errors (network, server, etc.)
+      // Local session is already cleared, so the user is logged out safely.
     }
   }
 

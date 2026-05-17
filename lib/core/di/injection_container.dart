@@ -18,6 +18,12 @@ import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 import '../../features/home/data/datasources/books_service.dart';
+import '../../features/notifications/data/datasources/notifications_remote_datasource.dart';
+import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notifications_repository.dart';
+import '../../features/notifications/domain/usecases/get_notifications_usecase.dart';
+import '../../features/notifications/domain/usecases/mark_all_notifications_read_usecase.dart';
+import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,5 +106,29 @@ Future<void> init() async {
       
   sl.registerLazySingleton<BooksService>(
       () => BooksService(dioClient: sl()));
+
+  // ─── Notifications ─────────────────────────────────────
+
+  // Bloc
+  sl.registerFactory(
+    () => NotificationsBloc(
+      getNotificationsUseCase: sl(),
+      markAllNotificationsReadUseCase: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => MarkAllNotificationsReadUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<NotificationsRepository>(
+    () => NotificationsRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data Source
+  sl.registerLazySingleton<NotificationsRemoteDataSource>(
+    () => NotificationsRemoteDataSourceImpl(dioClient: sl()),
+  );
 }
 
