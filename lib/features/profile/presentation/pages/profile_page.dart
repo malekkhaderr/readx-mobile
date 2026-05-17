@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_bloc.dart';
@@ -160,9 +162,27 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
                     ),
                     child: profile.hasAvatar
-                        ? ClipOval(child: Image.network(profile.avatarImageUrl!, width: 90, height: 90, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold)))))
-                        : Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold))),
+                        ? ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: profile.avatarImageUrl!,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Center(
+                                child: Text(profile.avatarInitial,
+                                    style: const TextStyle(
+                                        fontSize: 36,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(profile.avatarInitial,
+                                style: const TextStyle(
+                                    fontSize: 36,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold))),
                   ),
                   Positioned(
                     bottom: 0,
@@ -340,9 +360,27 @@ class _CompletedBooksSection extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(14),
                       child: book.coverImageUrl != null
-                          ? Image.network(book.coverImageUrl!, width: 72, height: 72, fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(width: 72, height: 72, color: AppColors.primaryLight, child: const Icon(Icons.book, color: AppColors.primary)))
-                          : Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.book, color: AppColors.primary)),
+                          ? CachedNetworkImage(
+                              imageUrl: book.coverImageUrl!,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Shimmer.fromColors(
+                                baseColor: AppColors.primaryLight,
+                                highlightColor: Colors.white,
+                                child: Container(width: 72, height: 72, color: AppColors.primaryLight),
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                  width: 72,
+                                  height: 72,
+                                  color: AppColors.primaryLight,
+                                  child: const Icon(Icons.book, color: AppColors.primary)),
+                            )
+                          : Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)),
+                              child: const Icon(Icons.book, color: AppColors.primary)),
                     ),
                     Positioned(bottom: 4, right: 4, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: AppColors.successGreen, shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 10))),
                   ]),
@@ -504,7 +542,12 @@ class _TrophyItem extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             trophy.iconUrl != null
-                ? Image.network(trophy.iconUrl!, width: 64, height: 64, errorBuilder: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 48)))
+                ? CachedNetworkImage(
+                    imageUrl: trophy.iconUrl!,
+                    width: 64,
+                    height: 64,
+                    errorWidget: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 48)),
+                  )
                 : const Text('🏆', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text(trophy.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -520,8 +563,22 @@ class _TrophyItem extends StatelessWidget {
           decoration: BoxDecoration(shape: BoxShape.circle, color: trophy.earned ? AppColors.primaryLight : AppColors.divider.withOpacity(0.5), border: Border.all(color: trophy.earned ? AppColors.primary.withOpacity(0.3) : AppColors.divider, width: 2)),
           child: Center(
             child: trophy.iconUrl != null
-                ? ClipOval(child: Image.network(trophy.iconUrl!, width: 36, height: 36, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Text('🏆', style: TextStyle(fontSize: 22, color: trophy.earned ? null : Colors.grey))))
-                : Text('🏆', style: TextStyle(fontSize: 22, color: trophy.earned ? null : Colors.grey)),
+                ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: trophy.iconUrl!,
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Text('🏆',
+                          style: TextStyle(
+                              fontSize: 22,
+                              color: trophy.earned ? null : Colors.grey)),
+                    ),
+                  )
+                : Text('🏆',
+                    style: TextStyle(
+                        fontSize: 22,
+                        color: trophy.earned ? null : Colors.grey)),
           ),
         ),
         const SizedBox(height: 4),

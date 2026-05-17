@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
 
@@ -535,10 +537,15 @@ class _BookCoverMini extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          coverUrl,
+        child: CachedNetworkImage(
+          imageUrl: coverUrl,
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, stack) => Container(
+          placeholder: (context, url) => Shimmer.fromColors(
+            baseColor: AppColors.primaryLight,
+            highlightColor: Colors.white,
+            child: Container(color: AppColors.primaryLight),
+          ),
+          errorWidget: (ctx, err, stack) => Container(
             color: AppColors.primaryLight,
             child: const Center(child: Icon(Icons.book, color: AppColors.primary, size: 20)),
           ),
@@ -588,10 +595,15 @@ class _LibraryBookCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Image.network(
-                      book.coverUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: book.coverUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: AppColors.primaryLight,
+                        highlightColor: Colors.white,
+                        child: Container(color: AppColors.primaryLight),
+                      ),
+                      errorWidget: (ctx, err, stack) => Container(
                         color: AppColors.primaryLight,
                         child: const Center(child: Icon(Icons.book, color: AppColors.primary, size: 30)),
                       ),

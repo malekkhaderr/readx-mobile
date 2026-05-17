@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../reader/presentation/pages/epub_reader_page.dart';
@@ -154,10 +156,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          book.coverImageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: book.coverImageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => Container(
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: AppColors.primaryLight,
+                            highlightColor: Colors.white,
+                            child: Container(color: AppColors.primaryLight),
+                          ),
+                          errorWidget: (ctx, err, stack) => Container(
                             color: AppColors.primaryLight,
                             child: const Center(
                               child: Icon(Icons.book, color: AppColors.primary, size: 60),

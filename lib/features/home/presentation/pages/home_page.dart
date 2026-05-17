@@ -184,14 +184,18 @@ class _GreetingHeader extends StatelessWidget {
             ),
             child: hasAvatar
                 ? ClipOval(
-                    child: Image.network(avatarUrl!,
-                        width: 44, height: 44, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Center(
-                            child: Text(avatarInitial,
-                                style: const TextStyle(
-                                    fontSize: 18,
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold)))),
+                    child: CachedNetworkImage(
+                      imageUrl: avatarUrl!,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Center(
+                          child: Text(avatarInitial,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold))),
+                    ),
                   )
                 : ClipOval(
                     child: Image.asset('assets/images/owl.png',
@@ -348,77 +352,26 @@ class _BookListCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: book.coverImageUrl.isNotEmpty
-                      ? FutureBuilder<dynamic>(
-                          future: () async {
-                            try {
-                              // 1. Try the primary URL
-                              final response = await sl<DioClient>().dio.get<List<int>>(
-                                book.coverImageUrl,
-                                options: Options(
-                                  responseType: ResponseType.bytes,
-                                  sendTimeout: const Duration(seconds: 2),
-                                  receiveTimeout: const Duration(seconds: 2),
-                                ),
-                              );
-                              if (response.statusCode == 200) return book.coverImageUrl;
-                            } catch (_) {
-                              // Fail silently and try fallback
-                            }
-
-                            // 2. Fallback: Search Google Books API by title
-                            try {
-                              final query = Uri.encodeComponent(book.title);
-                              final searchRes = await Dio().get(
-                                'https://www.googleapis.com/books/v1/volumes?q=intitle:$query&maxResults=1',
-                              );
-                              if (searchRes.data['items'] != null && 
-                                  searchRes.data['items'].isNotEmpty) {
-                                final volumeInfo = searchRes.data['items'][0]['volumeInfo'];
-                                final imageLinks = volumeInfo['imageLinks'];
-                                if (imageLinks != null) {
-                                  return (imageLinks['thumbnail'] ?? imageLinks['smallThumbnail']);
-                                }
-                              }
-                            } catch (_) {}
-                            
-                            return null;
-                          }(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData && snapshot.data != null) {
-                              final imageUrl = snapshot.data as String;
-                              return Image.network(
-                                imageUrl,
-                                width: 120,
-                                height: 170,
-                                fit: BoxFit.cover,
-                                errorBuilder: (ctx, err, stack) => Container(
-                                  color: AppColors.primaryLight,
-                                  child: const Center(
-                                      child: Icon(Icons.book,
-                                          color: AppColors.primary)),
-                                ),
-                              );
-                            }
-                            
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Shimmer.fromColors(
-                                baseColor: AppColors.primaryLight,
-                                highlightColor: Colors.white,
-                                child: Container(
-                                  width: 120,
-                                  height: 170,
-                                  color: AppColors.primaryLight,
-                                ),
-                              );
-                            }
-
-                            return Container(
+                      ? CachedNetworkImage(
+                          imageUrl: book.coverImageUrl,
+                          width: 120,
+                          height: 170,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: AppColors.primaryLight,
+                            highlightColor: Colors.white,
+                            child: Container(
+                              width: 120,
+                              height: 170,
                               color: AppColors.primaryLight,
-                              child: const Center(
-                                  child: Icon(Icons.book,
-                                      color: AppColors.primary)),
-                            );
-                          },
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.primaryLight,
+                            child: const Center(
+                                child: Icon(Icons.book,
+                                    color: AppColors.primary)),
+                          ),
                         )
                       : Container(
                           color: AppColors.primaryLight,
