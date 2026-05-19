@@ -8,7 +8,7 @@ import '../../features/auth/presentation/pages/otp_page.dart';
 import '../../features/auth/presentation/pages/new_password_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/library_page.dart';
-import '../../features/shop/presentation/pages/book_shop_page.dart';
+import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/quotes/presentation/pages/quotes_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/reader/presentation/pages/reading_page.dart';
@@ -92,12 +92,12 @@ class AppRouter {
               ),
             ],
           ),
-          // Tab 2: Shop
+          // Tab 2: Search
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/shop',
-                builder: (context, state) => const BookShopPage(),
+                path: '/search',
+                builder: (context, state) => const SearchPage(),
               ),
             ],
           ),

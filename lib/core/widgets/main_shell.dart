@@ -57,8 +57,8 @@ class MainShell extends StatelessWidget {
                     onTap: () => navigationShell.goBranch(1),
                   ),
                   _NavItem(
-                    icon: Icons.store_rounded,
-                    label: 'Shop',
+                    icon: Icons.search_rounded,
+                    label: 'Search',
                     isSelected: navigationShell.currentIndex == 2,
                     onTap: () => navigationShell.goBranch(2),
                   ),

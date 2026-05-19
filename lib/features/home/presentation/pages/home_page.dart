@@ -328,6 +328,45 @@ class _BookListCard extends StatelessWidget {
 
   const _BookListCard({required this.book});
 
+  Widget _buildPriceWidget(BookCard book) {
+    if (book.effectivePrice == 0) {
+      return const Text(
+        'Free',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: AppColors.successGreen,
+        ),
+      );
+    }
+
+    final hasDiscount = book.price > book.effectivePrice;
+
+    return Row(
+      children: [
+        Text(
+          '\$${book.effectivePrice.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        if (hasDiscount) ...[
+          const SizedBox(width: 4),
+          Text(
+            '\$${book.price.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 9,
+              color: AppColors.textGrey,
+              decoration: TextDecoration.lineThrough,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -380,6 +419,32 @@ class _BookListCard extends StatelessWidget {
                           child: const Center(
                               child: Icon(Icons.book, color: AppColors.primary)),
                         ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.65),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, color: AppColors.gold, size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          book.averageRating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 if (book.viewCount > 0)
                   Positioned(
@@ -434,6 +499,8 @@ class _BookListCard extends StatelessWidget {
               color: AppColors.textGrey,
             ),
           ),
+          const SizedBox(height: 4),
+          _buildPriceWidget(book),
           const SizedBox(height: 4),
           Row(
             children: [

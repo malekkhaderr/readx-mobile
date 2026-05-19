@@ -42,6 +42,11 @@ class BookCard {
   final String coverImageUrl;
   final bool isPublished;
   final int viewCount;
+  final double price;
+  final double effectivePrice;
+  final double? discountPercentage;
+  final String? discountType;
+  final double averageRating;
 
   BookCard({
     required this.id,
@@ -52,6 +57,11 @@ class BookCard {
     required this.coverImageUrl,
     required this.isPublished,
     required this.viewCount,
+    required this.price,
+    required this.effectivePrice,
+    this.discountPercentage,
+    this.discountType,
+    required this.averageRating,
   });
 
   factory BookCard.fromJson(Map<String, dynamic> json) {
@@ -64,6 +74,11 @@ class BookCard {
       coverImageUrl: json['coverImageUrl'] as String? ?? '',
       isPublished: json['isPublished'] as bool? ?? true,
       viewCount: json['viewCount'] as int? ?? 0,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      effectivePrice: (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
+      discountPercentage: (json['discountPercentage'] as num?)?.toDouble(),
+      discountType: json['discountType'] as String?,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

@@ -17,6 +17,11 @@ class BookDetail {
   final int viewCount;
   final int readCount;
   final DateTime createdAt;
+  final double price;
+  final double effectivePrice;
+  final double? discountPercentage;
+  final String? discountType;
+  final double averageRating;
 
   BookDetail({
     required this.id,
@@ -37,6 +42,11 @@ class BookDetail {
     required this.viewCount,
     required this.readCount,
     required this.createdAt,
+    required this.price,
+    required this.effectivePrice,
+    this.discountPercentage,
+    this.discountType,
+    required this.averageRating,
   });
 
   factory BookDetail.fromJson(Map<String, dynamic> json) {
@@ -63,6 +73,11 @@ class BookDetail {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      effectivePrice: (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
+      discountPercentage: (json['discountPercentage'] as num?)?.toDouble(),
+      discountType: json['discountType'] as String?,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

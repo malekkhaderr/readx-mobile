@@ -3,7 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../reader/presentation/pages/epub_reader_page.dart';
+import '../../../shop/data/book_shop_state.dart';
+import '../../../shop/data/models/mock_book_shop_data.dart';
 import '../../data/datasources/books_service.dart';
 import '../../data/models/book_detail_model.dart';
 
@@ -26,6 +27,19 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   void initState() {
     super.initState();
     _loadBook();
+    BookShopState.addListener(_onStateChanged);
+  }
+
+  @override
+  void dispose() {
+    BookShopState.removeListener(_onStateChanged);
+    super.dispose();
+  }
+
+  void _onStateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadBook() async {
@@ -55,38 +69,33 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
   }
 
-  void _openEpubViewer() {
+  void _addToCart() {
     if (_book == null) return;
+    final book = _book!;
 
-    // Edge case 1 — Empty URL guard with SnackBar feedback
-    if (_book!.epubFileUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Book file not available'),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
+    final shopBook = ShopBook(
+      id: 'api_${book.id}',
+      title: book.title,
+      author: book.authorName,
+      coverImage: book.coverImageUrl,
+      price: book.price,
+      discountPrice: book.price > book.effectivePrice ? book.effectivePrice : null,
+      rating: book.averageRating,
+      reviewCount: book.viewCount,
+      genre: book.categoryName,
+      description: book.description ?? '',
+      pageCount: book.totalPages,
+      readingTime: '${(book.totalPages * 1.5).toInt()} mins',
+    );
 
-    // Edge case 2 — URL has spaces (decode first to avoid double-encoding, then encode cleanly)
-    final String decodedUrl = Uri.decodeFull(_book!.epubFileUrl);
-    final String encodedUrl = Uri.encodeFull(decodedUrl);
+    BookShopState.instance.addToCart(shopBook);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EpubReaderPage(
-          epubUrl: encodedUrl,
-          bookTitle: _book!.title,
-        ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Added "${book.title}" to cart!'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.successGreen,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -146,6 +155,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
 
     final book = _book!;
+    final inCart = BookShopState.instance.isInCart('api_${book.id}');
+    final isPurchased = BookShopState.instance.isPurchased('api_${book.id}');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -286,13 +297,40 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           _StatRowItem(label: 'Views', value: '${book.viewCount}'),
                           const SizedBox(height: 12),
                           _StatRowItem(label: 'Readers', value: '${book.readCount}'),
+                          const SizedBox(height: 12),
+                          _StatRowItem(
+                            label: 'Rating',
+                            value: book.averageRating >= 0
+                                ? '${book.averageRating.toStringAsFixed(1)} ★'
+                                : 'Not rated yet',
+                          ),
                         ],
                       ),
                     ),
 
                     const SizedBox(height: 32),
 
-                    // Read Action Button
+                    // Price Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Price',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                          _buildPriceDetails(book),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Add to Cart Action Button
                     if (book.isPublished)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -300,11 +338,23 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           width: double.infinity,
                           height: 58,
                           child: ElevatedButton.icon(
-                            onPressed: _openEpubViewer,
-                            icon: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 22),
-                            label: const Text(
-                              'READ BOOK',
-                              style: TextStyle(
+                            onPressed: (inCart || isPurchased) ? null : _addToCart,
+                            icon: Icon(
+                              isPurchased
+                                  ? Icons.check_circle_outline
+                                  : inCart
+                                      ? Icons.shopping_bag_outlined
+                                      : Icons.add_shopping_cart_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            label: Text(
+                              isPurchased
+                                  ? 'OWNED'
+                                  : inCart
+                                      ? 'IN CART'
+                                      : 'ADD TO CART',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -312,11 +362,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
+                              backgroundColor: (inCart || isPurchased)
+                                  ? AppColors.textGrey
+                                  : AppColors.primary,
+                              disabledBackgroundColor: AppColors.textGrey,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
-                              elevation: 4,
+                              elevation: (inCart || isPurchased) ? 0 : 4,
                               shadowColor: AppColors.primary.withOpacity(0.4),
                             ),
                           ),
@@ -331,6 +384,48 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPriceDetails(BookDetail book) {
+    if (book.effectivePrice == 0) {
+      return const Text(
+        'Free',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          color: AppColors.successGreen,
+        ),
+      );
+    }
+
+    final hasDiscount = book.price > book.effectivePrice;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '\$${book.effectivePrice.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+          ),
+        ),
+        if (hasDiscount) ...[
+          const SizedBox(width: 8),
+          Text(
+            '\$${book.price.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textGrey,
+              decoration: TextDecoration.lineThrough,
+            ),
+          ),
+        ],
+      ],
     );
   }
 
