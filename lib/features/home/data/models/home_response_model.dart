@@ -62,7 +62,7 @@ class BookCard {
       categoryName: json['categoryName'] as String? ?? '',
       totalPages: json['totalPages'] as int? ?? 0,
       coverImageUrl: json['coverImageUrl'] as String? ?? '',
-      isPublished: json['isPublished'] as bool? ?? false,
+      isPublished: json['isPublished'] as bool? ?? true,
       viewCount: json['viewCount'] as int? ?? 0,
     );
   }

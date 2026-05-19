@@ -437,33 +437,36 @@ class _BookListCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  book.categoryName,
-                  style: const TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+              if (book.categoryName.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    book.categoryName,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '${book.totalPages} pages',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: AppColors.textGrey,
+                const SizedBox(width: 4),
+              ],
+              if (book.totalPages > 0)
+                Expanded(
+                  child: Text(
+                    '${book.totalPages} pages',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.textGrey,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

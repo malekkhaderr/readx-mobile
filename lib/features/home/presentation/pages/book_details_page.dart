@@ -56,13 +56,35 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   void _openEpubViewer() {
-    if (_book == null || _book!.epubFileUrl.isEmpty) return;
+    if (_book == null) return;
+
+    // Edge case 1 — Empty URL guard with SnackBar feedback
+    if (_book!.epubFileUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Book file not available'),
+            ],
+          ),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Edge case 2 — URL has spaces (decode first to avoid double-encoding, then encode cleanly)
+    final String decodedUrl = Uri.decodeFull(_book!.epubFileUrl);
+    final String encodedUrl = Uri.encodeFull(decodedUrl);
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => EpubReaderPage(
-          epubUrl: _book!.epubFileUrl,
+          epubUrl: encodedUrl,
           bookTitle: _book!.title,
         ),
       ),
