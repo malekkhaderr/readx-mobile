@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -46,6 +47,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   int _elapsedMinutesOffset = 0;
   bool _sessionInitialized = false;
   bool _isResuming = false;
+  Timer? _progressTimer;
   final ValueNotifier<dynamic> _progressNotifier = ValueNotifier<dynamic>(null);
   int _totalPages = 1;
   int _totalParagraphs = 100;
@@ -190,6 +192,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
     _disableSecureWindow();
     _epubController?.dispose();
     _progressNotifier.dispose();
@@ -273,6 +276,8 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         );
       } catch (_) {}
     }
+    
+    _startProgressTimer();
     
     try {
       final tempDir = await getTemporaryDirectory();
@@ -384,6 +389,15 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     } catch (e) {
       debugPrint('Failed to save reading progress: $e');
     }
+  }
+
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted && _sessionInitialized) {
+        _saveProgress();
+      }
+    });
   }
 
   void _showError(String title, String details) {
