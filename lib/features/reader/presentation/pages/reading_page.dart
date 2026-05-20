@@ -30,6 +30,8 @@ class _ReadingPageState extends State<ReadingPage> {
     _scrollController.addListener(_onScroll);
   }
 
+
+
   void _loadChapter() {
     _chapter = ChapterRepository.getChapter(widget.bookId, _currentChapter);
     _scrollProgress = 0.0;

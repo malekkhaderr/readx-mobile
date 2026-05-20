@@ -12,11 +12,16 @@ import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/quotes/presentation/pages/quotes_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/reader/presentation/pages/reading_page.dart';
+import '../../features/reader/presentation/pages/epub_reader_page.dart';
 import '../../features/home/presentation/pages/book_details_page.dart';
 import '../widgets/main_shell.dart';
 import '../../features/shop/presentation/pages/shop_reader_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../constants/app_theme.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../di/injection_container.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
 
 // Global key for navigator (needed for push from within shell)
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -122,13 +127,15 @@ class AppRouter {
         ],
       ),
 
-      // ── Book Details (full-screen, no bottom nav) ──────
       GoRoute(
         path: '/book/:bookId',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final bookId = state.pathParameters['bookId'] ?? '1';
-          return BookDetailsPage(bookId: bookId);
+          return BlocProvider<ProfileBloc>.value(
+            value: sl<ProfileBloc>(),
+            child: BookDetailsPage(bookId: bookId),
+          );
         },
       ),
 
@@ -150,6 +157,17 @@ class AppRouter {
           final bookId = state.pathParameters['bookId'] ?? '1';
           final chapter = int.tryParse(state.pathParameters['chapter'] ?? '1') ?? 1;
           return ReadingPage(bookId: bookId, chapterNumber: chapter);
+        },
+      ),
+
+      // ── EPUB Reader (full-screen, no bottom nav) ─────
+      GoRoute(
+        path: '/epub-reader',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final epubUrl = state.uri.queryParameters['url'] ?? '';
+          final bookTitle = state.uri.queryParameters['title'] ?? 'Epub Reader';
+          return EpubReaderPage(epubUrl: epubUrl, bookTitle: bookTitle);
         },
       ),
 

@@ -96,7 +96,11 @@ class _LibraryPageState extends State<LibraryPage> {
               const SizedBox(height: 20),
               _ActionTile(icon: Icons.play_arrow_rounded, label: 'Continue Reading', color: AppColors.primary, onTap: () {
                 Navigator.pop(ctx);
-                context.push('/reader/${book.id}/${book.currentChapter}');
+                if (book.epubUrl != null && book.epubUrl!.isNotEmpty) {
+                  context.push('/epub-reader?url=${Uri.encodeComponent(book.epubUrl!)}&title=${Uri.encodeComponent(book.title)}');
+                } else {
+                  context.push('/reader/${book.id}/${book.currentChapter}');
+                }
               }),
               _ActionTile(icon: Icons.info_outline_rounded, label: 'Book Details', color: AppColors.textDark, onTap: () {
                 Navigator.pop(ctx);

@@ -2,6 +2,7 @@
 /// Uses a simple listener pattern matching the existing BookRepository style.
 
 import 'models/mock_book_shop_data.dart';
+import '../../../../core/data/book_repository.dart';
 
 typedef _VoidCb = void Function();
 
@@ -50,6 +51,7 @@ class BookShopState {
   void purchaseBook(ShopBook book) {
     _purchasedBookIds.add(book.id);
     _cartItems.removeWhere((b) => b.id == book.id);
+    BookRepository.addPurchasedBook(book);
     _notifyListeners();
   }
 
@@ -57,6 +59,7 @@ class BookShopState {
   void checkout() {
     for (final book in _cartItems) {
       _purchasedBookIds.add(book.id);
+      BookRepository.addPurchasedBook(book);
     }
     _cartItems.clear();
     _notifyListeners();

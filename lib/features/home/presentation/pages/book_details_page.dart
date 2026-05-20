@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -7,6 +8,12 @@ import '../../../shop/data/book_shop_state.dart';
 import '../../../shop/data/models/mock_book_shop_data.dart';
 import '../../data/datasources/books_service.dart';
 import '../../data/models/book_detail_model.dart';
+import '../../data/models/book_comment_model.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_state.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 /// Full-screen Book Details page — shows all info about a single book.
 /// Route: /book/:bookId
@@ -23,16 +30,30 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   bool _isLoading = true;
   String? _error;
 
+  // Comments State
+  List<CommentItem> _comments = [];
+  bool _loadingComments = false;
+  String? _commentsError;
+  final TextEditingController _commentController = TextEditingController();
+  bool _submittingComment = false;
+
+  int? _editingCommentId;
+  final TextEditingController _editCommentController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _loadBook();
     BookShopState.addListener(_onStateChanged);
+    // Ensure profile is loaded for comment checking/ownership
+    sl<ProfileBloc>().add(const LoadProfileEvent());
   }
 
   @override
   void dispose() {
     BookShopState.removeListener(_onStateChanged);
+    _commentController.dispose();
+    _editCommentController.dispose();
     super.dispose();
   }
 
@@ -48,7 +69,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       _error = null;
     });
     try {
-      final bookIdInt = int.tryParse(widget.bookId);
+      String cleanId = widget.bookId;
+      if (cleanId.startsWith('api_')) {
+        cleanId = cleanId.replaceFirst('api_', '');
+      }
+      final bookIdInt = int.tryParse(cleanId);
       if (bookIdInt == null) throw Exception('Invalid Book ID');
       
       final bookDetail = await sl<BooksService>().getBookDetail(bookIdInt);
@@ -59,12 +84,200 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           _isLoading = false;
         });
       }
+      // Load comments for this book
+      _loadComments();
     } catch (e) {
       if (mounted) {
         setState(() {
           _error = 'Failed to load book details. Please try again.';
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  void _sortComments() {
+    _comments.sort((a, b) {
+      final scoreA = a.upvoteCount - a.downvoteCount;
+      final scoreB = b.upvoteCount - b.downvoteCount;
+      if (scoreA != scoreB) {
+        return scoreB.compareTo(scoreA);
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
+  }
+
+  Future<void> _loadComments() async {
+    if (_book == null) return;
+    setState(() {
+      _loadingComments = true;
+      _commentsError = null;
+    });
+    try {
+      final commentsResponse = await sl<BooksService>().getComments(_book!.id);
+      if (mounted) {
+        setState(() {
+          _comments = commentsResponse.items;
+          _sortComments();
+          _loadingComments = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _commentsError = 'Could not load reviews.';
+          _loadingComments = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _submitComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty || _book == null) return;
+    setState(() {
+      _submittingComment = true;
+    });
+    try {
+      await sl<BooksService>().addComment(_book!.id, text);
+      _commentController.clear();
+      await _loadComments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Review submitted successfully!'),
+            backgroundColor: AppColors.successGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to submit review. Please try again.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submittingComment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteComment(int commentId) async {
+    if (_book == null) return;
+    try {
+      await sl<BooksService>().deleteComment(_book!.id, commentId);
+      await _loadComments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Review deleted.'),
+            backgroundColor: AppColors.textGrey,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to delete review.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateComment(int commentId) async {
+    final text = _editCommentController.text.trim();
+    if (text.isEmpty || _book == null) return;
+    try {
+      await sl<BooksService>().updateComment(_book!.id, commentId, text);
+      setState(() {
+        _editingCommentId = null;
+        _editCommentController.clear();
+      });
+      await _loadComments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Review updated!'),
+            backgroundColor: AppColors.successGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update review.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _voteComment(int commentId, int voteType) async {
+    if (_book == null) return;
+    
+    final index = _comments.indexWhere((c) => c.id == commentId);
+    if (index == -1) return;
+    
+    final oldComment = _comments[index];
+    int? newVote = voteType;
+    int upvoteDiff = 0;
+    int downvoteDiff = 0;
+    
+    if (oldComment.currentUserVote == voteType) {
+      newVote = null;
+      if (voteType == 0) {
+        upvoteDiff = -1;
+      } else if (voteType == 1) {
+        downvoteDiff = -1;
+      }
+    } else {
+      if (oldComment.currentUserVote == 0) {
+        upvoteDiff = -1;
+      } else if (oldComment.currentUserVote == 1) {
+        downvoteDiff = -1;
+      }
+      
+      if (voteType == 0) {
+        upvoteDiff += 1;
+      } else if (voteType == 1) {
+        downvoteDiff += 1;
+      }
+    }
+    
+    setState(() {
+      _comments[index] = oldComment.copyWith(
+        currentUserVote: newVote,
+        upvoteCount: (oldComment.upvoteCount + upvoteDiff).clamp(0, 99999),
+        downvoteCount: (oldComment.downvoteCount + downvoteDiff).clamp(0, 99999),
+      );
+      _sortComments();
+    });
+
+    try {
+      await sl<BooksService>().voteComment(_book!.id, commentId, voteType);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _comments[index] = oldComment;
+          _sortComments();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to register vote.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -86,6 +299,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       description: book.description ?? '',
       pageCount: book.totalPages,
       readingTime: '${(book.totalPages * 1.5).toInt()} mins',
+      epubUrl: book.epubFileUrl,
     );
 
     BookShopState.instance.addToCart(shopBook);
@@ -157,6 +371,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     final book = _book!;
     final inCart = BookShopState.instance.isInCart('api_${book.id}');
     final isPurchased = BookShopState.instance.isPurchased('api_${book.id}');
+
+    final profileState = context.watch<ProfileBloc>().state;
+    String? currentUserId;
+    String? currentUserFullName;
+    if (profileState is ProfileLoaded) {
+      currentUserId = profileState.profile.id;
+      currentUserFullName = profileState.profile.fullName;
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -338,10 +560,20 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           width: double.infinity,
                           height: 58,
                           child: ElevatedButton.icon(
-                            onPressed: (inCart || isPurchased) ? null : _addToCart,
+                            onPressed: isPurchased
+                                ? () {
+                                    if (book.epubFileUrl.isNotEmpty) {
+                                      context.push('/epub-reader?url=${Uri.encodeComponent(book.epubFileUrl)}&title=${Uri.encodeComponent(book.title)}');
+                                    } else {
+                                      context.push('/reader/api_${book.id}/1');
+                                    }
+                                  }
+                                : inCart
+                                    ? null
+                                    : _addToCart,
                             icon: Icon(
                               isPurchased
-                                  ? Icons.check_circle_outline
+                                  ? Icons.menu_book_rounded
                                   : inCart
                                       ? Icons.shopping_bag_outlined
                                       : Icons.add_shopping_cart_rounded,
@@ -350,7 +582,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             ),
                             label: Text(
                               isPurchased
-                                  ? 'OWNED'
+                                  ? 'READ BOOK'
                                   : inCart
                                       ? 'IN CART'
                                       : 'ADD TO CART',
@@ -362,20 +594,22 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: (inCart || isPurchased)
+                              backgroundColor: inCart
                                   ? AppColors.textGrey
                                   : AppColors.primary,
                               disabledBackgroundColor: AppColors.textGrey,
+                              minimumSize: const Size(double.infinity, 58),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
-                              elevation: (inCart || isPurchased) ? 0 : 4,
+                              elevation: inCart ? 0 : 4,
                               shadowColor: AppColors.primary.withOpacity(0.4),
                             ),
                           ),
                         ),
                       ),
 
+                    _buildReviewsSection(currentUserId, currentUserFullName),
                     const SizedBox(height: 50),
                   ],
                 ),
@@ -455,6 +689,394 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             Icons.bookmark_border_rounded,
             size: 24,
             color: AppColors.primary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection(String? currentUserId, String? currentUserFullName) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(height: 48, thickness: 1, color: Color(0xFFEEEEEE)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Reader Reviews (${_comments.length})',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              if (_loadingComments)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Add comment box
+          _buildAddCommentInput(),
+          
+          const SizedBox(height: 24),
+          
+          if (_commentsError != null && _comments.isEmpty)
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    _commentsError!,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                  TextButton(
+                    onPressed: _loadComments,
+                    child: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            )
+          else if (_comments.isEmpty && !_loadingComments)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'No reviews yet. Be the first to write one!',
+                  style: TextStyle(color: AppColors.textGrey, fontStyle: FontStyle.italic),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: _comments.map((comment) => _buildCommentItem(comment, currentUserId, currentUserFullName)).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddCommentInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEBEBF0)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          TextField(
+            controller: _commentController,
+            maxLines: 3,
+            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+            decoration: const InputDecoration(
+              hintText: 'Share your thoughts about this book...',
+              hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14),
+              fillColor: Colors.transparent,
+              filled: true,
+              contentPadding: EdgeInsets.zero,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 38,
+            child: ElevatedButton(
+              onPressed: _submittingComment ? null : _submitComment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                minimumSize: Size.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _submittingComment
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Post Review', style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold)),
+                        SizedBox(width: 6),
+                        Icon(Icons.send_rounded, size: 14, color: Colors.white),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentItem(CommentItem comment, String? currentUserId, String? currentUserFullName) {
+    final isOwner = currentUserId != null &&
+        (comment.readerProfileId.toString() == currentUserId ||
+         (currentUserFullName != null && comment.readerName.trim().toLowerCase() == currentUserFullName.trim().toLowerCase()));
+    final isEditingThis = _editingCommentId == comment.id;
+    final formattedDate = DateFormat('MMM d, yyyy').format(comment.createdAt);
+    
+    final hasUpvoted = comment.currentUserVote == 0;
+    final hasDownvoted = comment.currentUserVote == 1;
+
+    return Container(
+      key: ValueKey(comment.id),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF0F0F3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.gradientEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    comment.readerName.isNotEmpty ? comment.readerName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      comment.readerName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isOwner && !isEditingThis) ...[
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.textGrey),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    setState(() {
+                      _editingCommentId = comment.id;
+                      _editCommentController.text = comment.body;
+                    });
+                  },
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _showDeleteConfirmation(comment.id),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (isEditingThis)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                TextField(
+                  controller: _editCommentController,
+                  maxLines: 3,
+                  style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                  decoration: InputDecoration(
+                    fillColor: const Color(0xFFF7F7F9),
+                    filled: true,
+                    contentPadding: const EdgeInsets.all(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _editingCommentId = null;
+                          _editCommentController.clear();
+                        });
+                      },
+                      child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => _updateComment(comment.id),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const Text('Save', style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else ...[
+            Text(
+              comment.body,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF4A4A58),
+                height: 1.5,
+              ),
+            ),
+            if (comment.updatedAt != null) ...[
+              const SizedBox(height: 4),
+              const Text(
+                '(Edited)',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textGrey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => _voteComment(comment.id, 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: hasUpvoted ? AppColors.primaryLight : const Color(0xFFF7F7F9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        hasUpvoted ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        size: 14,
+                        color: hasUpvoted ? AppColors.primary : AppColors.textGrey,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${comment.upvoteCount}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: hasUpvoted ? AppColors.primary : AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => _voteComment(comment.id, 1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: hasDownvoted ? const Color(0xFFFFECEC) : const Color(0xFFF7F7F9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        hasDownvoted ? Icons.thumb_down : Icons.thumb_down_outlined,
+                        size: 14,
+                        color: hasDownvoted ? AppColors.error : AppColors.textGrey,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${comment.downvoteCount}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: hasDownvoted ? AppColors.error : AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(int commentId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Review'),
+        content: const Text('Are you sure you want to delete this review? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteComment(commentId);
+            },
+            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),

@@ -246,6 +246,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
               ] else
                 _EmptyDashboard(profile: profile),
 
+
+
               const SizedBox(height: 24),
 
               // ── Logout Button ──────────────────────────────
@@ -629,3 +631,5 @@ class _TrophyItem extends StatelessWidget {
     );
   }
 }
+
+

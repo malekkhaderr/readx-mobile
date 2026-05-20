@@ -19,6 +19,7 @@ class ShopBook {
   final bool isNew;
   final bool isTrending;
   final String sampleText;
+  final String? epubUrl;
 
   const ShopBook({
     required this.id,
@@ -38,6 +39,7 @@ class ShopBook {
     this.isNew = false,
     this.isTrending = false,
     this.sampleText = '',
+    this.epubUrl,
   });
 
   /// Effective price (discount if available)

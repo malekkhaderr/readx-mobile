@@ -7,6 +7,7 @@
 ///   final chapters = BookRepository.getChapters('1');
 
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/shop/data/models/mock_book_shop_data.dart';
 
 typedef _VoidCb = void Function();
 
@@ -25,6 +26,7 @@ class BookModel {
   final bool isInLibrary;
   final bool isBookmarked;
   final DateTime? lastReadAt;
+  final String? epubUrl;
 
   const BookModel({
     required this.id,
@@ -41,6 +43,7 @@ class BookModel {
     this.isInLibrary = false,
     this.isBookmarked = false,
     this.lastReadAt,
+    this.epubUrl,
   });
 
   double get progress => totalPages > 0 ? (readPages / totalPages).clamp(0.0, 1.0) : 0.0;
@@ -60,6 +63,7 @@ class BookModel {
     bool? isInLibrary,
     bool? isBookmarked,
     DateTime? lastReadAt,
+    String? epubUrl,
   }) {
     return BookModel(
       id: id ?? this.id,
@@ -76,6 +80,7 @@ class BookModel {
       isInLibrary: isInLibrary ?? this.isInLibrary,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       lastReadAt: lastReadAt ?? this.lastReadAt,
+      epubUrl: epubUrl ?? this.epubUrl,
     );
   }
 }
@@ -417,6 +422,33 @@ class BookRepository {
     return true;
   }
 
+  /// Adds a purchased book from the shop to the library, including its epub url.
+  static void addPurchasedBook(ShopBook shopBook) {
+    final idx = _books.indexWhere((b) => b.id == shopBook.id);
+    if (idx != -1) {
+      _books[idx] = _books[idx].copyWith(
+        isInLibrary: true,
+        epubUrl: shopBook.epubUrl,
+      );
+    } else {
+      _books.add(BookModel(
+        id: shopBook.id,
+        title: shopBook.title,
+        author: shopBook.author,
+        coverUrl: shopBook.coverImage,
+        genre: shopBook.genre,
+        description: shopBook.description,
+        rating: shopBook.rating,
+        totalPages: shopBook.pageCount,
+        isInLibrary: true,
+        epubUrl: shopBook.epubUrl,
+      ));
+      // Generate mock chapters if not already defined, as a fallback reading data source
+      ChapterRepository.addMockChapters(shopBook.id, shopBook.title, 10);
+    }
+    _notifyListeners();
+  }
+
   // ── Simple listener system for cross-widget rebuilds ──────
   static final List<_VoidCb> _listeners = [];
   static void addListener(_VoidCb listener) => _listeners.add(listener);
@@ -507,6 +539,13 @@ class ChapterRepository {
   /// Swap this with: `final response = await dio.get('/books/$bookId/chapters');`
   static List<ChapterModel> getChaptersForBook(String bookId) {
     return _chapters[bookId] ?? [];
+  }
+
+  /// Adds mock chapters for a purchased book if not already defined.
+  static void addMockChapters(String bookId, String bookTitle, int count) {
+    if (!_chapters.containsKey(bookId)) {
+      _chapters[bookId] = _generateChapters(bookId, bookTitle, count);
+    }
   }
 
   static List<ChapterModel> _generateChapters(String bookId, String bookTitle, int count) {
