@@ -11,7 +11,7 @@ class CubeShopPage extends StatefulWidget {
 
 class _CubeShopPageState extends State<CubeShopPage> {
   ShopCategory _selectedCategory = ShopCategory.allDeals;
-  int _cubeBalance = MockShopData.userCubeBalance;
+  int _featherBalance = MockShopData.userCubeBalance;
   final Set<String> _purchasedItems = {};
 
   List<ShopItem> get _filteredDeals {
@@ -32,10 +32,10 @@ class _CubeShopPageState extends State<CubeShopPage> {
       return;
     }
 
-    if (_cubeBalance < item.price) {
+    if (_featherBalance < item.price) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Not enough cubes! You need ${item.price - _cubeBalance} more.'),
+          content: Text('Not enough feathers! You need ${item.price - _featherBalance} more.'),
           backgroundColor: AppColors.error,
           duration: const Duration(seconds: 2),
         ),
@@ -66,7 +66,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
                 children: [
                   const Text('Price', style: TextStyle(fontWeight: FontWeight.w600)),
                   Row(children: [
-                    const Text('🧊', style: TextStyle(fontSize: 16)),
+                    Image.asset('assets/images/purple_feather.png', width: 18, height: 18, fit: BoxFit.contain),
                     const SizedBox(width: 4),
                     Text('${item.price}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ]),
@@ -84,7 +84,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
             onPressed: () {
               Navigator.pop(ctx);
               setState(() {
-                _cubeBalance -= item.price;
+                _featherBalance -= item.price;
                 _purchasedItems.add(item.id);
               });
               ScaffoldMessenger.of(context).showSnackBar(
@@ -122,12 +122,12 @@ class _CubeShopPageState extends State<CubeShopPage> {
               const SizedBox(height: 16),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text('Cube Shop', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                child: Text('Feather Shop', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)),
               ),
               const SizedBox(height: 8),
 
               // Balance Card
-              _CubeBalanceCard(balance: _cubeBalance),
+              _CubeBalanceCard(balance: _featherBalance),
               const SizedBox(height: 16),
 
               // Category Tabs
@@ -259,7 +259,7 @@ class _CubeBalanceCard extends StatelessWidget {
                   children: [
                     Icon(Icons.add, color: Colors.white, size: 14),
                     SizedBox(width: 4),
-                    Text('Get Cubes', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                    Text('Get Feathers', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -269,14 +269,14 @@ class _CubeBalanceCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('🧊', style: TextStyle(fontSize: 28)),
+              Image.asset('assets/images/purple_feather.png', width: 32, height: 32, fit: BoxFit.contain),
               const SizedBox(width: 8),
               Text(
                 balance.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},'),
                 style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold, height: 1),
               ),
               const SizedBox(width: 6),
-              const Padding(padding: EdgeInsets.only(bottom: 3), child: Text('Cubes', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500))),
+              const Padding(padding: EdgeInsets.only(bottom: 3), child: Text('Feathers', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500))),
             ],
           ),
         ],
@@ -327,7 +327,7 @@ class _DealCard extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('🧊', style: TextStyle(fontSize: 10)),
+                        Image.asset('assets/images/purple_feather.png', width: 12, height: 12, fit: BoxFit.contain),
                         const SizedBox(width: 4),
                         Text('${item.price}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
@@ -396,7 +396,7 @@ class _FeaturedRewardCard extends StatelessWidget {
                 ? const Icon(Icons.check_circle, color: AppColors.successGreen, size: 24)
                 : Column(
                     children: [
-                      const Text('🧊', style: TextStyle(fontSize: 16)),
+                      Image.asset('assets/images/purple_feather.png', width: 18, height: 18, fit: BoxFit.contain),
                       const SizedBox(height: 2),
                       Text('${item.price}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary)),
                     ],

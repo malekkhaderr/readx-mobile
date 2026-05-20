@@ -108,7 +108,7 @@ class ReaderDashboardModel extends ReaderDashboardEntity {
       levelLabel: user['level']?.toString() ?? 'Reader',
       booksRead: (user['booksRead'] as num?)?.toInt() ?? 0,
       streakDays: (user['streakDays'] as num?)?.toInt() ?? 0,
-      cubes: (user['cubes'] as num?)?.toInt() ?? 0,
+      cubes: (user['tokens'] as num?)?.toInt() ?? (user['cubes'] as num?)?.toInt() ?? 0,
       dailyGoal: (user['dailyGoal'] as num?)?.toInt() ?? 30,
       totalReadingTime: stats['totalReadingTime']?.toString() ?? '0m',
       avgSessionTime: stats['avgSessionTime']?.toString() ?? '0m',

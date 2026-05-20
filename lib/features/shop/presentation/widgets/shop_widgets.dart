@@ -53,7 +53,7 @@ class CubeBalanceCard extends StatelessWidget {
                     Icon(Icons.add, color: Colors.white, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      'Get Cubes',
+                      'Get Feathers',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -69,7 +69,7 @@ class CubeBalanceCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('🧊', style: TextStyle(fontSize: 28)),
+              Image.asset('assets/images/purple_feather.png', width: 32, height: 32, fit: BoxFit.contain),
               const SizedBox(width: 8),
               Text(
                 '${balance.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
@@ -84,7 +84,7 @@ class CubeBalanceCard extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.only(bottom: 3),
                 child: Text(
-                  'Cubes',
+                  'Feathers',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 16,
@@ -96,7 +96,7 @@ class CubeBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Earn 120 cubes today',
+            'Earn 120 feathers today',
             style: TextStyle(
               color: Colors.white.withOpacity(0.6),
               fontSize: 11,
@@ -230,7 +230,7 @@ class DealCard extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('🧊', style: TextStyle(fontSize: 10)),
+                Image.asset('assets/images/purple_feather.png', width: 12, height: 12, fit: BoxFit.contain),
                 const SizedBox(width: 4),
                 Text(
                   '${item.price}',
@@ -344,7 +344,7 @@ class FeaturedRewardCard extends StatelessWidget {
           // Price
           Column(
             children: [
-              const Text('🧊', style: TextStyle(fontSize: 16)),
+              Image.asset('assets/images/purple_feather.png', width: 18, height: 18, fit: BoxFit.contain),
               const SizedBox(height: 2),
               Text(
                 '${item.price}',

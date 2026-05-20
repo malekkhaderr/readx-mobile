@@ -160,21 +160,26 @@ class ProfileStatsRow extends StatelessWidget {
           _ProfileStat(
             value: '${profile.booksRead}',
             label: 'Books',
-            emoji: '📚',
+            icon: const Text('📚', style: TextStyle(fontSize: 18)),
           ),
           Container(width: 1, height: 36, color: AppColors.divider),
           _ProfileStat(
             value: '${profile.streakDays}',
             label: 'Day Streak',
-            emoji: '🔥',
+            icon: const Text('🔥', style: TextStyle(fontSize: 18)),
           ),
           Container(width: 1, height: 36, color: AppColors.divider),
           _ProfileStat(
             value: profile.cubes >= 1000
                 ? '${(profile.cubes / 1000).toStringAsFixed(1)}k'
                 : '${profile.cubes}',
-            label: 'Cubes',
-            emoji: '🧊',
+            label: 'Feathers',
+            icon: Image.asset(
+              'assets/images/purple_feather.png',
+              width: 22,
+              height: 22,
+              fit: BoxFit.contain,
+            ),
           ),
         ],
       ),
@@ -185,19 +190,19 @@ class ProfileStatsRow extends StatelessWidget {
 class _ProfileStat extends StatelessWidget {
   final String value;
   final String label;
-  final String emoji;
+  final Widget icon;
 
   const _ProfileStat({
     required this.value,
     required this.label,
-    required this.emoji,
+    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 18)),
+        SizedBox(height: 22, child: Center(child: icon)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -319,27 +324,29 @@ class _RitualDay extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: ritual.completed
-                ? AppColors.primary
+            color: ritual.minutesRead > 0
+                ? AppColors.successGreen
                 : AppColors.primaryLight.withOpacity(0.5),
             border: Border.all(
-              color: ritual.completed
-                  ? AppColors.primary
+              color: ritual.minutesRead > 0
+                  ? AppColors.successGreen
                   : AppColors.divider,
               width: 2,
             ),
           ),
           child: Center(
-            child: ritual.completed
-                ? const Icon(Icons.check, color: Colors.white, size: 18)
-                : Text(
-                    '${ritual.minutesRead}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
+            child: Text(
+              ritual.minutesRead >= 60
+                  ? (ritual.minutesRead % 60 == 0
+                      ? '${(ritual.minutesRead / 60).toInt()}h'
+                      : '${(ritual.minutesRead / 60).toStringAsFixed(1)}h')
+                  : '${ritual.minutesRead}m',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: ritual.minutesRead > 0 ? Colors.white : AppColors.textGrey,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -348,7 +355,7 @@ class _RitualDay extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            color: ritual.completed ? AppColors.primary : AppColors.textGrey,
+            color: ritual.minutesRead > 0 ? AppColors.successGreen : AppColors.textGrey,
           ),
         ),
       ],

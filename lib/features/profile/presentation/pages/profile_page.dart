@@ -241,7 +241,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 _ProfileStatsRow(dashboard: dashboard),
                 if (dashboard.completedBooks.isNotEmpty) _CompletedBooksSection(books: dashboard.completedBooks),
                 _ReadingRitualsSection(dashboard: dashboard),
-                _RewardStoreSection(cubesAvailable: dashboard.cubes),
+                _RewardStoreSection(feathersAvailable: dashboard.cubes),
                 _TrophyGridSection(trophies: dashboard.trophies),
               ] else
                 _EmptyDashboard(profile: profile),
@@ -343,23 +343,33 @@ class _ProfileStatsRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        _Stat(value: '${dashboard.booksRead}', label: 'Books', emoji: '📚'),
+        _Stat(value: '${dashboard.booksRead}', label: 'Books', icon: const Text('📚', style: TextStyle(fontSize: 18))),
         Container(width: 1, height: 36, color: AppColors.divider),
-        _Stat(value: '${dashboard.streakDays}', label: 'Day Streak', emoji: '🔥'),
+        _Stat(value: '${dashboard.streakDays}', label: 'Day Streak', icon: const Text('🔥', style: TextStyle(fontSize: 18))),
         Container(width: 1, height: 36, color: AppColors.divider),
-        _Stat(value: dashboard.formattedCubes, label: 'Cubes', emoji: '🧊'),
+        _Stat(
+          value: dashboard.formattedCubes,
+          label: 'Feathers',
+          icon: Image.asset(
+            'assets/images/purple_feather.png',
+            width: 22,
+            height: 22,
+            fit: BoxFit.contain,
+          ),
+        ),
       ]),
     );
   }
 }
 
 class _Stat extends StatelessWidget {
-  final String value, label, emoji;
-  const _Stat({required this.value, required this.label, required this.emoji});
+  final String value, label;
+  final Widget icon;
+  const _Stat({required this.value, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(emoji, style: const TextStyle(fontSize: 18)),
+    SizedBox(height: 22, child: Center(child: icon)),
     const SizedBox(height: 4),
     Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
     const SizedBox(height: 2),
@@ -483,11 +493,35 @@ class _RitualDay extends StatelessWidget {
       child: Column(children: [
         Container(
           width: 36, height: 36,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: activity.completed ? AppColors.primary : AppColors.primaryLight.withOpacity(0.5), border: Border.all(color: activity.completed ? AppColors.primary : AppColors.divider, width: 2)),
-          child: Center(child: activity.completed ? const Icon(Icons.check, color: Colors.white, size: 18) : Text('${activity.minutesRead}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textGrey))),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: activity.minutesRead > 0 ? AppColors.successGreen : AppColors.primaryLight.withOpacity(0.5),
+            border: Border.all(color: activity.minutesRead > 0 ? AppColors.successGreen : AppColors.divider, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              activity.minutesRead >= 60
+                  ? (activity.minutesRead % 60 == 0
+                      ? '${(activity.minutesRead / 60).toInt()}h'
+                      : '${(activity.minutesRead / 60).toStringAsFixed(1)}h')
+                  : '${activity.minutesRead}m',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: activity.minutesRead > 0 ? Colors.white : AppColors.textGrey,
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 4),
-        Text(activity.day, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: activity.completed ? AppColors.primary : AppColors.textGrey)),
+        Text(
+          activity.day,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: activity.minutesRead > 0 ? AppColors.successGreen : AppColors.textGrey,
+          ),
+        ),
       ]),
     );
   }
@@ -495,10 +529,10 @@ class _RitualDay extends StatelessWidget {
 
 // ── Reward Store ─────────────────────────────────────────────
 class _RewardStoreSection extends StatelessWidget {
-  final int cubesAvailable;
-  const _RewardStoreSection({required this.cubesAvailable});
+  final int feathersAvailable;
+  const _RewardStoreSection({required this.feathersAvailable});
 
-  String get _formattedCubes => cubesAvailable >= 1000 ? '${(cubesAvailable / 1000).toStringAsFixed(1)}k' : '$cubesAvailable';
+  String get _formattedFeathers => feathersAvailable >= 1000 ? '${(feathersAvailable / 1000).toStringAsFixed(1)}k' : '$feathersAvailable';
 
   @override
   Widget build(BuildContext context) {
@@ -520,11 +554,11 @@ class _RewardStoreSection extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))]),
           child: Row(children: [
-            const Text('🧊', style: TextStyle(fontSize: 24)),
+            Image.asset('assets/images/purple_feather.png', width: 28, height: 28, fit: BoxFit.contain),
             const SizedBox(width: 10),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(_formattedCubes, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, height: 1)),
-              Text('Cubes Available', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
+              Text(_formattedFeathers, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, height: 1)),
+              Text('Feathers Available', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
             ]),
             const Spacer(),
             GestureDetector(
@@ -543,7 +577,11 @@ class _RewardStoreSection extends StatelessWidget {
               const SizedBox(height: 4),
               Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textDark)),
               const SizedBox(height: 2),
-              Row(mainAxisSize: MainAxisSize.min, children: [const Text('🧊', style: TextStyle(fontSize: 8)), const SizedBox(width: 2), Text('${item.price}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary))]),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Image.asset('assets/images/purple_feather.png', width: 10, height: 10, fit: BoxFit.contain),
+                const SizedBox(width: 2),
+                Text('${item.price}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
+              ]),
             ])),
           ),
         ))).toList()),
