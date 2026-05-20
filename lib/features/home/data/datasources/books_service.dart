@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/book_detail_model.dart';
@@ -45,10 +46,37 @@ class BooksService {
 
   Future<void> updateComment(int bookId, int commentId, String body) async {
     try {
-      await dioClient.dio.put(
-        '${ApiConstants.books}/$bookId/comments/$commentId',
-        data: {'body': body},
-      );
+      try {
+        await dioClient.dio.put(
+          '${ApiConstants.books}/$bookId/comments/$commentId',
+          data: {'body': body},
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 405 || e.response?.statusCode == 404) {
+          try {
+            await dioClient.dio.patch(
+              '${ApiConstants.books}/$bookId/comments/$commentId',
+              data: {'body': body},
+            );
+          } on DioException catch (e2) {
+            if (e2.response?.statusCode == 404) {
+              await dioClient.dio.patch(
+                '/comments/$commentId',
+                data: {'body': body},
+              );
+            } else {
+              rethrow;
+            }
+          }
+        } else if (e.response?.statusCode == 404) {
+          await dioClient.dio.put(
+            '/comments/$commentId',
+            data: {'body': body},
+          );
+        } else {
+          rethrow;
+        }
+      }
     } catch (e) {
       rethrow;
     }
@@ -56,7 +84,15 @@ class BooksService {
 
   Future<void> deleteComment(int bookId, int commentId) async {
     try {
-      await dioClient.dio.delete('${ApiConstants.books}/$bookId/comments/$commentId');
+      try {
+        await dioClient.dio.delete('${ApiConstants.books}/$bookId/comments/$commentId');
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+          await dioClient.dio.delete('/comments/$commentId');
+        } else {
+          rethrow;
+        }
+      }
     } catch (e) {
       rethrow;
     }
@@ -67,6 +103,42 @@ class BooksService {
       await dioClient.dio.post(
         '${ApiConstants.books}/$bookId/comments/$commentId/vote',
         data: {'voteType': voteType},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getReadingSession(int bookId) async {
+    try {
+      final response = await dioClient.dio.get('${ApiConstants.readingSessions}/$bookId');
+      return response.data as Map<String, dynamic>?;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> startReadingSession(int bookId) async {
+    try {
+      await dioClient.dio.post('${ApiConstants.readingSessions}/$bookId/start');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateReadingProgress(int bookId, int currentPage, int readingTimeMinutes) async {
+    try {
+      await dioClient.dio.put(
+        '${ApiConstants.readingSessions}/$bookId/progress',
+        data: {
+          'currentPage': currentPage,
+          'readingTimeMinutes': readingTimeMinutes,
+        },
       );
     } catch (e) {
       rethrow;

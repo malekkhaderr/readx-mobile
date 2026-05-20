@@ -167,7 +167,14 @@ class AppRouter {
         builder: (context, state) {
           final epubUrl = state.uri.queryParameters['url'] ?? '';
           final bookTitle = state.uri.queryParameters['title'] ?? 'Epub Reader';
-          return EpubReaderPage(epubUrl: epubUrl, bookTitle: bookTitle);
+          final bookIdStr = state.uri.queryParameters['id'] ?? '1';
+          final cleanedId = bookIdStr.replaceAll('api_', '');
+          final bookId = int.tryParse(cleanedId) ?? 1;
+          return EpubReaderPage(
+            bookId: bookId,
+            epubUrl: epubUrl,
+            bookTitle: bookTitle,
+          );
         },
       ),
 

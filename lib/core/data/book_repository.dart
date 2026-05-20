@@ -124,36 +124,42 @@ class BookRepository {
       final b = _books[i];
       final savedChapter = _prefs.getInt('book_${b.id}_chapter');
       final savedReadPages = _prefs.getInt('book_${b.id}_readPages');
+      final savedTotalPages = _prefs.getInt('book_${b.id}_totalPages');
       final savedLastReadStr = _prefs.getString('book_${b.id}_lastRead');
       
-      if (savedChapter != null || savedReadPages != null) {
+      if (savedChapter != null || savedReadPages != null || savedTotalPages != null) {
         _books[i] = b.copyWith(
           currentChapter: savedChapter ?? b.currentChapter,
           readPages: savedReadPages ?? b.readPages,
+          totalPages: savedTotalPages ?? b.totalPages,
           lastReadAt: savedLastReadStr != null ? DateTime.tryParse(savedLastReadStr) : b.lastReadAt,
         );
       }
     }
   }
 
-  static Future<void> updateProgress(String bookId, int currentChapter, int readPages) async {
-    final idx = _books.indexWhere((b) => b.id == bookId);
+  static Future<void> updateProgress(String bookId, int currentChapter, int readPages, {bool force = false, int? totalPages}) async {
+    final cleanId = bookId.replaceAll('api_', '');
+    final idx = _books.indexWhere((b) => b.id.replaceAll('api_', '') == cleanId);
     if (idx == -1) return;
     
     final b = _books[idx];
     final lastRead = DateTime.now();
-    // Only allow readPages to grow, so they don't lose progress if they revisit chapters
-    final maxReadPages = readPages > b.readPages ? readPages : b.readPages;
+    // Only allow readPages to grow, so they don't lose progress if they revisit chapters, unless forced
+    final targetPages = force ? readPages : (readPages > b.readPages ? readPages : b.readPages);
+    final targetTotalPages = (totalPages != null && totalPages > 0) ? totalPages : b.totalPages;
 
     _books[idx] = b.copyWith(
       currentChapter: currentChapter,
-      readPages: maxReadPages,
+      readPages: targetPages,
+      totalPages: targetTotalPages,
       lastReadAt: lastRead,
     );
     
-    await _prefs.setInt('book_${bookId}_chapter', currentChapter);
-    await _prefs.setInt('book_${bookId}_readPages', maxReadPages);
-    await _prefs.setString('book_${bookId}_lastRead', lastRead.toIso8601String());
+    await _prefs.setInt('book_${b.id}_chapter', currentChapter);
+    await _prefs.setInt('book_${b.id}_readPages', targetPages);
+    await _prefs.setInt('book_${b.id}_totalPages', targetTotalPages);
+    await _prefs.setString('book_${b.id}_lastRead', lastRead.toIso8601String());
     
     _notifyListeners();
   }
@@ -343,7 +349,8 @@ class BookRepository {
   /// Swap this with: `final response = await dio.get('/books/$id');`
   static BookModel? getBookById(String id) {
     try {
-      return _books.firstWhere((b) => b.id == id);
+      final cleanId = id.replaceAll('api_', '');
+      return _books.firstWhere((b) => b.id.replaceAll('api_', '') == cleanId);
     } catch (_) {
       return null;
     }

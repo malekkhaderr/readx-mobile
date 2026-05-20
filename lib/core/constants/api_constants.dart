@@ -24,4 +24,7 @@ class ApiConstants {
 
   // Publisher Requests
   static const String publisherRequests = '/publisher-requests';
+
+  // Reading Sessions
+  static const String readingSessions = '/reading-sessions';
 }

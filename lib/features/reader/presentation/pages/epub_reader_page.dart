@@ -8,13 +8,20 @@ import 'package:epub_view/epub_view.dart' hide Image;
 import 'package:epub_view/src/data/models/paragraph.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_html/flutter_html.dart';
-
+import 'package:readx/core/di/injection_container.dart';
+import 'package:readx/features/home/data/datasources/books_service.dart';
+import 'package:readx/features/home/data/models/book_detail_model.dart';
+import 'package:readx/core/data/book_repository.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' show parse;
 class EpubReaderPage extends StatefulWidget {
+  final int bookId;
   final String epubUrl;
   final String bookTitle;
 
   const EpubReaderPage({
     super.key,
+    required this.bookId,
     required this.epubUrl,
     required this.bookTitle,
   });
@@ -33,12 +40,22 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   String _progressText = 'Initializing...';
   File? _localFile;
 
+  // Reading Session State
+  int _currentPage = 0;
+  DateTime? _sessionStartTime;
+  int _elapsedMinutesOffset = 0;
+  bool _sessionInitialized = false;
+  bool _isResuming = false;
+  final ValueNotifier<dynamic> _progressNotifier = ValueNotifier<dynamic>(null);
+  int _totalPages = 1;
+  int _totalParagraphs = 100;
+  double _paragraphsPerPage = 1.0;
+
   // Settings State Variables
   double _fontSize = 18.0;
   String _fontFamily = 'serif';
   String _theme = 'ivory'; // ivory, ebony, sepia
 
-  // Text Selection State
   bool _isTextSelected = false;
   String _selectedText = '';
 
@@ -175,6 +192,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   void dispose() {
     _disableSecureWindow();
     _epubController?.dispose();
+    _progressNotifier.dispose();
     super.dispose();
   }
 
@@ -207,6 +225,54 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   Future<void> _initReader() async {
     final String rawUrl = widget.epubUrl;
     debugPrint('DEBUG READER: Initializing reader for: $rawUrl');
+
+    // Fetch Book Detail to get totalPages
+    try {
+      final bookDetail = await sl<BooksService>().getBookDetail(widget.bookId);
+      setState(() {
+        _totalPages = bookDetail.totalPages > 0 ? bookDetail.totalPages : 1;
+      });
+      debugPrint('DEBUG READER: Fetched book details. totalPages: $_totalPages');
+    } catch (e) {
+      debugPrint('DEBUG READER: Failed to fetch book details: $e');
+    }
+
+    // Initialize session with backend
+    try {
+      final session = await sl<BooksService>().getReadingSession(widget.bookId);
+      if (session == null) {
+        await sl<BooksService>().startReadingSession(widget.bookId);
+        _currentPage = 1;
+        _elapsedMinutesOffset = 0;
+        _isResuming = false;
+      } else {
+        _currentPage = session['currentPage'] ?? 1;
+        _elapsedMinutesOffset = session['readingTimeMinutes'] ?? 0;
+        _isResuming = _currentPage > 1;
+      }
+      _sessionStartTime = DateTime.now();
+      _sessionInitialized = true;
+      await BookRepository.updateProgress(
+        widget.bookId.toString(),
+        1,
+        _currentPage,
+        totalPages: _totalPages,
+      );
+      debugPrint('DEBUG READER: Initialized backend session. currentPage: $_currentPage, isResuming: $_isResuming');
+    } catch (e) {
+      debugPrint('DEBUG READER: Failed to initialize backend session: $e');
+      _sessionStartTime = DateTime.now();
+      _isResuming = _currentPage > 1;
+      _sessionInitialized = true;
+      try {
+        await BookRepository.updateProgress(
+          widget.bookId.toString(),
+          1,
+          _currentPage,
+          totalPages: _totalPages,
+        );
+      } catch (_) {}
+    }
     
     try {
       final tempDir = await getTemporaryDirectory();
@@ -294,6 +360,29 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     } catch (e) {
       debugPrint('DEBUG READER: ERROR parsing/opening EPUB file: $e');
       _showError('Opening Error', 'Failed to open local EPUB file: $e');
+    }
+  }
+
+  Future<void> _saveProgress() async {
+    if (_sessionStartTime == null) return;
+    final elapsedMinutes = DateTime.now().difference(_sessionStartTime!).inMinutes;
+    final totalMinutes = _elapsedMinutesOffset + elapsedMinutes;
+    try {
+      debugPrint('Saving reading progress: currentPage=$_currentPage, readingTimeMinutes=$totalMinutes');
+      await sl<BooksService>().updateReadingProgress(
+        widget.bookId,
+        _currentPage,
+        totalMinutes,
+      );
+      await BookRepository.updateProgress(
+        widget.bookId.toString(),
+        1,
+        _currentPage,
+        totalPages: _totalPages,
+      );
+      debugPrint('Updated local BookRepository progress to $_currentPage pages.');
+    } catch (e) {
+      debugPrint('Failed to save reading progress: $e');
     }
   }
 
@@ -581,16 +670,26 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _backgroundColor,
-      appBar: AppBar(
-        backgroundColor: _appBarBg,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: _textColor, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: _isLoading || _hasError
+    return WillPopScope(
+      onWillPop: () async {
+        await _saveProgress();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: AppBar(
+          backgroundColor: _appBarBg,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new, color: _textColor, size: 20),
+            onPressed: () async {
+              await _saveProgress();
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          title: _isLoading || _hasError
             ? Text(
                 widget.bookTitle,
                 style: TextStyle(
@@ -687,8 +786,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               ),
             ),
       body: _buildBody(),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBody() {
     if (_hasError) {
@@ -842,6 +942,54 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               },
               child: EpubView(
                 controller: _epubController!,
+                onChapterChanged: (value) {
+                  if (!_sessionInitialized || _isResuming) {
+                    return;
+                  }
+                  if (value != null && _paragraphsPerPage > 0) {
+                    final currentIndex = value.position.index;
+                    final computedPage = (currentIndex / _paragraphsPerPage).floor() + 1;
+                    final newPage = computedPage.clamp(1, _totalPages);
+                    if (_currentPage != newPage) {
+                      _currentPage = newPage;
+                      _progressNotifier.value = value;
+                    }
+                  }
+                },
+                onDocumentLoaded: (document) {
+                  final totalParagraphs = _calculateTotalParagraphs(document);
+                  setState(() {
+                    _totalParagraphs = totalParagraphs;
+                    _paragraphsPerPage = (_totalParagraphs / _totalPages).clamp(1.0, double.infinity);
+                  });
+                  debugPrint('DEBUG READER: Document loaded! totalParagraphs: $_totalParagraphs, totalPages: $_totalPages, paragraphsPerPage: $_paragraphsPerPage');
+                  
+                  // Auto-resume to the saved page index
+                  if (_currentPage > 1) {
+                    Future.delayed(const Duration(milliseconds: 350), () {
+                      if (!mounted || _epubController == null) return;
+                      final targetParagraph = ((_currentPage - 1) * _paragraphsPerPage).round();
+                      debugPrint('DEBUG READER: Auto-resuming to page $_currentPage (paragraph index $targetParagraph)');
+                      try {
+                        _epubController!.jumpTo(index: targetParagraph.clamp(0, _totalParagraphs - 1));
+                      } catch (e) {
+                        debugPrint('DEBUG READER: Error during page resume jumpTo: $e');
+                      } finally {
+                        Future.delayed(const Duration(milliseconds: 150), () {
+                          if (mounted) {
+                            setState(() {
+                              _isResuming = false;
+                            });
+                          }
+                        });
+                      }
+                    });
+                  } else {
+                    setState(() {
+                      _isResuming = false;
+                    });
+                  }
+                },
                 builders: EpubViewBuilders<DefaultBuilderOptions>(
                   options: const DefaultBuilderOptions(
                     textStyle: TextStyle(
@@ -863,6 +1011,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                 ? _buildInteractionRow()
                 : const SizedBox.shrink(),
           ),
+
+          // 4. Premium Bottom Page Progress Indicator Bar
+          _buildBottomProgressBar(),
         ],
       ),
     );
@@ -1140,6 +1291,124 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildBottomProgressBar() {
+    return ValueListenableBuilder<dynamic>(
+      valueListenable: _progressNotifier,
+      builder: (context, value, child) {
+        if (_epubController == null) {
+          return const SizedBox.shrink();
+        }
+
+        final pageNum = _currentPage > 0 ? _currentPage : 1;
+        final progressPercent = (pageNum / _totalPages).clamp(0.0, 1.0);
+        final percentageString = '${(progressPercent * 100).toStringAsFixed(0)}%';
+        
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: _appBarBg,
+            border: Border(
+              top: BorderSide(
+                color: _textColor.withOpacity(0.08),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Page $pageNum of $_totalPages',
+                style: TextStyle(
+                  fontFamily: 'Sora',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _mutedTextColor,
+                ),
+              ),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: progressPercent,
+                        backgroundColor: _progressTrackBg,
+                        valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
+                        minHeight: 4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    percentageString,
+                    style: TextStyle(
+                      fontFamily: 'Sora',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _textColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int _calculateTotalParagraphs(EpubBook book) {
+    try {
+      final chapters = _parseChapters(book);
+      int total = 0;
+      String? filename = '';
+      
+      for (final next in chapters) {
+        if (filename != next.ContentFileName) {
+          filename = next.ContentFileName;
+          final contentFile = book.Content?.Html?[filename];
+          if (contentFile != null) {
+            final document = parse(contentFile.Content);
+            final bodies = document.getElementsByTagName('body');
+            if (bodies.isNotEmpty) {
+              final elements = _removeAllDiv(bodies.first.children);
+              total += elements.length;
+            }
+          }
+        }
+      }
+      return total > 0 ? total : 100;
+    } catch (e) {
+      debugPrint('DEBUG READER: Error calculating total paragraphs: $e');
+      return 100;
+    }
+  }
+
+  List<EpubChapter> _parseChapters(EpubBook epubBook) {
+    return epubBook.Chapters!.fold<List<EpubChapter>>(
+      [],
+      (acc, next) {
+        acc.add(next);
+        next.SubChapters!.forEach(acc.add);
+        return acc;
+      },
+    );
+  }
+
+  List<dom.Element> _removeAllDiv(List<dom.Element> elements) {
+    final List<dom.Element> result = [];
+    for (final node in elements) {
+      if (node.localName == 'div' && node.children.length > 1) {
+        result.addAll(_removeAllDiv(node.children));
+      } else {
+        result.add(node);
+      }
+    }
+    return result;
   }
 
   Widget _buildInteractionButton(String label, IconData icon, VoidCallback onTap) {

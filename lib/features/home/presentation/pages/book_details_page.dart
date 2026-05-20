@@ -6,6 +6,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../shop/data/book_shop_state.dart';
 import '../../../shop/data/models/mock_book_shop_data.dart';
+import '../../../../core/data/book_repository.dart';
 import '../../data/datasources/books_service.dart';
 import '../../data/models/book_detail_model.dart';
 import '../../data/models/book_comment_model.dart';
@@ -45,6 +46,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     super.initState();
     _loadBook();
     BookShopState.addListener(_onStateChanged);
+    BookRepository.addListener(_onStateChanged);
     // Ensure profile is loaded for comment checking/ownership
     sl<ProfileBloc>().add(const LoadProfileEvent());
   }
@@ -52,6 +54,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   @override
   void dispose() {
     BookShopState.removeListener(_onStateChanged);
+    BookRepository.removeListener(_onStateChanged);
     _commentController.dispose();
     _editCommentController.dispose();
     super.dispose();
@@ -78,13 +81,36 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       
       final bookDetail = await sl<BooksService>().getBookDetail(bookIdInt);
       
+      try {
+        final session = await sl<BooksService>().getReadingSession(bookIdInt);
+        if (session != null) {
+          final currentPage = session['currentPage'] ?? 0;
+          await BookRepository.updateProgress(
+            widget.bookId,
+            1,
+            currentPage,
+            force: true,
+            totalPages: bookDetail.totalPages,
+          );
+        } else {
+          await BookRepository.updateProgress(
+            widget.bookId,
+            1,
+            0,
+            force: true,
+            totalPages: bookDetail.totalPages,
+          );
+        }
+      } catch (e) {
+        debugPrint('DEBUG DETAILS: Failed to sync reading session: $e');
+      }
+
       if (mounted) {
         setState(() {
           _book = bookDetail;
           _isLoading = false;
         });
       }
-      // Load comments for this book
       _loadComments();
     } catch (e) {
       if (mounted) {
@@ -97,7 +123,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   void _sortComments() {
-    _comments.sort((a, b) {
+    final sorted = List<CommentItem>.from(_comments);
+    sorted.sort((a, b) {
       final scoreA = a.upvoteCount - a.downvoteCount;
       final scoreB = b.upvoteCount - b.downvoteCount;
       if (scoreA != scoreB) {
@@ -105,6 +132,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       }
       return b.createdAt.compareTo(a.createdAt);
     });
+    if (mounted) {
+      setState(() {
+        _comments = sorted;
+      });
+    }
   }
 
   Future<void> _loadComments() async {
@@ -477,6 +509,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       ),
                     ),
 
+                    _buildReadingProgress(book),
+
                     const SizedBox(height: 32),
 
                     // Description / Quote Card
@@ -563,7 +597,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             onPressed: isPurchased
                                 ? () {
                                     if (book.epubFileUrl.isNotEmpty) {
-                                      context.push('/epub-reader?url=${Uri.encodeComponent(book.epubFileUrl)}&title=${Uri.encodeComponent(book.title)}');
+                                      context.push('/epub-reader?id=${book.id}&url=${Uri.encodeComponent(book.epubFileUrl)}&title=${Uri.encodeComponent(book.title)}');
                                     } else {
                                       context.push('/reader/api_${book.id}/1');
                                     }
@@ -660,6 +694,57 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildReadingProgress(BookDetail book) {
+    final repoBook = BookRepository.getBookById(book.id.toString());
+    if (repoBook == null || repoBook.progress <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final percent = repoBook.progress;
+    final percentString = '${(percent * 100).toStringAsFixed(0)}%';
+    final readPages = repoBook.readPages;
+    final totalPages = repoBook.totalPages > 0 ? repoBook.totalPages : book.totalPages;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Reading Progress',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark.withOpacity(0.8),
+                ),
+              ),
+              Text(
+                '$percentString ($readPages of $totalPages pages)',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: percent,
+              minHeight: 8,
+              backgroundColor: AppColors.primaryLight,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -824,9 +909,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   Widget _buildCommentItem(CommentItem comment, String? currentUserId, String? currentUserFullName) {
-    final isOwner = currentUserId != null &&
-        (comment.readerProfileId.toString() == currentUserId ||
-         (currentUserFullName != null && comment.readerName.trim().toLowerCase() == currentUserFullName.trim().toLowerCase()));
+    final profileState = context.watch<ProfileBloc>().state;
+    final profile = profileState is ProfileLoaded ? profileState.profile : null;
+    final isOwner = profile != null &&
+        (comment.readerProfileId.toString() == profile.id ||
+         (profile.fullName.isNotEmpty && comment.readerName.trim().toLowerCase() == profile.fullName.trim().toLowerCase()) ||
+         (profile.firstName.isNotEmpty && comment.readerName.trim().toLowerCase() == profile.firstName.trim().toLowerCase()) ||
+         (profile.email.isNotEmpty && comment.readerName.trim().toLowerCase() == profile.email.split('@').first.trim().toLowerCase()));
     final isEditingThis = _editingCommentId == comment.id;
     final formattedDate = DateFormat('MMM d, yyyy').format(comment.createdAt);
     
