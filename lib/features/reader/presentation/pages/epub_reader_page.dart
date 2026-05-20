@@ -24,6 +24,7 @@ class EpubReaderPage extends StatefulWidget {
 }
 
 class _EpubReaderPageState extends State<EpubReaderPage> {
+  static const MethodChannel _secureChannel = MethodChannel('com.readx.readx/secure');
   EpubController? _epubController;
   bool _isLoading = true;
   bool _hasError = false;
@@ -140,15 +141,39 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     }
   }
 
+  Future<void> _enableSecureWindow() async {
+    try {
+      if (Platform.isAndroid) {
+        await _secureChannel.invokeMethod('enableSecure');
+        debugPrint('Secure window enabled.');
+      }
+    } catch (e) {
+      debugPrint('Failed to enable secure window: $e');
+    }
+  }
+
+  Future<void> _disableSecureWindow() async {
+    try {
+      if (Platform.isAndroid) {
+        await _secureChannel.invokeMethod('disableSecure');
+        debugPrint('Secure window disabled.');
+      }
+    } catch (e) {
+      debugPrint('Failed to disable secure window: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _enableSecureWindow();
     _loadSettings();
     _initReader();
   }
 
   @override
   void dispose() {
+    _disableSecureWindow();
     _epubController?.dispose();
     super.dispose();
   }
@@ -290,16 +315,17 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   // Highlight Action Handlers
   void _handleQuote() {
     if (_selectedText.isEmpty) return;
-    Clipboard.setData(ClipboardData(text: _selectedText));
+    
+    // Copying and sharing restricted to preserve copyright and publishing rights
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Quote copied to clipboard!',
+                'Copying or sharing book content is restricted to preserve copyright and publishing rights.',
                 style: TextStyle(
                   fontFamily: 'Sora',
                   fontWeight: FontWeight.w600,
@@ -310,12 +336,12 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
             ),
           ],
         ),
-        backgroundColor: _accentColor,
+        backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -784,6 +810,18 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           // 2. Main scrollable EpubView in SelectionArea
           Expanded(
             child: SelectionArea(
+              contextMenuBuilder: (context, selectableRegionState) {
+                final List<ContextMenuButtonItem> buttonItems =
+                    List.from(selectableRegionState.contextMenuButtonItems);
+                // Exclude Copy and Share context menu items to protect copyright
+                buttonItems.removeWhere((item) =>
+                    item.type == ContextMenuButtonType.copy ||
+                    item.type == ContextMenuButtonType.share);
+                return AdaptiveTextSelectionToolbar.buttonItems(
+                  anchors: selectableRegionState.contextMenuAnchors,
+                  buttonItems: buttonItems,
+                );
+              },
               onSelectionChanged: (selection) {
                 final text = selection?.plainText.trim() ?? '';
                 if (text.isNotEmpty) {
