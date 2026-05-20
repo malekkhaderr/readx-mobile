@@ -192,6 +192,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   @override
   void dispose() {
+    _saveProgress();
     _progressTimer?.cancel();
     _disableSecureWindow();
     _epubController?.dispose();

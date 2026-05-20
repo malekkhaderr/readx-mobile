@@ -1,7 +1,22 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:readx/core/di/injection_container.dart';
+import 'package:readx/features/home/data/datasources/books_service.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
 import '../../../../core/data/quotes_repository.dart';
+
+class ReadingProgressState {
+  final double scrollProgress;
+  final int currentChapter;
+  final int currentPage;
+
+  const ReadingProgressState({
+    required this.scrollProgress,
+    required this.currentChapter,
+    required this.currentPage,
+  });
+}
 
 class ReadingPage extends StatefulWidget {
   final String bookId;
@@ -15,54 +30,169 @@ class ReadingPage extends StatefulWidget {
 class _ReadingPageState extends State<ReadingPage> {
   late int _currentChapter;
   late BookModel? _book;
-  ChapterModel? _chapter;
+  List<ChapterModel> _chapters = [];
   bool _isBookmarked = false;
   double _fontSize = 15.0;
   double _scrollProgress = 0.0;
   final ScrollController _scrollController = ScrollController();
+
+  late final ValueNotifier<ReadingProgressState> _progressNotifier = ValueNotifier<ReadingProgressState>(
+    ReadingProgressState(scrollProgress: 0.0, currentChapter: _currentChapter, currentPage: 1),
+  );
+
+  // Session State
+  int _currentPage = 1;
+  int _totalPages = 1;
+  int _elapsedMinutesOffset = 0;
+  DateTime? _sessionStartTime;
+  bool _sessionInitialized = false;
+  bool _isResuming = false;
+  bool _isLoading = true;
+  Timer? _progressTimer;
 
   @override
   void initState() {
     super.initState();
     _currentChapter = widget.chapterNumber;
     _book = BookRepository.getBookById(widget.bookId);
-    _loadChapter();
+
+    final bookIdInt = int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
+    _loadBookDetailsAndSession(bookIdInt);
+
     _scrollController.addListener(_onScroll);
   }
 
+  Future<void> _loadBookDetailsAndSession(int bookIdInt) async {
+    // 1. Fetch book detail to resolve totalPages
+    try {
+      final bookDetail = await sl<BooksService>().getBookDetail(bookIdInt);
+      _totalPages = bookDetail.totalPages > 0 ? bookDetail.totalPages : (_book?.totalPages ?? 100);
+    } catch (e) {
+      debugPrint('DEBUG READING: Failed to fetch book details: $e');
+      _totalPages = _book?.totalPages ?? 100;
+    }
 
+    // 2. Fetch or start reading session
+    try {
+      final session = await sl<BooksService>().getReadingSession(bookIdInt);
+      if (session == null) {
+        await sl<BooksService>().startReadingSession(bookIdInt);
+        _currentPage = 1;
+        _elapsedMinutesOffset = 0;
+        _isResuming = false;
+      } else {
+        _currentPage = session['currentPage'] ?? 1;
+        _elapsedMinutesOffset = session['readingTimeMinutes'] ?? 0;
+        _isResuming = _currentPage > 1;
+      }
+      _sessionStartTime = DateTime.now();
+      _sessionInitialized = true;
+    } catch (e) {
+      debugPrint('DEBUG READING: Failed reading session lifecycle: $e');
+      _sessionStartTime = DateTime.now();
+      _sessionInitialized = true;
+    }
 
-  void _loadChapter() {
-    _chapter = ChapterRepository.getChapter(widget.bookId, _currentChapter);
-    _scrollProgress = 0.0;
-    if (_scrollController.hasClients) _scrollController.jumpTo(0);
-    setState(() {});
+    // 3. Load all chapters for continuous display
+    if (_book != null) {
+      if (ChapterRepository.getChaptersForBook(widget.bookId).isEmpty) {
+        ChapterRepository.addMockChapters(widget.bookId, _book!.title, _book!.totalChapters);
+      }
+      _chapters = ChapterRepository.getChaptersForBook(widget.bookId);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _progressNotifier.value = ReadingProgressState(
+        scrollProgress: _isResuming && _currentPage > 1 ? ((_currentPage - 1) / _totalPages).clamp(0.0, 1.0) : 0.0,
+        currentChapter: _currentChapter,
+        currentPage: _currentPage,
+      );
+    }
+
+    // 4. Trigger auto-resume jump once layouts are mounted
+    if (_isResuming && _currentPage > 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        final max = _scrollController.position.maxScrollExtent;
+        if (max > 0) {
+          final targetOffset = ((_currentPage - 1) / _totalPages) * max;
+          _scrollController.jumpTo(targetOffset.clamp(0.0, max));
+        }
+      });
+    }
+
+    // 5. Start timer to save progress every 30s
+    _startProgressTimer();
   }
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final max = _scrollController.position.maxScrollExtent;
     if (max <= 0) return;
-    setState(() {
-      _scrollProgress = (_scrollController.offset / max).clamp(0.0, 1.0);
+
+    final offset = _scrollController.offset;
+    final progressFraction = (offset / max).clamp(0.0, 1.0);
+
+    // Dynamic pagination and chapter resolution
+    final resolvedCh = _chapters.isEmpty
+        ? 1
+        : ((progressFraction * _chapters.length).floor() + 1).clamp(1, _chapters.length);
+    final resolvedPage = (progressFraction * _totalPages).round().clamp(1, _totalPages);
+
+    // Update non-UI state variables so they are available for saving
+    _scrollProgress = progressFraction;
+    _currentChapter = resolvedCh;
+    _currentPage = resolvedPage;
+
+    final currentVal = _progressNotifier.value;
+    if (currentVal.scrollProgress != progressFraction ||
+        currentVal.currentChapter != resolvedCh ||
+        currentVal.currentPage != resolvedPage) {
+      _progressNotifier.value = ReadingProgressState(
+        scrollProgress: progressFraction,
+        currentChapter: resolvedCh,
+        currentPage: resolvedPage,
+      );
+    }
+  }
+
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _saveProgress();
     });
   }
 
-  void _goToChapter(int chapter) {
-    if (chapter < 1 || (_book != null && chapter > _book!.totalChapters)) return;
-    _saveProgress();
-    setState(() {
-      _currentChapter = chapter;
-      _loadChapter();
-    });
-    _saveProgress(); // Persist the new chapter start immediately
-  }
+  Future<void> _saveProgress() async {
+    if (_book == null || !_sessionInitialized) return;
 
-  void _saveProgress() {
-    if (_book == null) return;
-    final progressFract = (_currentChapter - 1 + _scrollProgress) / _book!.totalChapters;
-    final rPages = (_book!.totalPages * progressFract).toInt().clamp(0, _book!.totalPages);
-    BookRepository.updateProgress(_book!.id, _currentChapter, rPages);
+    // Persist progress locally
+    await BookRepository.updateProgress(
+      _book!.id,
+      _currentChapter,
+      _currentPage,
+      totalPages: _totalPages,
+    );
+
+    // Sync to remote API
+    if (_sessionStartTime != null) {
+      final elapsedMinutes = DateTime.now().difference(_sessionStartTime!).inMinutes;
+      final totalMinutes = _elapsedMinutesOffset + elapsedMinutes;
+      try {
+        final bookIdInt = int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
+        await sl<BooksService>().updateReadingProgress(
+          bookIdInt,
+          _currentPage,
+          totalMinutes,
+        );
+        debugPrint('DEBUG READING: Saved progress. currentPage=$_currentPage, totalMinutes=$totalMinutes');
+      } catch (e) {
+        debugPrint('DEBUG READING: Failed updating session progress: $e');
+      }
+    }
   }
 
   void _showFontSizeSheet() {
@@ -82,7 +212,18 @@ class _ReadingPageState extends State<ReadingPage> {
                   children: [
                     const Text('Aa', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
                     Expanded(
-                      child: Slider(value: _fontSize, min: 12, max: 24, divisions: 6, activeColor: AppColors.primary, label: '${_fontSize.toInt()}', onChanged: (v) { setSheetState(() {}); setState(() => _fontSize = v); }),
+                      child: Slider(
+                        value: _fontSize,
+                        min: 12,
+                        max: 24,
+                        divisions: 6,
+                        activeColor: AppColors.primary,
+                        label: '${_fontSize.toInt()}',
+                        onChanged: (v) {
+                          setSheetState(() {});
+                          setState(() => _fontSize = v);
+                        },
+                      ),
                     ),
                     const Text('Aa', style: TextStyle(fontSize: 20, color: AppColors.textDark, fontWeight: FontWeight.bold)),
                   ],
@@ -100,7 +241,9 @@ class _ReadingPageState extends State<ReadingPage> {
 
   void _saveQuoteFromBlock(String quoteText) {
     if (_book == null) return;
-    final chTitle = _chapter?.title ?? 'Chapter $_currentChapter';
+    final chTitle = _chapters.isNotEmpty && _currentChapter <= _chapters.length
+        ? _chapters[_currentChapter - 1].title
+        : 'Chapter $_currentChapter';
     QuotesRepository.addQuote(
       text: quoteText,
       bookId: _book!.id,
@@ -123,10 +266,10 @@ class _ReadingPageState extends State<ReadingPage> {
   }
 
   void _showSaveQuoteDialog() {
-    if (_book == null || _chapter == null) return;
-    // Gather all quote-type blocks
-    final quoteBlocks = _chapter!.blocks.where((b) => b.type == ContentBlockType.quote).toList();
-    // Also allow custom text
+    if (_book == null || _chapters.isEmpty) return;
+    
+    final currentChData = _chapters[_currentChapter - 1];
+    final quoteBlocks = currentChData.blocks.where((b) => b.type == ContentBlockType.quote).toList();
     final textController = TextEditingController();
 
     showModalBottomSheet(
@@ -143,10 +286,9 @@ class _ReadingPageState extends State<ReadingPage> {
             const SizedBox(height: 16),
             const Text('Save a Quote', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
             const SizedBox(height: 4),
-            Text('From ${_book!.title} — ${_chapter!.title}', style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            Text('From ${_book!.title} — ${currentChData.title}', style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
             const SizedBox(height: 18),
 
-            // Pre-existing quotes from chapter
             if (quoteBlocks.isNotEmpty) ...[
               const Text('Quotes in this chapter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
               const SizedBox(height: 8),
@@ -176,7 +318,6 @@ class _ReadingPageState extends State<ReadingPage> {
               const SizedBox(height: 12),
             ],
 
-            // Custom quote
             const Text('Or write your own', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
             const SizedBox(height: 8),
             TextField(
@@ -203,7 +344,11 @@ class _ReadingPageState extends State<ReadingPage> {
                 },
                 icon: const Icon(Icons.format_quote_rounded, size: 18, color: Colors.white),
                 label: const Text('Save Quote', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
           ],
@@ -215,8 +360,10 @@ class _ReadingPageState extends State<ReadingPage> {
   @override
   void dispose() {
     _saveProgress();
+    _progressTimer?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _progressNotifier.dispose();
     super.dispose();
   }
 
@@ -237,104 +384,206 @@ class _ReadingPageState extends State<ReadingPage> {
       );
     }
 
-    final chapterTitle = _chapter?.title ?? 'Chapter $_currentChapter';
-    final chapterProgress = (_currentChapter - 1 + _scrollProgress) / _book!.totalChapters;
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.ivory,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+      );
+    }
 
-    return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // ── Top Bar ────────────────────────────────────
-            _ReaderTopBar(
-              chapterTitle: chapterTitle,
-              progress: chapterProgress.clamp(0.0, 1.0),
-              isBookmarked: _isBookmarked,
-              onBack: () => Navigator.pop(context),
-              onBookmark: () {
-                setState(() => _isBookmarked = !_isBookmarked);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isBookmarked ? '🔖 Bookmarked!' : 'Bookmark removed'), duration: const Duration(seconds: 1)));
-              },
-            ),
+    return WillPopScope(
+      onWillPop: () async {
+        await _saveProgress();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.ivory,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // ── Top Bar ────────────────────────────────────
+              ValueListenableBuilder<ReadingProgressState>(
+                valueListenable: _progressNotifier,
+                builder: (context, progressState, _) {
+                  final chapterTitle = _chapters.isNotEmpty && progressState.currentChapter <= _chapters.length
+                      ? _chapters[progressState.currentChapter - 1].title
+                      : 'Loading...';
+                  return _ReaderTopBar(
+                    chapterTitle: chapterTitle,
+                    progress: progressState.scrollProgress.clamp(0.0, 1.0),
+                    isBookmarked: _isBookmarked,
+                    onBack: () async {
+                      await _saveProgress();
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    onBookmark: () {
+                      setState(() => _isBookmarked = !_isBookmarked);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(_isBookmarked ? '🔖 Bookmarked!' : 'Bookmark removed'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
 
-            // ── Content ────────────────────────────────────
-            Expanded(
-              child: _chapter == null
-                  ? const Center(child: Text('Chapter content loading...', style: TextStyle(color: AppColors.textGrey)))
-                  : SingleChildScrollView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.primary.withOpacity(0.2))),
-                              child: const Row(mainAxisSize: MainAxisSize.min, children: [Text('🔥', style: TextStyle(fontSize: 12)), SizedBox(width: 4), Text('12 DAY STREAK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primary, letterSpacing: 0.8))]),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(_book!.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark, fontFamily: 'Georgia', height: 1.2)),
-                          const SizedBox(height: 6),
-                          Text('by ${_book!.author}', style: const TextStyle(fontSize: 13, color: AppColors.textGrey, fontStyle: FontStyle.italic)),
-                          const SizedBox(height: 20),
-
-                          // Render blocks (with save button on quotes)
-                          ..._chapter!.blocks.map((block) {
-                            switch (block.type) {
-                              case ContentBlockType.paragraph:
-                                if (block.hasDropCap) return _DropCapParagraph(text: block.text, fontSize: _fontSize);
-                                return _BodyParagraph(text: block.text, fontSize: _fontSize);
-                              case ContentBlockType.quote:
-                                return _BlockQuote(
-                                  text: block.text,
-                                  fontSize: _fontSize,
-                                  onSave: () => _saveQuoteFromBlock(block.text),
-                                );
-                              case ContentBlockType.heading:
-                                return Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(block.text, style: TextStyle(fontSize: _fontSize + 5, fontWeight: FontWeight.bold, color: AppColors.textDark, fontFamily: 'Georgia')));
-                            }
-                          }),
-
-                          const SizedBox(height: 32),
-                          Center(
-                            child: Column(children: [
-                              const Text('— End of Chapter —', style: TextStyle(fontSize: 13, color: AppColors.textGrey, fontStyle: FontStyle.italic)),
-                              const SizedBox(height: 16),
-                              if (_currentChapter < _book!.totalChapters)
-                                ElevatedButton.icon(
-                                  onPressed: () => _goToChapter(_currentChapter + 1),
-                                  icon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
-                                  label: const Text('Next Chapter', style: TextStyle(color: Colors.white)),
-                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              // ── Content ────────────────────────────────────
+              Expanded(
+                child: _chapters.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Content loading...',
+                          style: TextStyle(color: AppColors.textGrey),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                                 ),
-                            ]),
-                          ),
-                          const SizedBox(height: 40),
-                        ],
-                      ),
-                    ),
-            ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('🔥', style: TextStyle(fontSize: 12)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '12 DAY STREAK',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.primary,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              _book!.title,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
+                                fontFamily: 'Georgia',
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'by ${_book!.author}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textGrey,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
 
-            // ── Bottom Bar ─────────────────────────────────
-            _ReaderBottomBar(
-              progress: chapterProgress.clamp(0.0, 1.0),
-              currentChapter: _currentChapter,
-              totalChapters: _book!.totalChapters,
-              onPrev: _currentChapter > 1 ? () => _goToChapter(_currentChapter - 1) : null,
-              onNext: _currentChapter < _book!.totalChapters ? () => _goToChapter(_currentChapter + 1) : null,
-              onFont: _showFontSizeSheet,
-              onQuote: _showSaveQuoteDialog,
-              onBookmark: () {
-                setState(() => _isBookmarked = !_isBookmarked);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isBookmarked ? '🔖 Bookmarked!' : 'Bookmark removed'), duration: const Duration(seconds: 1)));
-              },
-              isBookmarked: _isBookmarked,
-            ),
-          ],
+                            // Render all chapters continuously
+                            ..._chapters.expand((chapter) {
+                              return [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 24, bottom: 12),
+                                  child: Text(
+                                    chapter.title,
+                                    style: TextStyle(
+                                      fontSize: _fontSize + 3,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textDark,
+                                      fontFamily: 'Georgia',
+                                    ),
+                                  ),
+                                ),
+                                ...chapter.blocks.map((block) {
+                                  switch (block.type) {
+                                    case ContentBlockType.paragraph:
+                                      if (block.hasDropCap) {
+                                        return _DropCapParagraph(
+                                          text: block.text,
+                                          fontSize: _fontSize,
+                                        );
+                                      }
+                                      return _BodyParagraph(
+                                        text: block.text,
+                                        fontSize: _fontSize,
+                                      );
+                                    case ContentBlockType.quote:
+                                      return _BlockQuote(
+                                        text: block.text,
+                                        fontSize: _fontSize,
+                                        onSave: () => _saveQuoteFromBlock(block.text),
+                                      );
+                                    case ContentBlockType.heading:
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        child: Text(
+                                          block.text,
+                                          style: TextStyle(
+                                            fontSize: _fontSize + 5,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textDark,
+                                            fontFamily: 'Georgia',
+                                          ),
+                                        ),
+                                      );
+                                  }
+                                }),
+                                const SizedBox(height: 16),
+                                const Divider(height: 32, thickness: 1),
+                              ];
+                            }),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+              ),
+
+              // ── Bottom Bar ─────────────────────────────────
+              ValueListenableBuilder<ReadingProgressState>(
+                valueListenable: _progressNotifier,
+                builder: (context, progressState, _) {
+                  return _ReaderBottomBar(
+                    progress: progressState.scrollProgress.clamp(0.0, 1.0),
+                    currentPage: progressState.currentPage,
+                    totalPages: _totalPages,
+                    onFont: _showFontSizeSheet,
+                    onQuote: _showSaveQuoteDialog,
+                    onBookmark: () {
+                      setState(() => _isBookmarked = !_isBookmarked);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(_isBookmarked ? '🔖 Bookmarked!' : 'Bookmark removed'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    isBookmarked: _isBookmarked,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -442,12 +691,19 @@ class _BlockQuote extends StatelessWidget {
 // ── Bottom Bar (with Quote action) ──────────────────────────
 class _ReaderBottomBar extends StatelessWidget {
   final double progress;
-  final int currentChapter, totalChapters;
-  final VoidCallback? onPrev, onNext;
+  final int currentPage, totalPages;
   final VoidCallback onFont, onQuote, onBookmark;
   final bool isBookmarked;
 
-  const _ReaderBottomBar({required this.progress, required this.currentChapter, required this.totalChapters, this.onPrev, this.onNext, required this.onFont, required this.onQuote, required this.onBookmark, required this.isBookmarked});
+  const _ReaderBottomBar({
+    required this.progress,
+    required this.currentPage,
+    required this.totalPages,
+    required this.onFont,
+    required this.onQuote,
+    required this.onBookmark,
+    required this.isBookmarked,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -457,17 +713,28 @@ class _ReaderBottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _BottomBtn(icon: Icons.arrow_back_ios_new, label: 'Prev', onTap: onPrev, enabled: onPrev != null),
-            Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('${(progress * 100).toInt()}%', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
-              Text('Ch $currentChapter/$totalChapters', style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
-            ]),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${(progress * 100).toInt()}%',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                Text(
+                  'Page $currentPage/$totalPages',
+                  style: const TextStyle(fontSize: 10, color: AppColors.textGrey),
+                ),
+              ],
+            ),
             _BottomBtn(icon: Icons.text_fields, label: 'Font', onTap: onFont),
             _BottomBtn(icon: Icons.format_quote_rounded, label: 'Quote', onTap: onQuote, isActive: true),
             _BottomBtn(icon: isBookmarked ? Icons.bookmark : Icons.bookmark_outline, label: 'Save', onTap: onBookmark, isActive: isBookmarked),
-            _BottomBtn(icon: Icons.arrow_forward_ios, label: 'Next', onTap: onNext, enabled: onNext != null),
           ],
         ),
       ),
@@ -479,17 +746,17 @@ class _BottomBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
-  final bool enabled, isActive;
-  const _BottomBtn({required this.icon, required this.label, this.onTap, this.enabled = true, this.isActive = false});
+  final bool isActive;
+  const _BottomBtn({required this.icon, required this.label, this.onTap, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 20, color: isActive ? AppColors.primary : enabled ? AppColors.textGrey : AppColors.divider),
+        Icon(icon, size: 20, color: isActive ? AppColors.primary : AppColors.textGrey),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 9, color: enabled ? AppColors.textGrey : AppColors.divider, fontWeight: FontWeight.w600)),
+        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
       ]),
     );
   }
