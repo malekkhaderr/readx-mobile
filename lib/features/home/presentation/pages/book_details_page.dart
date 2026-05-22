@@ -76,6 +76,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (cleanId.startsWith('api_')) {
         cleanId = cleanId.replaceFirst('api_', '');
       }
+      if (cleanId.startsWith('sb')) {
+        cleanId = cleanId.replaceFirst('sb', '');
+      }
       final bookIdInt = int.tryParse(cleanId);
       if (bookIdInt == null) throw Exception('Invalid Book ID');
       
@@ -698,7 +701,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   Widget _buildReadingProgress(BookDetail book) {
-    final repoBook = BookRepository.getBookById(book.id.toString());
+    final repoBook = BookRepository.getBookById(widget.bookId) ?? BookRepository.getBookById(book.id.toString());
     if (repoBook == null || repoBook.progress <= 0) {
       return const SizedBox.shrink();
     }
@@ -723,12 +726,17 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   color: AppColors.textDark.withOpacity(0.8),
                 ),
               ),
-              Text(
-                '$percentString ($readPages of $totalPages pages)',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '$percentString ($readPages of $totalPages pages)',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
                 ),
               ),
             ],
