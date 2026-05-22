@@ -1,8 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -13,8 +11,6 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../../data/models/home_response_model.dart';
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/network/dio_client.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {

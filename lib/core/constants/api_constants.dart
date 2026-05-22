@@ -23,8 +23,17 @@ class ApiConstants {
   static const String notifications = '/notifications';
 
   // Publisher Requests
-  static const String publisherRequests = '/publisher-requests';
+  static const String publisherRequests = '/PublisherRequests';
+  static const String publisherRequestsMy = '/PublisherRequests/my';
+  static const String publisherRequestsModify = '/PublisherRequests/modify';
+  static const String publisherRequestsRemove = '/PublisherRequests/remove';
 
   // Reading Sessions
   static const String readingSessions = '/reading-sessions';
+
+  // Author Dashboard
+  // Author Dashboard
+  static const String authorDashboard = '/AuthorDashboard/dashboard';
+  static const String authorBooks = '/AuthorDashboard/books';
+  static const String authorStatistics = '/AuthorDashboard/statistics';
 }

@@ -24,6 +24,14 @@ import '../../features/notifications/domain/repositories/notifications_repositor
 import '../../features/notifications/domain/usecases/get_notifications_usecase.dart';
 import '../../features/notifications/domain/usecases/mark_all_notifications_read_usecase.dart';
 import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
+import '../../features/author_dashboard/data/datasources/author_dashboard_remote_datasource.dart';
+import '../../features/author_dashboard/data/repositories/author_dashboard_repository_impl.dart';
+import '../../features/author_dashboard/domain/repositories/author_dashboard_repository.dart';
+import '../../features/author_dashboard/domain/usecases/get_author_dashboard_usecase.dart';
+import '../../features/author_dashboard/domain/usecases/get_author_books_usecase.dart';
+import '../../features/author_dashboard/domain/usecases/get_author_statistics_usecase.dart';
+import '../../features/author_dashboard/domain/usecases/publisher_requests_usecases.dart';
+import '../../features/author_dashboard/presentation/bloc/author_dashboard_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -129,6 +137,41 @@ Future<void> init() async {
   // Data Source
   sl.registerLazySingleton<NotificationsRemoteDataSource>(
     () => NotificationsRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+  // ─── Author Dashboard ──────────────────────────────────
+
+  // Bloc
+  sl.registerFactory(
+    () => AuthorDashboardBloc(
+      getAuthorDashboardUseCase: sl(),
+      getAuthorBooksUseCase: sl(),
+      getAuthorStatisticsUseCase: sl(),
+      getPublisherRequestsUseCase: sl(),
+      submitAddBookRequestUseCase: sl(),
+      submitModifyBookRequestUseCase: sl(),
+      submitRemoveBookRequestUseCase: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => GetAuthorDashboardUseCase(sl()));
+  sl.registerLazySingleton(() => GetAuthorBooksUseCase(sl()));
+  sl.registerLazySingleton(() => GetAuthorStatisticsUseCase(sl()));
+  
+  sl.registerLazySingleton(() => GetPublisherRequestsUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitAddBookRequestUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitModifyBookRequestUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitRemoveBookRequestUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<AuthorDashboardRepository>(
+    () => AuthorDashboardRepositoryImpl(sl()),
+  );
+
+  // Data Source
+  sl.registerLazySingleton<AuthorDashboardRemoteDataSource>(
+    () => AuthorDashboardRemoteDataSourceImpl(dioClient: sl()),
   );
 }
 
