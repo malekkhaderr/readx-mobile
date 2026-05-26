@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/widgets/feather_widgets.dart';
 import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_state.dart';
 import '../../../home/data/models/home_response_model.dart';
-import '../../../shop/data/book_shop_state.dart';
-import '../../../shop/data/models/mock_book_shop_data.dart';
-import '../../../shop/presentation/widgets/cart_sheet.dart';
+import '../../../library/presentation/bloc/library_bloc.dart';
+import '../../../library/presentation/bloc/library_state.dart';
 
 enum SearchSortOption {
   popularity('Popularity'),
@@ -36,16 +37,10 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    BookShopState.addListener(_onStateChanged);
-  }
-
-  void _onStateChanged() {
-    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    BookShopState.removeListener(_onStateChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -120,53 +115,25 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  void _addToCart(BookCard book) {
-    final shopBook = ShopBook(
-      id: 'api_${book.id}',
-      title: book.title,
-      author: book.authorName,
-      coverImage: book.coverImageUrl,
-      price: book.price,
-      discountPrice: book.price > book.effectivePrice ? book.effectivePrice : null,
-      rating: book.averageRating,
-      reviewCount: book.viewCount,
-      genre: book.categoryName,
-      description: '',
-      pageCount: book.totalPages,
-      readingTime: '${(book.totalPages * 1.5).toInt()} mins',
-    );
-
-    BookShopState.instance.addToCart(shopBook);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ Added "${book.title}" to cart!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.successGreen,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final shopState = BookShopState.instance;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            if (state is HomeInitial || state is HomeLoading) {
-              return CustomScrollView(
-                slivers: [
-                  _buildHeaderSection(shopState.cartCount),
-                  _buildSearchSection(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  SliverToBoxAdapter(child: _buildShimmerGrid()),
-                ],
-              );
-            }
+    return BlocProvider.value(
+      value: sl<LibraryBloc>(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) {
+              if (state is HomeInitial || state is HomeLoading) {
+                return CustomScrollView(
+                  slivers: [
+                    _buildHeaderSection(),
+                    _buildSearchSection(),
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    SliverToBoxAdapter(child: _buildShimmerGrid()),
+                  ],
+                );
+              }
 
             if (state is HomeError) {
               return Center(
@@ -210,10 +177,8 @@ class _SearchPageState extends State<SearchPage> {
                     coverImageUrl: b.coverImageUrl,
                     isPublished: b.isPublished,
                     viewCount: b.viewCount,
-                    price: b.price,
-                    effectivePrice: b.effectivePrice,
-                    discountPercentage: b.discountPercentage,
-                    discountType: b.discountType,
+                    priceUSD: b.priceUSD,
+                    priceTokens: b.priceTokens,
                     averageRating: b.averageRating,
                   );
                   allBooksMap[b.id] = enrichedBook;
@@ -257,7 +222,7 @@ class _SearchPageState extends State<SearchPage> {
               return CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  _buildHeaderSection(shopState.cartCount),
+                  _buildHeaderSection(),
                   _buildSearchSection(),
                   
                   // Category Chips
@@ -376,15 +341,10 @@ class _SearchPageState extends State<SearchPage> {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 final book = filteredBooks[index];
-                                final isPurchased = shopState.isPurchased('api_${book.id}');
-                                final isInCart = shopState.isInCart('api_${book.id}');
-
                                 return _SearchBookCard(
                                   book: book,
-                                  isPurchased: isPurchased,
-                                  isInCart: isInCart,
-                                  onTap: () => context.push('/book/${book.id}'),
-                                  onAddToCart: () => _addToCart(book),
+                                  onTap: () =>
+                                      context.push('/book/${book.id}'),
                                 );
                               },
                               childCount: filteredBooks.length,
@@ -400,29 +360,25 @@ class _SearchPageState extends State<SearchPage> {
           },
         ),
       ),
+      ),
     );
   }
 
-  SliverToBoxAdapter _buildHeaderSection(int cartCount) {
+  SliverToBoxAdapter _buildHeaderSection() {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        child: Row(
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Search Books', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  SizedBox(height: 2),
-                  Text('Discover your next favorite read', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
-                ],
-              ),
-            ),
-            _CartIconBadge(
-              count: cartCount,
-              onTap: () => showCartSheet(context),
-            ),
+            Text('Search Books',
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark)),
+            SizedBox(height: 2),
+            Text('Discover your next favorite read',
+                style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
           ],
         ),
       ),
@@ -496,79 +452,26 @@ class _SearchPageState extends State<SearchPage> {
   }
 }
 
-class _CartIconBadge extends StatelessWidget {
-  final int count;
-  final VoidCallback onTap;
-  const _CartIconBadge({required this.count, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            const Center(
-              child: Icon(Icons.shopping_cart_outlined, color: AppColors.textDark, size: 22),
-            ),
-            if (count > 0)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      count > 9 ? '9+' : '$count',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// _CartIconBadge removed — purchase happens on the book details page now.
 
 class _SearchBookCard extends StatelessWidget {
   final BookCard book;
-  final bool isPurchased;
-  final bool isInCart;
   final VoidCallback onTap;
-  final VoidCallback onAddToCart;
 
-  const _SearchBookCard({
-    required this.book,
-    required this.isPurchased,
-    required this.isInCart,
-    required this.onTap,
-    required this.onAddToCart,
-  });
+  const _SearchBookCard({required this.book, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = book.price > book.effectivePrice;
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, state) {
+        final isOwned = state is LibraryLoaded &&
+            state.books.any((b) => b.bookId == book.id);
+        return _buildCard(context, isOwned);
+      },
+    );
+  }
 
+  Widget _buildCard(BuildContext context, bool isOwned) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -577,79 +480,131 @@ class _SearchBookCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
+          border: Border.all(color: AppColors.divider.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover Image
+            // ── Cover Image with badges ──
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Image.network(
-                      book.coverImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
-                        color: AppColors.primaryLight,
-                        child: const Center(
-                          child: Icon(Icons.book, color: AppColors.primary, size: 28),
-                        ),
-                      ),
+                  Hero(
+                    tag: 'book-cover-${book.id}',
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16)),
+                      child: book.coverImageUrl.isNotEmpty
+                          ? Image.network(
+                              book.coverImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) =>
+                                  _coverFallback(),
+                            )
+                          : _coverFallback(),
                     ),
                   ),
-                  // Rating Badge (Top-Right)
+                  // Rating Badge (top-LEFT now, since OWNED takes top-right)
                   Positioned(
                     top: 8,
-                    right: 8,
+                    left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                          const Icon(Icons.star_rounded,
+                              color: AppColors.gold, size: 11),
                           const SizedBox(width: 2),
                           Text(
                             book.averageRating > 0
                                 ? book.averageRating.toStringAsFixed(1)
-                                : '0.0',
+                                : '—',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textDark,
                               fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // Purchased/Owned Badge (Top-Left)
-                  if (isPurchased)
+                  // OWNED / FREE badge (top-RIGHT)
+                  if (isOwned)
                     Positioned(
                       top: 8,
-                      left: 8,
+                      right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.successGreen,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppColors.successGreen.withOpacity(0.4),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_rounded,
+                                size: 9, color: Colors.white),
+                            SizedBox(width: 3),
+                            Text(
+                              'OWNED',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (book.isFree)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.successGreen,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          'OWNED',
+                          'FREE',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
@@ -657,7 +612,7 @@ class _SearchBookCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Info Details
+            // ── Info section ──
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
@@ -681,74 +636,53 @@ class _SearchBookCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textGrey,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      // Price Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (book.effectivePrice == 0)
-                              const Text(
-                                'Free',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.successGreen,
-                                ),
-                              )
-                            else ...[
-                              if (hasDiscount)
-                                Text(
-                                  '\$${book.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: AppColors.textGrey,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                              Text(
-                                '\$${book.effectivePrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Add to Cart Button
-                      if (!isPurchased)
-                        GestureDetector(
-                          onTap: isInCart ? null : onAddToCart,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: isInCart ? AppColors.textGrey : AppColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              isInCart
-                                  ? Icons.shopping_bag_outlined
-                                  : Icons.add_shopping_cart_rounded,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                          ),
-                        ),
-                    ],
+                  const SizedBox(height: 8),
+                  // Price ALWAYS visible — even when owned, so the user can
+                  // recall what they paid. Ownership is shown above as a badge.
+                  PriceTag(
+                    priceUSD: book.priceUSD,
+                    priceFeathers: book.priceTokens,
+                    isFree: book.isFree,
+                    compact: true,
                   ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _coverFallback() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            book.title,
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
         ),
       ),
     );
