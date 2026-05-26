@@ -22,7 +22,9 @@ import '../constants/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
-
+import '../../features/author_dashboard/presentation/pages/author_dashboard_page.dart';
+import '../../features/author_dashboard/presentation/pages/author_books_page.dart';
+import '../../features/author_dashboard/presentation/pages/author_main_shell.dart';
 // Global key for navigator (needed for push from within shell)
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -120,6 +122,42 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/profile',
+                builder: (context, state) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // ── Author App Shell (Bottom Navigation) ────────
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AuthorMainShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // Tab 0: Dashboard
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author',
+                builder: (context, state) => const AuthorDashboardPage(),
+              ),
+            ],
+          ),
+          // Tab 1: Requests
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author/books',
+                builder: (context, state) => const AuthorBooksPage(),
+              ),
+            ],
+          ),
+          // Tab 2: Profile (reuses reader profile page)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author/profile',
                 builder: (context, state) => const ProfilePage(),
               ),
             ],

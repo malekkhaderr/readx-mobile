@@ -80,8 +80,14 @@ class _OtpPageState extends State<OtpPage> {
         // Go to new password page
         context.go('/new-password', extra: widget.email);
       } else {
-        // Go to home after registration
-        // TODO: navigate to home
+        // Go to login after email verification
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email verified! Please log in.'),
+            backgroundColor: AppColors.successGreen,
+          ),
+        );
+        context.go('/login');
       }
     }
   }

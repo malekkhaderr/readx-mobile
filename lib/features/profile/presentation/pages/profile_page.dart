@@ -15,6 +15,10 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../../core/di/injection_container.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../author_dashboard/presentation/bloc/author_dashboard_bloc.dart';
+import '../../../author_dashboard/presentation/pages/author_book_detail_page.dart';
+import '../../../author_dashboard/data/models/author_book_model.dart';
+
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -141,6 +145,15 @@ class _ProfileBodyState extends State<_ProfileBody> {
   @override
   Widget build(BuildContext context) {
     final profile = widget.profile;
+
+    // ── Route to the appropriate profile view based on role ──
+    if (profile.isAuthor) {
+      return _AuthorProfileBody(profile: profile, onLogout: () {
+        context.read<AuthBloc>().add(const LogoutEvent());
+      });
+    }
+
+    // ── Reader profile (unchanged) ───────────────────────────
     final dashboard = profile.readerDashboard;
 
     return RefreshIndicator(
@@ -244,9 +257,18 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 _RewardStoreSection(feathersAvailable: dashboard.cubes),
                 _TrophyGridSection(trophies: dashboard.trophies),
               ] else
-                _EmptyDashboard(profile: profile),
-
-
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
+                  child: const Column(children: [
+                    Text('📚', style: TextStyle(fontSize: 48)),
+                    SizedBox(height: 12),
+                    Text('Start Your Reading Journey!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark), textAlign: TextAlign.center),
+                    SizedBox(height: 8),
+                    Text('Your reading stats will appear here as you start reading.', style: TextStyle(fontSize: 13, color: AppColors.textGrey), textAlign: TextAlign.center),
+                  ]),
+                ),
 
               const SizedBox(height: 24),
 
@@ -255,7 +277,6 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Trigger logout event
                     context.read<AuthBloc>().add(const LogoutEvent());
                   },
                   style: ElevatedButton.styleFrom(
@@ -277,29 +298,416 @@ class _ProfileBodyState extends State<_ProfileBody> {
   }
 }
 
-// ── Empty Dashboard (new user / author) ─────────────────────
-class _EmptyDashboard extends StatelessWidget {
+// ── Author Profile Body ──────────────────────────────────────
+// Clean, dedicated author profile — shows only author-relevant
+// information. Reader sections (streaks, rituals, feathers,
+// trophies) are never rendered here.
+class _AuthorProfileBody extends StatelessWidget {
   final UserProfileEntity profile;
-  const _EmptyDashboard({required this.profile});
+  final VoidCallback onLogout;
+  const _AuthorProfileBody({required this.profile, required this.onLogout});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
-      child: Column(children: [
-        const Text('📚', style: const TextStyle(fontSize: 48)),
-        const SizedBox(height: 12),
-        Text(profile.isAuthor ? 'Author Dashboard' : 'Start Your Reading Journey!',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark), textAlign: TextAlign.center),
-        const SizedBox(height: 8),
-        Text(profile.isAuthor ? 'Author stats will appear here once available.' : 'Your reading stats will appear here as you start reading.',
-            style: const TextStyle(fontSize: 13, color: AppColors.textGrey), textAlign: TextAlign.center),
-      ]),
+    AuthorDashboardBloc? authorBloc;
+    try {
+      authorBloc = context.read<AuthorDashboardBloc>();
+    } catch (_) {}
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<ProfileBloc>().add(const RefreshProfileEvent());
+        await context.read<ProfileBloc>().stream.firstWhere((s) => s is! ProfileLoading);
+      },
+      child: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Email verification banner ──────────────────
+              if (!profile.isEmailVerified)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  color: AppColors.warningOrange.withOpacity(0.15),
+                  child: Row(children: [
+                    const Icon(Icons.mail_outline, size: 18, color: AppColors.warningOrange),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('Please verify your email address.', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.w500))),
+                    GestureDetector(
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent!'))),
+                      child: const Text('Resend', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
+                    ),
+                  ]),
+                ),
+
+              // ── Author Info Header Card ────────────────────
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                ),
+                child: Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.2),
+                        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                      ),
+                      child: profile.hasAvatar
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: profile.avatarImageUrl!,
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Center(
+                                  child: Text(profile.avatarInitial,
+                                      style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(profile.avatarInitial,
+                                  style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold))),
+                    ),
+                    const SizedBox(width: 16),
+                    // Name + role
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            profile.fullName,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              '✍️  Author',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Profile Info Fields ────────────────────────
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                ),
+                child: Column(
+                  children: [
+                    _InfoTile(icon: Icons.badge_outlined, label: 'Author ID', value: '#${profile.id}'),
+                    _divider(),
+                    _InfoTile(icon: Icons.email_outlined, label: 'Email', value: profile.email),
+                    _divider(),
+                    _InfoTile(
+                      icon: profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
+                      label: 'Email Status',
+                      value: profile.isEmailVerified ? 'Verified' : 'Not Verified',
+                      valueColor: profile.isEmailVerified ? AppColors.successGreen : AppColors.error,
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Published Books ────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                child: Row(children: [
+                  const Text('Published Books', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                  const Spacer(),
+                  if (authorBloc != null)
+                    BlocBuilder<AuthorDashboardBloc, AuthorDashboardState>(
+                      builder: (ctx, s) {
+                        final count = authorBloc!.cachedBooks?.length ?? 0;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('$count books', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        );
+                      },
+                    ),
+                ]),
+              ),
+
+              if (authorBloc != null)
+                BlocBuilder<AuthorDashboardBloc, AuthorDashboardState>(
+                  builder: (context, state) {
+                    final books = authorBloc!.cachedBooks;
+                    if (state is AuthorDashboardLoading && (books == null || books.isEmpty)) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (books == null || books.isEmpty) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                        ),
+                        child: const Column(children: [
+                          Text('📚', style: TextStyle(fontSize: 48)),
+                          SizedBox(height: 12),
+                          Text('No Books Yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                          SizedBox(height: 6),
+                          Text('Your published books will appear here.', style: TextStyle(fontSize: 13, color: AppColors.textGrey), textAlign: TextAlign.center),
+                        ]),
+                      );
+                    }
+                    // 2-column grid of compact book cover cards
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.62,
+                        ),
+                        itemCount: books.length,
+                        itemBuilder: (context, index) {
+                          final book = books[index];
+                          return _AuthorBookGridCard(
+                            book: book,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => AuthorBookDetailPage(book: book)),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: Text('Books unavailable', style: TextStyle(color: AppColors.textGrey))),
+                ),
+
+
+              const SizedBox(height: 28),
+
+              // ── Logout Button ──────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ElevatedButton.icon(
+                  onPressed: onLogout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: const Text('Log Out', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() => const Divider(height: 1, indent: 52);
+}
+
+// ── Info Tile (author profile detail row) ─────────────────────
+class _InfoTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _InfoTile({required this.icon, required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, size: 18, color: AppColors.primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textDark)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+
+// ── Author Book Grid Card ─────────────────────────────────────
+// Compact 2-per-row card: cover image + title + status + rating.
+// Tapping navigates to the full AuthorBookDetailPage.
+class _AuthorBookGridCard extends StatelessWidget {
+  final AuthorBook book;
+  final VoidCallback onTap;
+  const _AuthorBookGridCard({required this.book, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Cover Image ──────────────────────────────
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Image or placeholder
+                    book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: book.coverImageUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => _placeholder(),
+                            errorWidget: (_, __, ___) => _placeholder(),
+                          )
+                        : _placeholder(),
+                    // Status pill overlay
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: book.isPublished
+                              ? AppColors.successGreen
+                              : AppColors.warningOrange,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          book.isPublished ? 'Live' : 'Draft',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // ── Info ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    book.title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded, size: 12, color: AppColors.warningOrange),
+                      const SizedBox(width: 3),
+                      Text(
+                        book.averageRating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.textGrey),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: AppColors.primaryLight,
+      child: const Center(
+        child: Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 36),
+      ),
+    );
+  }
+}
+
 
 // ── Action Button ────────────────────────────────────────────
 class _ActionButton extends StatelessWidget {

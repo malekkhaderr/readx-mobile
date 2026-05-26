@@ -95,7 +95,13 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
             if (state is AuthAuthenticated) {
-              context.go('/home');
+              // Role-based redirect: Author (role 1) → Author Dashboard
+              final role = state.user.role.toLowerCase();
+              if (role == '1' || role == 'author' || role == 'publisher') {
+                context.go('/author');
+              } else {
+                context.go('/home');
+              }
             }
           },
           child: SafeArea(

@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:readx/core/di/injection_container.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
-import 'package:readx/features/home/data/models/book_detail_model.dart';
 import 'package:readx/core/data/book_repository.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
@@ -1453,90 +1452,6 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               fontSize: 10,
               fontWeight: FontWeight.w800,
               color: _accentColor,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: _bottomNavBg,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          )
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem('READ', Icons.book_rounded, true),
-              _buildNavItem('LIBRARY', Icons.explore_rounded, false),
-              const SizedBox(width: 48), // Spacer for central overlapping diamond FAB
-              _buildNavItem('RANKS', Icons.emoji_events_rounded, false),
-              _buildNavItem('PROFILE', Icons.person_rounded, false),
-            ],
-          ),
-          Positioned(
-            top: 0,
-            child: Transform.translate(
-              offset: const Offset(0, -16),
-              child: Container(
-                height: 52,
-                width: 52,
-                decoration: BoxDecoration(
-                  color: _accentColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _accentColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                child: const Icon(
-                  Icons.diamond_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(String label, IconData icon, bool isActive) {
-    final color = isActive ? _accentColor : _bottomNavUnselected;
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Sora',
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-              color: color,
               letterSpacing: 0.5,
             ),
           ),
