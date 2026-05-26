@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
 import 'dart:typed_data';
+import 'package:universal_file/universal_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -9,9 +10,14 @@ import 'package:epub_view/epub_view.dart' hide Image;
 import 'package:epub_view/src/data/models/paragraph.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:go_router/go_router.dart';
 import 'package:readx/core/di/injection_container.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
 import 'package:readx/features/home/data/models/book_detail_model.dart';
+import 'package:readx/features/library/presentation/bloc/library_bloc.dart';
+import 'package:readx/features/library/presentation/bloc/library_event.dart';
+import 'package:readx/features/library/presentation/bloc/library_state.dart';
+import 'package:readx/features/quotes/presentation/pages/add_quote_page.dart';
 import 'package:readx/core/data/book_repository.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
@@ -39,7 +45,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   String _errorMessage = '';
   double _downloadProgress = 0.0;
   String _progressText = 'Initializing...';
-  File? _localFile;
+  io.File? _localFile;
 
   // Reading Session State
   int _currentPage = 0;
@@ -47,6 +53,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   int _elapsedMinutesOffset = 0;
   bool _sessionInitialized = false;
   bool _isResuming = false;
+  // Latched once the backend returns 409 ("session already completed").
+  // After that we stop calling the /progress endpoint to avoid a retry storm.
+  bool _sessionCompleted = false;
   Timer? _progressTimer;
   final ValueNotifier<dynamic> _progressNotifier = ValueNotifier<dynamic>(null);
   int _totalPages = 1;
@@ -162,7 +171,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   Future<void> _enableSecureWindow() async {
     try {
-      if (Platform.isAndroid) {
+      if (io.Platform.isAndroid) {
         await _secureChannel.invokeMethod('enableSecure');
         debugPrint('Secure window enabled.');
       }
@@ -173,7 +182,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   Future<void> _disableSecureWindow() async {
     try {
-      if (Platform.isAndroid) {
+      if (io.Platform.isAndroid) {
         await _secureChannel.invokeMethod('disableSecure');
         debugPrint('Secure window disabled.');
       }
@@ -227,19 +236,51 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   Future<void> _initReader() async {
-    final String rawUrl = widget.epubUrl;
+    final String rawUrl = widget.epubUrl.trim();
     debugPrint('DEBUG READER: Initializing reader for: $rawUrl');
 
-    // Fetch Book Detail to get totalPages
-    try {
-      final bookDetail = await sl<BooksService>().getBookDetail(widget.bookId);
-      setState(() {
-        _totalPages = bookDetail.totalPages > 0 ? bookDetail.totalPages : 1;
-      });
-      debugPrint('DEBUG READER: Fetched book details. totalPages: $_totalPages');
-    } catch (e) {
-      debugPrint('DEBUG READER: Failed to fetch book details: $e');
+    // ── Guard 1: validate the URL is a real http(s) link ──
+    // The backend stores nullable epub URLs; many books have garbage like
+    // "test.com" / "1234" / null. Bail out immediately so we don't waste
+    // 45 seconds in Dio timeout — show the existing error UI right away.
+    final isRealUrl =
+        rawUrl.startsWith('http://') || rawUrl.startsWith('https://');
+    if (!isRealUrl) {
+      _showError(
+        'Book content not available',
+        'This book does not have a readable file uploaded yet. '
+            'Please contact the publisher or try another book.',
+      );
+      return;
     }
+
+    // ── Guard 2: ownership check ──
+    // The reader should never open for a book the user does not own.
+    // The book details page already enforces this on the way in, but in
+    // case someone reaches /epub-reader directly, we re-verify against
+    // LibraryBloc state (already kept fresh by home/library tabs).
+    final libState = sl<LibraryBloc>().state;
+    final isOwned = libState is LibraryLoaded &&
+        libState.books.any((b) => b.bookId == widget.bookId);
+    if (!isOwned) {
+      // If the bloc hasn't loaded yet (deep-link case), fire a load and
+      // skip the gate this once. Otherwise reject.
+      if (libState is! LibraryLoaded) {
+        sl<LibraryBloc>().add(const LoadLibraryEvent());
+      } else {
+        _showError(
+          'Access denied',
+          'You need to add this book to your library before reading it.',
+        );
+        return;
+      }
+    }
+
+    // Note: we no longer fetch the backend's `totalPages` here. EPUBs are
+    // reflowable so the canonical "total" comes from the file itself —
+    // we count the paragraphs in the parsed EPUB and use that as the
+    // page total in onDocumentLoaded(). The backend's totalPages was
+    // inconsistent with the actual content for many books.
 
     // Initialize session with backend
     try {
@@ -253,6 +294,22 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         _currentPage = session['currentPage'] ?? 1;
         _elapsedMinutesOffset = session['readingTimeMinutes'] ?? 0;
         _isResuming = _currentPage > 1;
+        // If the backend already marked this session as completed, the
+        // /progress endpoint will reject every save with 409. Try to start
+        // a fresh session so progress saving works again — if that also
+        // fails (e.g. the backend disallows it), latch _sessionCompleted
+        // and just keep reading without server-side progress.
+        if (session['isCompleted'] == true) {
+          try {
+            await sl<BooksService>().startReadingSession(widget.bookId);
+            debugPrint(
+                'DEBUG READER: Restarted reading session after server marked it completed.');
+          } catch (e) {
+            debugPrint(
+                'DEBUG READER: Could not restart completed session: $e — disabling future progress saves.');
+            _sessionCompleted = true;
+          }
+        }
       }
       _sessionStartTime = DateTime.now();
       _sessionInitialized = true;
@@ -260,7 +317,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         widget.bookId.toString(),
         1,
         _currentPage,
-        totalPages: _totalPages,
+        totalPages: _totalPages > 1 ? _totalPages : null,
       );
       debugPrint('DEBUG READER: Initialized backend session. currentPage: $_currentPage, isResuming: $_isResuming');
     } catch (e) {
@@ -273,7 +330,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           widget.bookId.toString(),
           1,
           _currentPage,
-          totalPages: _totalPages,
+          totalPages: _totalPages > 1 ? _totalPages : null,
         );
       } catch (_) {}
     }
@@ -284,7 +341,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       final tempDir = await getTemporaryDirectory();
       final cleanTitle = widget.bookTitle.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase();
       final localFilePath = '${tempDir.path}/$cleanTitle.epub';
-      _localFile = File(localFilePath);
+      _localFile = io.File(localFilePath);
       debugPrint('DEBUG READER: Resolved local file path: ${_localFile!.path}');
     } catch (e) {
       debugPrint('DEBUG READER: ERROR resolving local directory: $e');
@@ -358,7 +415,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     try {
       setState(() {
         _epubController = EpubController(
-          document: EpubDocument.openFile(_localFile!),
+          document: EpubDocument.openFile(File(_localFile!.path)),
         );
         _isLoading = false;
       });
@@ -371,10 +428,26 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   Future<void> _saveProgress() async {
     if (_sessionStartTime == null) return;
-    final elapsedMinutes = DateTime.now().difference(_sessionStartTime!).inMinutes;
+
+    // If the backend already told us the session is finished, stop hitting
+    // the endpoint — otherwise every 30-second tick spams a 409 forever.
+    if (_sessionCompleted) {
+      // Still keep the local progress up to date.
+      await BookRepository.updateProgress(
+        widget.bookId.toString(),
+        1,
+        _currentPage,
+        totalPages: _totalPages > 1 ? _totalPages : null,
+      );
+      return;
+    }
+
+    final elapsedMinutes =
+        DateTime.now().difference(_sessionStartTime!).inMinutes;
     final totalMinutes = _elapsedMinutesOffset + elapsedMinutes;
     try {
-      debugPrint('Saving reading progress: currentPage=$_currentPage, readingTimeMinutes=$totalMinutes');
+      debugPrint(
+          'Saving reading progress: currentPage=$_currentPage, readingTimeMinutes=$totalMinutes');
       await sl<BooksService>().updateReadingProgress(
         widget.bookId,
         _currentPage,
@@ -384,9 +457,27 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         widget.bookId.toString(),
         1,
         _currentPage,
-        totalPages: _totalPages,
+        totalPages: _totalPages > 1 ? _totalPages : null,
       );
       debugPrint('Updated local BookRepository progress to $_currentPage pages.');
+    } on DioException catch (e) {
+      // 409 = backend completed the session. Latch our flag so we stop
+      // calling progress for the rest of this reader session.
+      if (e.response?.statusCode == 409) {
+        debugPrint(
+            'Reading session already completed on the server — disabling further progress saves.');
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      } else {
+        debugPrint('Failed to save reading progress: $e');
+      }
+      // Still update the local cache so the UI reflects the latest page.
+      await BookRepository.updateProgress(
+        widget.bookId.toString(),
+        1,
+        _currentPage,
+        totalPages: _totalPages > 1 ? _totalPages : null,
+      );
     } catch (e) {
       debugPrint('Failed to save reading progress: $e');
     }
@@ -417,271 +508,37 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   // Highlight Action Handlers
+  // _handleQuote removed — the SAVE QUOTE selection button has been taken
+  // out of the reader toolbar. Quotes are added via the Quotes tab now.
+
+  /// Send the user to the Add Quote page with the highlighted text, current
+  /// book, and current page already filled in. The Add Quote page also
+  /// auto-fills the category from the chosen book. Content stays editable.
   void _handleQuote() {
     if (_selectedText.isEmpty) return;
-    
-    // Copying and sharing restricted to preserve copyright and publishing rights
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Copying or sharing book content is restricted to preserve copyright and publishing rights.',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  fontWeight: FontWeight.w600,
-                  color: _theme == 'sepia' ? const Color(0xFF3C2F2F) : Colors.white,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        duration: const Duration(seconds: 3),
+    final cleaned = _selectedText.trim();
+    // Capture before any state changes / pops
+    final bookId = widget.bookId;
+    final bookTitle = widget.bookTitle;
+    final pageNumber = _currentPage > 0 ? _currentPage : 1;
+
+    // Clear the selection state so the toolbar collapses while we navigate.
+    setState(() {
+      _isTextSelected = false;
+      _selectedText = '';
+    });
+
+    context.push(
+      '/add-quote',
+      extra: AddQuoteArgs(
+        bookId: bookId,
+        bookTitle: bookTitle,
+        content: cleaned,
+        pageNumber: pageNumber,
       ),
     );
   }
 
-  void _handleDefine() {
-    if (_selectedText.isEmpty) return;
-    
-    final word = _selectedText.replaceAll(RegExp(r'[^\w\s]'), '').trim();
-    final cleanWord = word.split(' ').first;
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _backgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: _mutedTextColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Icon(Icons.g_translate_rounded, color: _accentColor, size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Define: "$cleanWord"',
-                      style: TextStyle(
-                        fontFamily: 'Lora',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _textColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Noun / Verb',
-                      style: TextStyle(
-                        fontFamily: 'Sora',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _accentColor,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '1. To mark or express with accuracy; to explain or define elements of significance found within standard textual interfaces.\n\n2. (Figurative) To illuminate and explore the mysteries of ancient volumes and scrolls.',
-                      style: TextStyle(
-                        fontFamily: 'Lora',
-                        fontSize: 14,
-                        height: 1.5,
-                        color: _textColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _handleNote() {
-    if (_selectedText.isEmpty) return;
-    
-    final textController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: _backgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.edit_note_rounded, color: _accentColor, size: 24),
-              const SizedBox(width: 10),
-              Text(
-                'Add Note',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'For highlighted text:',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: _mutedTextColor,
-                ),
-              ),
-               const SizedBox(height: 6),
-               Container(
-                 constraints: const BoxConstraints(maxHeight: 60),
-                 width: double.infinity,
-                 padding: const EdgeInsets.all(10),
-                 decoration: BoxDecoration(
-                   color: _cardBg,
-                   borderRadius: BorderRadius.circular(8),
-                 ),
-                 child: SingleChildScrollView(
-                   child: Text(
-                     '"$_selectedText"',
-                     style: TextStyle(
-                       fontFamily: 'Lora',
-                       fontSize: 13,
-                       fontStyle: FontStyle.italic,
-                       color: _textColor.withOpacity(0.8),
-                     ),
-                   ),
-                 ),
-               ),
-               const SizedBox(height: 16),
-               TextField(
-                 controller: textController,
-                 maxLines: 3,
-                 style: TextStyle(
-                   fontFamily: 'Lora',
-                   fontSize: 14,
-                   color: _textColor,
-                 ),
-                 decoration: InputDecoration(
-                   hintText: 'Write your thoughts...',
-                   hintStyle: TextStyle(
-                     color: _mutedTextColor.withOpacity(0.7),
-                   ),
-                   filled: true,
-                   fillColor: _cardBg,
-                   border: OutlineInputBorder(
-                     borderRadius: BorderRadius.circular(12),
-                     borderSide: BorderSide.none,
-                   ),
-                   focusedBorder: OutlineInputBorder(
-                     borderRadius: BorderRadius.circular(12),
-                     borderSide: BorderSide(color: _accentColor, width: 1.5),
-                   ),
-                 ),
-               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  color: _mutedTextColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Note saved successfully!',
-                      style: TextStyle(
-                        fontFamily: 'Sora',
-                        color: _theme == 'sepia' ? const Color(0xFF3C2F2F) : Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    backgroundColor: _accentColor,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  color: _theme == 'sepia' ? const Color(0xFF3C2F2F) : Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -919,10 +776,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     return SafeArea(
       child: Column(
         children: [
-          // 1. Floating Streak progress card
-          _buildStreakCard(),
-          
-          // 2. Main scrollable EpubView in SelectionArea
+          // Streak card removed — progress is communicated via the
+          // page-number bar at the bottom of the screen instead.
+          // Main scrollable EpubView in SelectionArea
           Expanded(
             child: SelectionArea(
               contextMenuBuilder: (context, selectableRegionState) {
@@ -958,51 +814,66 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               child: EpubView(
                 controller: _epubController!,
                 onChapterChanged: (value) {
-                  if (!_sessionInitialized || _isResuming) {
-                    return;
-                  }
-                  if (value != null && _paragraphsPerPage > 0) {
-                    final currentIndex = value.position.index;
-                    final computedPage = (currentIndex / _paragraphsPerPage).floor() + 1;
-                    final newPage = computedPage.clamp(1, _totalPages);
-                    if (_currentPage != newPage) {
-                      _currentPage = newPage;
-                      _progressNotifier.value = value;
-                    }
+                  // Track scroll position so the bottom progress bar updates,
+                  // but DO NOT clamp the page number — the book is shown as
+                  // one continuous flow and the user can scroll anywhere.
+                  // While we're auto-jumping to the saved page on first
+                  // load (_isResuming = true), ignore notifications so we
+                  // don't fight our own seek.
+                  // 1:1 mapping — every paragraph counts as one page-unit.
+                  // _totalPages is set in onDocumentLoaded once we've counted
+                  // the EPUB's paragraphs.
+                  if (value == null || _isResuming) return;
+                  final newPage = value.position.index + 1;
+                  if (newPage > 0 && newPage != _currentPage) {
+                    _currentPage = newPage;
+                    _progressNotifier.value = value;
                   }
                 },
                 onDocumentLoaded: (document) {
+                  // Total = number of paragraphs in the actual EPUB. The
+                  // backend's totalPages metadata is intentionally ignored
+                  // because it was inaccurate for many books — the canonical
+                  // total now lives in the file we just parsed.
                   final totalParagraphs = _calculateTotalParagraphs(document);
                   setState(() {
                     _totalParagraphs = totalParagraphs;
-                    _paragraphsPerPage = (_totalParagraphs / _totalPages).clamp(1.0, double.infinity);
+                    _totalPages = totalParagraphs > 0 ? totalParagraphs : 1;
+                    _paragraphsPerPage = 1.0;
                   });
-                  debugPrint('DEBUG READER: Document loaded! totalParagraphs: $_totalParagraphs, totalPages: $_totalPages, paragraphsPerPage: $_paragraphsPerPage');
-                  
-                  // Auto-resume to the saved page index
+                  debugPrint(
+                      'DEBUG READER: Document loaded! _totalPages = $_totalPages (paragraphs)');
+
+                  // Auto-resume to the last saved page so the user picks up
+                  // exactly where they left off. The book is still rendered
+                  // as one continuous flow — we only seek the scroll position
+                  // once on first load. While the jumpTo is in flight,
+                  // _isResuming = true so onChapterChanged ignores its own
+                  // updates. After 500ms we clear _isResuming so user
+                  // scrolling is tracked normally.
                   if (_currentPage > 1) {
                     Future.delayed(const Duration(milliseconds: 350), () {
                       if (!mounted || _epubController == null) return;
-                      final targetParagraph = ((_currentPage - 1) * _paragraphsPerPage).round();
-                      debugPrint('DEBUG READER: Auto-resuming to page $_currentPage (paragraph index $targetParagraph)');
+                      // 1 paragraph = 1 page; resume index is page-1.
+                      final safeTarget = (_currentPage - 1)
+                          .clamp(0, (_totalParagraphs - 1).clamp(0, 1 << 30));
+                      debugPrint(
+                          'DEBUG READER: Auto-resuming to page $_currentPage (paragraph index $safeTarget)');
                       try {
-                        _epubController!.jumpTo(index: targetParagraph.clamp(0, _totalParagraphs - 1));
+                        _epubController!.jumpTo(index: safeTarget);
                       } catch (e) {
-                        debugPrint('DEBUG READER: Error during page resume jumpTo: $e');
+                        debugPrint(
+                            'DEBUG READER: Error during page resume jumpTo: $e');
                       } finally {
-                        Future.delayed(const Duration(milliseconds: 150), () {
+                        Future.delayed(const Duration(milliseconds: 500), () {
                           if (mounted) {
-                            setState(() {
-                              _isResuming = false;
-                            });
+                            setState(() => _isResuming = false);
                           }
                         });
                       }
                     });
                   } else {
-                    setState(() {
-                      _isResuming = false;
-                    });
+                    setState(() => _isResuming = false);
                   }
                 },
                 builders: EpubViewBuilders<DefaultBuilderOptions>(
@@ -1098,7 +969,14 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           builders.chapterDividerBuilder(chapters[chapterIndex]),
         Html(
           data: htmlData,
-          onLinkTap: (href, _, __) => onExternalLinkPressed(href!),
+          // href can be null for in-document anchors (<a name="x">) or
+          // malformed links — guard so the reader doesn't crash if the
+          // user taps one of them.
+          onLinkTap: (href, _, __) {
+            if (href != null && href.isNotEmpty) {
+              onExternalLinkPressed(href);
+            }
+          },
           style: {
             'html': Style(
               fontFamily: _fontFamily,
@@ -1167,20 +1045,58 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
             TagExtension(
               tagsToExtend: {"img"},
               builder: (imageContext) {
-                final url = imageContext.attributes['src']!.replaceAll('../', '');
-                final content = Uint8List.fromList(
-                    document.Content!.Images![url]!.Content!);
-                return Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image(
-                      image: MemoryImage(content),
-                      fit: BoxFit.contain,
+                // Defensive lookup: an EPUB's <img src=...> can point at
+                // images that aren't bundled, use unexpected path prefixes,
+                // or simply not exist. The previous chained ! operators
+                // crashed the whole reader on the first missing asset
+                // (Null check operator used on a null value).
+                try {
+                  final rawSrc = imageContext.attributes['src'];
+                  if (rawSrc == null || rawSrc.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  // Try a few common path variants. EPUB packages sometimes
+                  // store images under just the filename, sometimes under
+                  // the relative path.
+                  final candidates = <String>{
+                    rawSrc,
+                    rawSrc.replaceAll('../', ''),
+                    rawSrc.split('/').last,
+                  };
+
+                  final images = document.Content?.Images;
+                  if (images == null) return const SizedBox.shrink();
+
+                  EpubByteContentFile? file;
+                  for (final key in candidates) {
+                    if (images.containsKey(key)) {
+                      file = images[key];
+                      if (file != null) break;
+                    }
+                  }
+                  if (file?.Content == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final content = Uint8List.fromList(file!.Content!);
+                  return Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        content,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox.shrink(),
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } catch (e) {
+                  // Never let one broken image take down the reader.
+                  debugPrint('DEBUG READER: Image rendering error: $e');
+                  return const SizedBox.shrink();
+                }
               },
             ),
           ],
@@ -1189,120 +1105,18 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     );
   }
 
-  Widget _buildStreakCard() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    '🔥',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '12 DAY STREAK',
-                    style: TextStyle(
-                      fontFamily: 'Sora',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      color: _textColor,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '850 / 1000 XP',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  color: _accentColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: 0.85,
-              backgroundColor: _progressTrackBg,
-              valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
-              minHeight: 6,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Next Reward: Golden Bookmark',
-                style: TextStyle(
-                  fontFamily: 'Sora',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: _mutedTextColor,
-                ),
-              ),
-              Row(
-                children: [
-                  _buildSmallBadge(Icons.star_rounded),
-                  const SizedBox(width: 6),
-                  _buildSmallBadge(Icons.bolt_rounded),
-                ],
-              )
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallBadge(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: _accentColor.withOpacity(0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: 14,
-        color: _accentColor,
-      ),
-    );
-  }
 
   Widget _buildInteractionRow() {
+    // Only QUOTE is exposed when the user highlights text. NOTE and DEFINE
+    // were removed — the Notes feature lives outside the reader and the
+    // Define popover was a placeholder with hardcoded text.
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildInteractionButton('NOTE', Icons.edit_note_rounded, _handleNote),
-          const SizedBox(width: 32),
-          _buildInteractionButton('DEFINE', Icons.g_translate_rounded, _handleDefine),
-          const SizedBox(width: 32),
-          _buildInteractionButton('QUOTE', Icons.share_rounded, _handleQuote),
+          _buildInteractionButton(
+              'QUOTE', Icons.format_quote_rounded, _handleQuote),
         ],
       ),
     );
@@ -1312,7 +1126,10 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     return ValueListenableBuilder<dynamic>(
       valueListenable: _progressNotifier,
       builder: (context, value, child) {
-        if (_epubController == null) {
+        // Wait until the EPUB has been parsed and we know the real total.
+        // _totalPages defaults to 1; we only render after onDocumentLoaded
+        // sets it to the actual paragraph count from the file.
+        if (_epubController == null || _totalPages <= 1) {
           return const SizedBox.shrink();
         }
 
@@ -1404,11 +1221,19 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   List<EpubChapter> _parseChapters(EpubBook epubBook) {
-    return epubBook.Chapters!.fold<List<EpubChapter>>(
+    final chapters = epubBook.Chapters;
+    if (chapters == null || chapters.isEmpty) return const [];
+    return chapters.fold<List<EpubChapter>>(
       [],
       (acc, next) {
         acc.add(next);
-        next.SubChapters!.forEach(acc.add);
+        // SubChapters can legitimately be null/empty in many EPUBs.
+        final subs = next.SubChapters;
+        if (subs != null) {
+          for (final sub in subs) {
+            acc.add(sub);
+          }
+        }
         return acc;
       },
     );
@@ -1505,10 +1330,12 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                     )
                   ],
                 ),
-                child: const Icon(
-                  Icons.diamond_rounded,
-                  color: Colors.white,
-                  size: 24,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset(
+                    'assets/images/purple_feather.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
