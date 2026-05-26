@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/animations.dart';
+import '../../../../core/widgets/feather_widgets.dart';
+import '../../../library/presentation/bloc/library_bloc.dart';
+import '../../../library/presentation/bloc/library_event.dart';
+import '../../../library/presentation/bloc/library_state.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
@@ -22,8 +27,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Make sure the LibraryBloc has loaded the user's books so we can
+    // mark "Owned" badges on the home page cards.
+    sl<LibraryBloc>().add(const LoadLibraryEvent());
+  }
+
   Future<void> _onRefresh() async {
     context.read<HomeBloc>().add(const RefreshHomeEvent());
+    sl<LibraryBloc>().add(const RefreshLibraryEvent());
   }
 
   @override
@@ -32,8 +46,10 @@ class _HomePageState extends State<HomePage> {
     final UserProfileEntity? profile =
         profileState is ProfileLoaded ? profileState.profile : null;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return BlocProvider.value(
+      value: sl<LibraryBloc>(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: AppColors.primary,
@@ -213,6 +229,7 @@ class _HomePageState extends State<HomePage> {
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
+      ),
       ),
     );
   }
@@ -522,10 +539,11 @@ class _StatsStrip extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
-            icon: Icons.diamond_rounded,
+            icon: Icons.local_florist_rounded, // fallback (won't render)
+            iconAsset: 'assets/images/purple_feather.png',
             value: dash.formattedCubes,
-            label: 'Tokens',
-            color: const Color(0xFF00B8D4),
+            label: 'Feathers',
+            color: AppColors.primary,
           ),
         ),
       ],
@@ -535,11 +553,13 @@ class _StatsStrip extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
+  final String? iconAsset;
   final String value;
   final String label;
   final Color color;
   const _StatCard({
     required this.icon,
+    this.iconAsset,
     required this.value,
     required this.label,
     required this.color,
@@ -570,7 +590,12 @@ class _StatCard extends StatelessWidget {
               color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: iconAsset != null
+                ? Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(iconAsset!, fit: BoxFit.contain),
+                  )
+                : Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 8),
           Text(
@@ -609,6 +634,16 @@ class _FeaturedHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, libState) {
+        final isOwned = libState is LibraryLoaded &&
+            libState.books.any((b) => b.bookId == book.id);
+        return _buildCard(context, isOwned);
+      },
+    );
+  }
+
+  Widget _buildCard(BuildContext context, bool isOwned) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       child: GestureDetector(
@@ -707,20 +742,31 @@ class _FeaturedHeroCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppColors.gold.withOpacity(0.25),
+                                color: isOwned
+                                    ? AppColors.successGreen.withOpacity(0.85)
+                                    : AppColors.gold.withOpacity(0.25),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.local_fire_department_rounded,
-                                      size: 10, color: AppColors.gold),
-                                  SizedBox(width: 3),
+                                  Icon(
+                                    isOwned
+                                        ? Icons.check_circle_rounded
+                                        : Icons.local_fire_department_rounded,
+                                    size: 10,
+                                    color: isOwned
+                                        ? Colors.white
+                                        : AppColors.gold,
+                                  ),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    'FEATURED',
+                                    isOwned ? 'OWNED' : 'FEATURED',
                                     style: TextStyle(
                                       fontSize: 9,
-                                      color: AppColors.gold,
+                                      color: isOwned
+                                          ? Colors.white
+                                          : AppColors.gold,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1,
                                     ),
@@ -753,7 +799,7 @@ class _FeaturedHeroCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            // CTA
+                            // CTA — label depends on ownership
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
@@ -761,20 +807,25 @@ class _FeaturedHeroCard extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  Icon(
+                                    isOwned
+                                        ? Icons.menu_book_rounded
+                                        : Icons.arrow_forward_rounded,
+                                    size: 14,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    'Read Now',
-                                    style: TextStyle(
+                                    isOwned ? 'Read Now' : 'View Details',
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  SizedBox(width: 6),
-                                  Icon(Icons.arrow_forward_rounded,
-                                      size: 14, color: AppColors.primary),
                                 ],
                               ),
                             ),
@@ -852,21 +903,25 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () {},
-            child: Row(
-              children: [
-                Text(
-                  'See all',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary.withOpacity(0.85),
-                    fontWeight: FontWeight.w700,
+            onTap: () => context.go('/search'),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Row(
+                children: [
+                  Text(
+                    'See all',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary.withOpacity(0.85),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 2),
-                Icon(Icons.chevron_right_rounded,
-                    size: 16, color: AppColors.primary.withOpacity(0.85)),
-              ],
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 16, color: AppColors.primary.withOpacity(0.85)),
+                ],
+              ),
             ),
           ),
         ],
@@ -893,7 +948,7 @@ class _BookHorizontalList extends StatelessWidget {
     if (publishedBooks.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 270,
+      height: 282,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -914,48 +969,35 @@ class _BookListCard extends StatelessWidget {
   final BookCard book;
   const _BookListCard({required this.book});
 
+  // Always show real prices so users can recall what they paid,
+  // even after they own the book. Ownership is shown as a corner badge.
   Widget _buildPriceWidget(BookCard book) {
-    if (book.effectivePrice == 0) {
-      return const Text(
-        'Free',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AppColors.successGreen,
-        ),
-      );
-    }
-
-    final hasDiscount = book.price > book.effectivePrice;
-    return Row(
-      children: [
-        Text(
-          '\$${book.effectivePrice.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-          ),
-        ),
-        if (hasDiscount) ...[
-          const SizedBox(width: 4),
-          Text(
-            '\$${book.price.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 9,
-              color: AppColors.textGrey,
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
-        ],
-      ],
+    return PriceTag(
+      priceUSD: book.priceUSD,
+      priceFeathers: book.priceTokens,
+      isFree: book.isFree,
+      compact: true,
     );
+  }
+
+  bool _isOwnedFromState(LibraryState state) {
+    if (state is LibraryLoaded) {
+      return state.books.any((b) => b.bookId == book.id);
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = book.price > book.effectivePrice && book.price > 0;
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, libState) {
+        final isOwned = _isOwnedFromState(libState);
+        return _buildCard(context, isOwned);
+      },
+    );
+  }
 
+  Widget _buildCard(BuildContext context, bool isOwned) {
     return Container(
       width: 130,
       margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -1062,8 +1104,45 @@ class _BookListCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Sale badge
-                if (hasDiscount)
+                // Owned badge takes priority — otherwise show FREE if applicable
+                if (isOwned)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.successGreen,
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.successGreen.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle_rounded,
+                              size: 9, color: Colors.white),
+                          SizedBox(width: 3),
+                          Text(
+                            'OWNED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (book.isFree)
                   Positioned(
                     top: 8,
                     right: 8,
@@ -1071,11 +1150,11 @@ class _BookListCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B35),
+                        color: AppColors.successGreen,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
-                        'SALE',
+                        'FREE',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 8,
