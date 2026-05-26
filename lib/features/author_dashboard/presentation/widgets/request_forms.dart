@@ -164,6 +164,7 @@ class _ModifyBookRequestFormState extends State<ModifyBookRequestForm> {
           const Text('Submit Modify Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
+            isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Select Book',
               filled: true,
@@ -259,6 +260,7 @@ class _RemoveBookRequestFormState extends State<RemoveBookRequestForm> {
           const Text('Submit Remove Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
+            isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Select Book',
               filled: true,
