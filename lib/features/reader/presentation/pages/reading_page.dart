@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:readx/core/di/injection_container.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_event.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_state.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
 import '../../../../core/data/quotes_repository.dart';
@@ -43,12 +47,15 @@ class _ReadingPageState extends State<ReadingPage> {
   // Session State
   int _currentPage = 1;
   int _totalPages = 1;
-  int _elapsedMinutesOffset = 0;
-  DateTime? _sessionStartTime;
+  /// Anchor for the next "minutes since last save" delta.
+  DateTime? _lastSaveAt;
   bool _sessionInitialized = false;
   bool _isResuming = false;
   bool _isLoading = true;
   Timer? _progressTimer;
+  int _tokensEarnedThisSession = 0;
+  bool _saveInFlight = false;
+  bool _sessionCompleted = false;
 
   @override
   void initState() {
@@ -72,24 +79,33 @@ class _ReadingPageState extends State<ReadingPage> {
       _totalPages = _book?.totalPages ?? 100;
     }
 
-    // 2. Fetch or start reading session
+    // 2. Fetch or start reading session.
+    // Backend tracks the cumulative time server-side; we only need
+    // `currentPage` to resume. The local stopwatch starts fresh.
     try {
       final session = await sl<BooksService>().getReadingSession(bookIdInt);
       if (session == null) {
         await sl<BooksService>().startReadingSession(bookIdInt);
         _currentPage = 1;
-        _elapsedMinutesOffset = 0;
         _isResuming = false;
       } else {
         _currentPage = session['currentPage'] ?? 1;
-        _elapsedMinutesOffset = session['readingTimeMinutes'] ?? 0;
         _isResuming = _currentPage > 1;
+        if (session['isCompleted'] == true) {
+          // Backend will 409 every save until a fresh session exists;
+          // attempt a restart, otherwise latch and skip future calls.
+          try {
+            await sl<BooksService>().startReadingSession(bookIdInt);
+          } catch (_) {
+            _sessionCompleted = true;
+          }
+        }
       }
-      _sessionStartTime = DateTime.now();
+      _lastSaveAt = DateTime.now();
       _sessionInitialized = true;
     } catch (e) {
       debugPrint('DEBUG READING: Failed reading session lifecycle: $e');
-      _sessionStartTime = DateTime.now();
+      _lastSaveAt = DateTime.now();
       _sessionInitialized = true;
     }
 
@@ -168,8 +184,10 @@ class _ReadingPageState extends State<ReadingPage> {
 
   Future<void> _saveProgress() async {
     if (_book == null || !_sessionInitialized) return;
+    if (_saveInFlight) return;
 
-    // Persist progress locally
+    // Always mirror progress locally so "Continue reading" stays in sync,
+    // regardless of whether we hit the network this tick.
     await BookRepository.updateProgress(
       _book!.id,
       _currentChapter,
@@ -177,22 +195,91 @@ class _ReadingPageState extends State<ReadingPage> {
       totalPages: _totalPages,
     );
 
-    // Sync to remote API
-    if (_sessionStartTime != null) {
-      final elapsedMinutes = DateTime.now().difference(_sessionStartTime!).inMinutes;
-      final totalMinutes = _elapsedMinutesOffset + elapsedMinutes;
-      try {
-        final bookIdInt = int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
-        await sl<BooksService>().updateReadingProgress(
-          bookIdInt,
-          _currentPage,
-          totalMinutes,
-        );
-        debugPrint('DEBUG READING: Saved progress. currentPage=$_currentPage, totalMinutes=$totalMinutes');
-      } catch (e) {
+    if (_sessionCompleted || _lastSaveAt == null) return;
+
+    final now = DateTime.now();
+    final deltaMinutes = now.difference(_lastSaveAt!).inMinutes;
+    if (deltaMinutes <= 0) return;
+
+    _saveInFlight = true;
+    final bookIdInt =
+        int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
+    try {
+      final result = await sl<BooksService>().updateReadingProgress(
+        bookIdInt,
+        _currentPage,
+        deltaMinutes,
+      );
+
+      // Reset stopwatch only after a successful credit.
+      _lastSaveAt = now;
+      if (result.tokensEarned > 0) {
+        _tokensEarnedThisSession += result.tokensEarned;
+      }
+      if (result.isCompleted) {
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      }
+      debugPrint(
+          'DEBUG READING: Saved progress delta=${deltaMinutes}m, tokensEarned=${result.tokensEarned}.');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      } else if (e.response?.statusCode == 404) {
+        // No server-side session — self-heal once.
+        try {
+          await sl<BooksService>().startReadingSession(bookIdInt);
+          final retry = await sl<BooksService>().updateReadingProgress(
+            bookIdInt,
+            _currentPage,
+            deltaMinutes,
+          );
+          _lastSaveAt = now;
+          if (retry.tokensEarned > 0) {
+            _tokensEarnedThisSession += retry.tokensEarned;
+          }
+          if (retry.isCompleted) {
+            _sessionCompleted = true;
+            _progressTimer?.cancel();
+          }
+        } catch (retryErr) {
+          debugPrint('DEBUG READING: self-heal failed: $retryErr');
+        }
+      } else {
         debugPrint('DEBUG READING: Failed updating session progress: $e');
       }
+    } catch (e) {
+      debugPrint('DEBUG READING: Failed updating session progress: $e');
+    } finally {
+      _saveInFlight = false;
     }
+  }
+
+  /// Final flush + side-effects when the user is leaving the reader.
+  Future<void> _handleExit() async {
+    await _saveProgress();
+    try {
+      sl<ProfileBloc>().add(const RefreshProfileEvent());
+    } catch (_) {/* bloc not registered yet — ignore */}
+
+    if (!mounted) return;
+    final earned = _tokensEarnedThisSession;
+    if (earned <= 0) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          earned == 1
+              ? 'Great job! You earned 1 token this session.'
+              : 'Great job! You earned $earned tokens this session.',
+        ),
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _showFontSizeSheet() {
@@ -354,7 +441,7 @@ class _ReadingPageState extends State<ReadingPage> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() => textController.dispose());
   }
 
   @override
@@ -397,7 +484,7 @@ class _ReadingPageState extends State<ReadingPage> {
 
     return WillPopScope(
       onWillPop: () async {
-        await _saveProgress();
+        await _handleExit();
         return true;
       },
       child: Scaffold(
@@ -418,7 +505,7 @@ class _ReadingPageState extends State<ReadingPage> {
                     progress: progressState.scrollProgress.clamp(0.0, 1.0),
                     isBookmarked: _isBookmarked,
                     onBack: () async {
-                      await _saveProgress();
+                      await _handleExit();
                       if (mounted) {
                         Navigator.pop(context);
                       }
@@ -453,29 +540,48 @@ class _ReadingPageState extends State<ReadingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('🔥', style: TextStyle(fontSize: 12)),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '12 DAY STREAK',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    )
-                                  ],
-                                ),
+                              child: Builder(
+                                builder: (ctx) {
+                                  // Pull the real streak from ProfileBloc
+                                  // instead of showing a hardcoded value.
+                                  final ps = sl<ProfileBloc>().state;
+                                  final streak = ps is ProfileLoaded
+                                      ? (ps.profile.readerDashboard
+                                              ?.streakDays ??
+                                          0)
+                                      : 0;
+                                  if (streak <= 0) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryLight,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: AppColors.primary
+                                              .withOpacity(0.2)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('🔥',
+                                            style: TextStyle(fontSize: 12)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '$streak DAY${streak == 1 ? '' : ' '}STREAK',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(height: 24),

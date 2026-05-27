@@ -38,14 +38,44 @@ class AuthError extends AuthState {
   List<Object> get props => [message];
 }
 
-class PasswordResetSent extends AuthState {
-  const PasswordResetSent();
-}
-
 class AuthRegistered extends AuthState {
   final UserEntity user;
   const AuthRegistered(this.user);
 
   @override
   List<Object> get props => [user];
+}
+
+/// Forgot-password OTP email was dispatched.
+class ForgotPasswordSent extends AuthState {
+  final String email;
+  const ForgotPasswordSent(this.email);
+
+  @override
+  List<Object> get props => [email];
+}
+
+/// Password was successfully reset; user should head back to /login.
+class PasswordResetSuccess extends AuthState {
+  const PasswordResetSuccess();
+}
+
+/// An OTP was (re)sent for the email + purpose.
+class OtpSent extends AuthState {
+  final String email;
+  final int purpose;
+  const OtpSent({required this.email, required this.purpose});
+
+  @override
+  List<Object> get props => [email, purpose];
+}
+
+/// An OTP code was successfully verified.
+class OtpVerified extends AuthState {
+  final String email;
+  final int purpose;
+  const OtpVerified({required this.email, required this.purpose});
+
+  @override
+  List<Object> get props => [email, purpose];
 }

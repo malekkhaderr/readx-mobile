@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -142,31 +143,33 @@ class WelcomePage extends StatelessWidget {
           ],
         ),
 
-            // ── Dev Skip Button ──────────────────────────
-            Positioned(
-              top: 8,
-              right: 12,
-              child: GestureDetector(
-                onTap: () => context.go('/home'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: const Text(
-                    '⚡ DEV SKIP',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+            // ── Dev Skip Button (debug builds only) ──────
+            if (kDebugMode)
+              Positioned(
+                top: 8,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () => context.go('/home'),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: const Text(
+                      'DEV',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

@@ -1,0 +1,1138 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/constants/app_theme.dart';
+import '../../../../core/data/quotes_repository.dart';
+
+enum _SortOption { newest, oldest, byBook }
+
+class QuotesPage extends StatefulWidget {
+  const QuotesPage({super.key});
+
+  @override
+  State<QuotesPage> createState() => _QuotesPageState();
+}
+
+class _QuotesPageState extends State<QuotesPage> {
+  String _filter = 'All';
+  String _searchQuery = '';
+  _SortOption _sort = _SortOption.newest;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<SavedQuote> get _filteredQuotes {
+    var all = QuotesRepository.getAllQuotes();
+
+    // Filter by book
+    if (_filter != 'All') {
+      all = all.where((q) => q.bookTitle == _filter).toList();
+    }
+
+    // Filter by search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      all = all.where((quote) {
+        return quote.text.toLowerCase().contains(q) ||
+            quote.bookTitle.toLowerCase().contains(q) ||
+            quote.author.toLowerCase().contains(q);
+      }).toList();
+    }
+
+    // Sort
+    switch (_sort) {
+      case _SortOption.newest:
+        all.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+        break;
+      case _SortOption.oldest:
+        all.sort((a, b) => a.savedAt.compareTo(b.savedAt));
+        break;
+      case _SortOption.byBook:
+        all.sort((a, b) => a.bookTitle.compareTo(b.bookTitle));
+        break;
+    }
+    return all;
+  }
+
+  List<String> get _bookFilters {
+    final books =
+        QuotesRepository.getAllQuotes().map((q) => q.bookTitle).toSet().toList();
+    books.sort();
+    return ['All', ...books];
+  }
+
+  int get _quotesThisWeek {
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+    return QuotesRepository.getAllQuotes()
+        .where((q) => q.savedAt.isAfter(weekAgo))
+        .length;
+  }
+
+  int get _booksWithQuotes {
+    return QuotesRepository.getAllQuotes()
+        .map((q) => q.bookId)
+        .toSet()
+        .length;
+  }
+
+  void _deleteQuote(SavedQuote quote) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Quote',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        content: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(12),
+            border: const Border(
+              left: BorderSide(color: AppColors.primary, width: 3),
+            ),
+          ),
+          child: Text(
+            quote.text.length > 80
+                ? '${quote.text.substring(0, 80)}...'
+                : quote.text,
+            style: const TextStyle(
+              fontStyle: FontStyle.italic,
+              color: AppColors.textDark,
+              height: 1.4,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.textGrey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              QuotesRepository.removeQuote(quote.id);
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Quote deleted'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _copyQuote(SavedQuote quote) {
+    final text = '"${quote.text}"\n\n— ${quote.author}, ${quote.bookTitle}';
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Quote copied to clipboard'),
+          ],
+        ),
+        backgroundColor: AppColors.successGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showSortMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Sort by',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _sortOption('Newest first', Icons.arrow_downward_rounded,
+                _SortOption.newest, ctx),
+            _sortOption('Oldest first', Icons.arrow_upward_rounded,
+                _SortOption.oldest, ctx),
+            _sortOption('By book title', Icons.menu_book_rounded,
+                _SortOption.byBook, ctx),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sortOption(
+      String label, IconData icon, _SortOption opt, BuildContext ctx) {
+    final selected = _sort == opt;
+    return InkWell(
+      onTap: () {
+        setState(() => _sort = opt);
+        Navigator.pop(ctx);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryLight : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                color: selected ? AppColors.primary : AppColors.textGrey,
+                size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.primary : AppColors.textDark,
+                ),
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_rounded,
+                  color: AppColors.primary, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final quotes = _filteredQuotes;
+    final filters = _bookFilters;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          _GradientHeader(
+            totalCount: QuotesRepository.count,
+            onSortTap: _showSortMenu,
+          ),
+          Expanded(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Stats Strip
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                    child: _StatsStrip(
+                      total: QuotesRepository.count,
+                      thisWeek: _quotesThisWeek,
+                      books: _booksWithQuotes,
+                    ),
+                  ),
+                ),
+
+                // Search Bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _SearchField(
+                      controller: _searchController,
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      onClear: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    ),
+                  ),
+                ),
+
+                // Filter chips
+                if (filters.length > 1)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: SizedBox(
+                        height: 36,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: filters.length,
+                          itemBuilder: (context, index) {
+                            final f = filters[index];
+                            final isSelected = f == _filter;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _filter = f),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: isSelected
+                                        ? null
+                                        : Border.all(
+                                            color: AppColors.divider
+                                                .withOpacity(0.6)),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.primary
+                                                  .withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (f == 'All')
+                                        Icon(
+                                          Icons.all_inclusive_rounded,
+                                          size: 13,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppColors.textGrey,
+                                        )
+                                      else
+                                        Icon(
+                                          Icons.menu_book_rounded,
+                                          size: 13,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppColors.textGrey,
+                                        ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        f == 'All' ? 'All Books' : f,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppColors.textDark,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // Result count + filters indicator
+                if (quotes.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${quotes.length} ${quotes.length == 1 ? 'quote' : 'quotes'}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (_filter != 'All' || _searchQuery.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'FILTERED',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Quotes list or empty state
+                if (quotes.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyState(
+                      isFiltered:
+                          _filter != 'All' || _searchQuery.isNotEmpty,
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (index >= quotes.length) return null;
+                        return Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                          child: _QuoteCard(
+                            quote: quotes[index],
+                            onDelete: () => _deleteQuote(quotes[index]),
+                            onCopy: () => _copyQuote(quotes[index]),
+                            index: index,
+                          ),
+                        );
+                      },
+                      childCount: quotes.length,
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────────────────
+
+class _GradientHeader extends StatelessWidget {
+  final int totalCount;
+  final VoidCallback onSortTap;
+  const _GradientHeader({required this.totalCount, required this.onSortTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(20, topPadding + 16, 16, 22),
+      child: Row(
+        children: [
+          // Quote icon
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.3)),
+            ),
+            child: const Icon(Icons.format_quote_rounded,
+                color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'My Quotes',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Your saved highlights',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Sort button
+          GestureDetector(
+            onTap: onSortTap,
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withOpacity(0.25)),
+              ),
+              child: const Center(
+                child: Icon(Icons.tune_rounded,
+                    color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// STATS STRIP
+// ─────────────────────────────────────────────────────────
+
+class _StatsStrip extends StatelessWidget {
+  final int total;
+  final int thisWeek;
+  final int books;
+  const _StatsStrip({
+    required this.total,
+    required this.thisWeek,
+    required this.books,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.format_quote_rounded,
+            value: '$total',
+            label: 'Total Quotes',
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.calendar_today_rounded,
+            value: '$thisWeek',
+            label: 'This Week',
+            color: const Color(0xFFFF6B35),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.menu_book_rounded,
+            value: '$books',
+            label: 'Books',
+            color: const Color(0xFF00B8D4),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// SEARCH FIELD
+// ─────────────────────────────────────────────────────────
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider.withOpacity(0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search_rounded,
+              color: AppColors.textGrey, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+              decoration: const InputDecoration(
+                hintText: 'Search quotes, books, authors...',
+                hintStyle: TextStyle(
+                    color: AppColors.textGrey,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500),
+                border: InputBorder.none,
+                isCollapsed: true,
+              ),
+            ),
+          ),
+          if (controller.text.isNotEmpty)
+            GestureDetector(
+              onTap: onClear,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.divider.withOpacity(0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close_rounded,
+                    size: 14, color: AppColors.textDark),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// QUOTE CARD
+// ─────────────────────────────────────────────────────────
+
+class _QuoteCard extends StatelessWidget {
+  final SavedQuote quote;
+  final VoidCallback onDelete;
+  final VoidCallback onCopy;
+  final int index;
+  const _QuoteCard({
+    required this.quote,
+    required this.onDelete,
+    required this.onCopy,
+    required this.index,
+  });
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  // Different accent gradients for visual variety
+  List<Color> get _accentGradient {
+    final palettes = [
+      [const Color(0xFF7B61FF), const Color(0xFF9D8AFF)], // purple
+      [const Color(0xFFFF6B35), const Color(0xFFFFA77B)], // orange
+      [const Color(0xFF00B8D4), const Color(0xFF6FE6F8)], // cyan
+      [const Color(0xFFFF6B6B), const Color(0xFFFFA8A8)], // coral
+      [const Color(0xFF4CAF50), const Color(0xFF7DDB80)], // green
+    ];
+    return palettes[index % palettes.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _accentGradient;
+    // Strip wrapping quotes if present in stored text
+    var text = quote.text;
+    if (text.startsWith('"') && text.endsWith('"')) {
+      text = text.substring(1, text.length - 1);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: accent[0].withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Left accent bar
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 5,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: accent,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+            // Decorative big quote mark in background
+            Positioned(
+              right: -10,
+              top: -20,
+              child: Icon(
+                Icons.format_quote_rounded,
+                size: 100,
+                color: accent[0].withOpacity(0.06),
+              ),
+            ),
+            // Main content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row: small quote icon
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: accent,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent[0].withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.format_quote_rounded,
+                        color: Colors.white, size: 14),
+                  ),
+                  const SizedBox(height: 14),
+                  // Quote text
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textDark,
+                      height: 1.55,
+                      fontFamily: 'Georgia',
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Divider
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.divider.withOpacity(0.6),
+                          AppColors.divider.withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Bottom: book info + actions
+                  Row(
+                    children: [
+                      // Book cover
+                      Container(
+                        width: 40,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            quote.coverUrl,
+                            width: 40,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: accent),
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.menu_book_rounded,
+                                    color: Colors.white, size: 18),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Book details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              quote.bookTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textDark,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'by ${quote.author}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: accent[0],
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.bookmark_outline_rounded,
+                                    size: 10,
+                                    color: AppColors.textGrey
+                                        .withOpacity(0.7)),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    'Ch. ${quote.chapterNumber}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textGrey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.textGrey.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _timeAgo(quote.savedAt),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textGrey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Actions
+                      _actionButton(
+                        icon: Icons.copy_rounded,
+                        color: AppColors.textGrey,
+                        onTap: onCopy,
+                      ),
+                      const SizedBox(width: 6),
+                      _actionButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: AppColors.error,
+                        onTap: onDelete,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 16, color: color),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// EMPTY STATE
+// ─────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final bool isFiltered;
+  const _EmptyState({required this.isFiltered});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Animated quote bubble
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.12),
+                    AppColors.primary.withOpacity(0.04),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      isFiltered
+                          ? Icons.search_off_rounded
+                          : Icons.format_quote_rounded,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              isFiltered ? 'No matches found' : 'No quotes yet',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isFiltered
+                  ? 'Try adjusting your search or filter'
+                  : 'Save quotes while reading\nto see them here',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textGrey,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (!isFiltered) ...[
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.primary.withOpacity(0.15)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lightbulb_rounded,
+                        size: 14, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Tip: Long-press text in the reader',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -14,11 +14,19 @@ class RatingReviewItem {
   });
 
   factory RatingReviewItem.fromJson(Map<String, dynamic> json) {
+    // Backend renamed the field to `text` after enabling textual reviews.
+    // The `reviewText`/`comment` keys stay as fallbacks for older payloads
+    // that may still be cached client-side or returned by older endpoints.
+    final text = json['text'] as String? ??
+        json['reviewText'] as String? ??
+        json['comment'] as String?;
     return RatingReviewItem(
       id: json['id'] as int? ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      reviewText: json['reviewText'] as String? ?? json['comment'] as String? ?? json['text'] as String?,
-      readerName: json['readerName'] as String? ?? json['userName'] as String? ?? 'Anonymous',
+      reviewText: text,
+      readerName: json['readerName'] as String? ??
+          json['userName'] as String? ??
+          'Anonymous',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),

@@ -144,6 +144,20 @@ class _NotificationsView extends StatelessWidget {
                           createdAt: notification.createdAt,
                           isRead: notification.isRead,
                           type: notification.type,
+                          onTap: notification.isRead
+                              ? null
+                              : () {
+                                  final profileState =
+                                      sl<ProfileBloc>().state;
+                                  if (profileState is ProfileLoaded) {
+                                    context.read<NotificationsBloc>().add(
+                                      MarkOneNotificationReadEvent(
+                                        userId: profileState.profile.id,
+                                        notificationId: notification.id,
+                                      ),
+                                    );
+                                  }
+                                },
                         );
                       },
                     ),
@@ -232,6 +246,7 @@ class _NotificationTile extends StatelessWidget {
   final DateTime createdAt;
   final bool isRead;
   final int type;
+  final VoidCallback? onTap;
 
   const _NotificationTile({
     required this.title,
@@ -239,6 +254,7 @@ class _NotificationTile extends StatelessWidget {
     required this.createdAt,
     required this.isRead,
     required this.type,
+    this.onTap,
   });
 
   String _formatTimeAgo(DateTime date) {
@@ -311,10 +327,12 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _getBgColor(isRead),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: _getBgColor(isRead),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
@@ -365,7 +383,9 @@ class _NotificationTile extends StatelessWidget {
                   message,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isRead ? AppColors.textGrey : AppColors.textDark.withOpacity(0.8),
+                    color: isRead
+                        ? AppColors.textGrey
+                        : AppColors.textDark.withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
@@ -374,6 +394,7 @@ class _NotificationTile extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

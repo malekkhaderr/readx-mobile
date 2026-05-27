@@ -7,7 +7,17 @@ class ResetPasswordUseCase {
 
   ResetPasswordUseCase(this.repository);
 
-  Future<Either<Failure, void>> call({required String email}) {
-    return repository.resetPassword(email: email);
+  Future<Either<Failure, void>> call({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) {
+    return repository.resetPassword(
+      email: email,
+      otpCode: otpCode,
+      newPassword: newPassword,
+      confirmNewPassword: confirmNewPassword,
+    );
   }
 }

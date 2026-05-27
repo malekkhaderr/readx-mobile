@@ -3,425 +3,126 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/app_theme.dart';
-import '../../../home/presentation/bloc/home_bloc.dart';
-import '../../../home/presentation/bloc/home_state.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/widgets/feather_widgets.dart';
 import '../../../home/data/models/home_response_model.dart';
-import '../../../shop/data/book_shop_state.dart';
-import '../../../shop/data/models/mock_book_shop_data.dart';
-import '../../../shop/presentation/widgets/cart_sheet.dart';
+import '../../../library/presentation/bloc/library_bloc.dart';
+import '../../../library/presentation/bloc/library_state.dart';
+import '../bloc/search_bloc.dart';
+import '../bloc/search_event.dart';
+import '../bloc/search_state.dart';
 
-enum SearchSortOption {
-  popularity('Popularity'),
-  rating('Top Rated'),
-  priceLowHigh('Price: Low to High'),
-  priceHighLow('Price: High to Low');
-
-  final String label;
-  const SearchSortOption(this.label);
-}
-
-class SearchPage extends StatefulWidget {
+class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      // Factory: every entry to the tab gets a clean SearchBloc so old
+      // searches don't bleed into a fresh visit. We immediately fire the
+      // categories + initial-books fetches so the screen is never empty.
+      create: (_) => sl<SearchBloc>()
+        ..add(const LoadSearchCategoriesEvent())
+        ..add(const LoadInitialBooksEvent()),
+      child: const _SearchView(),
+    );
+  }
 }
 
-class _SearchPageState extends State<SearchPage> {
+class _SearchView extends StatefulWidget {
+  const _SearchView();
+
+  @override
+  State<_SearchView> createState() => _SearchViewState();
+}
+
+class _SearchViewState extends State<_SearchView> {
   final _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
-  SearchSortOption _selectedSort = SearchSortOption.popularity;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    BookShopState.addListener(_onStateChanged);
-  }
-
-  void _onStateChanged() {
-    if (mounted) setState(() {});
+    _scrollController.addListener(_maybeLoadMore);
   }
 
   @override
   void dispose() {
-    BookShopState.removeListener(_onStateChanged);
+    _scrollController.removeListener(_maybeLoadMore);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _showSortSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.divider,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Sort By',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                ),
-                const SizedBox(height: 12),
-                ...SearchSortOption.values.map(
-                  (opt) => InkWell(
-                    onTap: () {
-                      setState(() => _selectedSort = opt);
-                      Navigator.pop(ctx);
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      child: Row(
-                        children: [
-                          Icon(
-                            opt == _selectedSort
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_unchecked,
-                            color: opt == _selectedSort ? AppColors.primary : AppColors.textGrey,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            opt.label,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: opt == _selectedSort ? FontWeight.w600 : FontWeight.w400,
-                              color: opt == _selectedSort ? AppColors.primary : AppColors.textDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _addToCart(BookCard book) {
-    final shopBook = ShopBook(
-      id: 'api_${book.id}',
-      title: book.title,
-      author: book.authorName,
-      coverImage: book.coverImageUrl,
-      price: book.price,
-      discountPrice: book.price > book.effectivePrice ? book.effectivePrice : null,
-      rating: book.averageRating,
-      reviewCount: book.viewCount,
-      genre: book.categoryName,
-      description: '',
-      pageCount: book.totalPages,
-      readingTime: '${(book.totalPages * 1.5).toInt()} mins',
-    );
-
-    BookShopState.instance.addToCart(shopBook);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ Added "${book.title}" to cart!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.successGreen,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  /// When the user nears the bottom of the grid, ask the bloc to fetch
+  /// the next page. The bloc itself guards against double-fetches.
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 320) {
+      context.read<SearchBloc>().add(const LoadMoreSearchResultsEvent());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final shopState = BookShopState.instance;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: BlocBuilder<HomeBloc, HomeState>(
+        child: BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
-            if (state is HomeInitial || state is HomeLoading) {
-              return CustomScrollView(
-                slivers: [
-                  _buildHeaderSection(shopState.cartCount),
-                  _buildSearchSection(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  SliverToBoxAdapter(child: _buildShimmerGrid()),
-                ],
-              );
-            }
-
-            if (state is HomeError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                    const SizedBox(height: 16),
-                    Text(state.message, style: const TextStyle(color: AppColors.textGrey)),
-                  ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<SearchBloc>().add(const RetrySearchEvent());
+                // Wait for the in-flight load to settle so the spinner
+                // doesn't disappear before the data does.
+                await context
+                    .read<SearchBloc>()
+                    .stream
+                    .firstWhere((s) => !s.isLoading);
+              },
+              color: AppColors.primary,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-              );
-            }
-
-            if (state is HomeLoaded) {
-              // Deduplicate books from all sections
-              final allBooksMap = <int, BookCard>{};
-              final bookCategoriesMap = <int, Set<String>>{};
-
-              for (final b in state.data.trendingBooks) {
-                allBooksMap[b.id] = b;
-                if (b.categoryName.isNotEmpty) {
-                  bookCategoriesMap.putIfAbsent(b.id, () => {}).add(b.categoryName.toLowerCase());
-                }
-              }
-              for (final b in state.data.recommendedBooks) {
-                allBooksMap[b.id] = b;
-                if (b.categoryName.isNotEmpty) {
-                  bookCategoriesMap.putIfAbsent(b.id, () => {}).add(b.categoryName.toLowerCase());
-                }
-              }
-              for (final cat in state.data.categories) {
-                for (final b in cat.books) {
-                  final catName = b.categoryName.isNotEmpty ? b.categoryName : cat.categoryName;
-                  final enrichedBook = BookCard(
-                    id: b.id,
-                    title: b.title,
-                    authorName: b.authorName,
-                    categoryName: catName,
-                    totalPages: b.totalPages,
-                    coverImageUrl: b.coverImageUrl,
-                    isPublished: b.isPublished,
-                    viewCount: b.viewCount,
-                    price: b.price,
-                    effectivePrice: b.effectivePrice,
-                    discountPercentage: b.discountPercentage,
-                    discountType: b.discountType,
-                    averageRating: b.averageRating,
-                  );
-                  allBooksMap[b.id] = enrichedBook;
-                  bookCategoriesMap.putIfAbsent(b.id, () => {}).add(cat.categoryName.toLowerCase());
-                }
-              }
-              final books = allBooksMap.values.toList();
-
-              // Get all categories for filter chips
-              final categoriesList = ['All', ...state.data.categories.map((c) => c.categoryName)];
-
-              // Filter books
-              final filteredBooks = books.where((book) {
-                final query = _searchQuery.toLowerCase();
-                final matchesQuery = book.title.toLowerCase().contains(query) ||
-                    book.authorName.toLowerCase().contains(query);
-
-                final matchesCategory = _selectedCategory == 'All' ||
-                    book.categoryName.toLowerCase() == _selectedCategory.toLowerCase() ||
-                    (bookCategoriesMap[book.id]?.contains(_selectedCategory.toLowerCase()) ?? false);
-
-                return matchesQuery && matchesCategory;
-              }).toList();
-
-              // Sort books
-              switch (_selectedSort) {
-                case SearchSortOption.popularity:
-                  filteredBooks.sort((a, b) => b.viewCount.compareTo(a.viewCount));
-                  break;
-                case SearchSortOption.rating:
-                  filteredBooks.sort((a, b) => b.averageRating.compareTo(a.averageRating));
-                  break;
-                case SearchSortOption.priceLowHigh:
-                  filteredBooks.sort((a, b) => a.effectivePrice.compareTo(b.effectivePrice));
-                  break;
-                case SearchSortOption.priceHighLow:
-                  filteredBooks.sort((a, b) => b.effectivePrice.compareTo(a.effectivePrice));
-                  break;
-              }
-
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
                 slivers: [
-                  _buildHeaderSection(shopState.cartCount),
-                  _buildSearchSection(),
-                  
-                  // Category Chips
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: SizedBox(
-                        height: 38,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: categoriesList.length,
-                          itemBuilder: (context, index) {
-                            final cat = categoriesList[index];
-                            final isSelected = cat == _selectedCategory;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: GestureDetector(
-                                onTap: () => setState(() {
-                                  _selectedCategory = cat;
-                                }),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.primary : AppColors.surface,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: isSelected ? null : Border.all(color: AppColors.divider),
-                                  ),
-                                  child: Text(
-                                    cat,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected ? Colors.white : AppColors.textGrey,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Results & Sort Row
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${filteredBooks.length} results',
-                            style: const TextStyle(fontSize: 13, color: AppColors.textGrey, fontWeight: FontWeight.w500),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: _showSortSheet,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.divider),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.sort, size: 14, color: AppColors.textGrey),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _selectedSort.label,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGrey),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Book Grid
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: filteredBooks.isEmpty
-                        ? SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(40),
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('🔍', style: TextStyle(fontSize: 48)),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      _searchQuery.isNotEmpty
-                                          ? 'No books match "$_searchQuery"'
-                                          : 'No books in this category',
-                                      style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          )
-                        : SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: 0.55,
-                            ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final book = filteredBooks[index];
-                                final isPurchased = shopState.isPurchased('api_${book.id}');
-                                final isInCart = shopState.isInCart('api_${book.id}');
-
-                                return _SearchBookCard(
-                                  book: book,
-                                  isPurchased: isPurchased,
-                                  isInCart: isInCart,
-                                  onTap: () => context.push('/book/${book.id}'),
-                                  onAddToCart: () => _addToCart(book),
-                                );
-                              },
-                              childCount: filteredBooks.length,
-                            ),
-                          ),
-                  ),
+                  _buildHeaderSection(),
+                  _buildSearchSection(state),
+                  if (state.categories.isNotEmpty) _buildCategoryChips(state),
+                  _buildResultsHeader(state),
+                  ..._buildBody(state),
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
-              );
-            }
-
-            return const SizedBox.shrink();
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  SliverToBoxAdapter _buildHeaderSection(int cartCount) {
-    return SliverToBoxAdapter(
+  // ─────────────────────── HEADER ───────────────────────
+  SliverToBoxAdapter _buildHeaderSection() {
+    return const SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        child: Row(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Search Books', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  SizedBox(height: 2),
-                  Text('Discover your next favorite read', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
-                ],
+            Text(
+              'Search Books',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
               ),
             ),
-            _CartIconBadge(
-              count: cartCount,
-              onTap: () => showCartSheet(context),
+            SizedBox(height: 2),
+            Text(
+              'Discover your next favorite read',
+              style: TextStyle(fontSize: 13, color: AppColors.textGrey),
             ),
           ],
         ),
@@ -429,7 +130,9 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  SliverToBoxAdapter _buildSearchSection() {
+  // ─────────────────────── SEARCH FIELD ───────────────────────
+  SliverToBoxAdapter _buildSearchSection(SearchState state) {
+    final hasText = _searchController.text.isNotEmpty;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -447,23 +150,308 @@ class _SearchPageState extends State<SearchPage> {
           ),
           child: TextField(
             controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v),
+            onChanged: (v) =>
+                context.read<SearchBloc>().add(QueryChangedEvent(v)),
             decoration: InputDecoration(
-              hintText: 'Search books, authors, genres...',
-              hintStyle: const TextStyle(color: AppColors.textGrey, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: AppColors.textGrey, size: 20),
-              suffixIcon: _searchQuery.isNotEmpty
+              hintText: 'Search books, authors, genres…',
+              hintStyle:
+                  const TextStyle(color: AppColors.textGrey, fontSize: 14),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textGrey,
+                size: 20,
+              ),
+              suffixIcon: hasText
                   ? IconButton(
-                      icon: const Icon(Icons.close, size: 18, color: AppColors.textGrey),
+                      icon: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AppColors.textGrey,
+                      ),
                       onPressed: () {
                         _searchController.clear();
-                        setState(() => _searchQuery = '');
+                        context
+                            .read<SearchBloc>()
+                            .add(const QueryChangedEvent(''));
                       },
                     )
                   : null,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────── CATEGORY CHIPS ───────────────────────
+  SliverToBoxAdapter _buildCategoryChips(SearchState state) {
+    final cats = state.categories;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: SizedBox(
+          height: 38,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            // +1 for the leading "All" chip.
+            itemCount: cats.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _CategoryChip(
+                  label: 'All',
+                  selected: state.selectedCategoryId == null,
+                  onTap: () => context.read<SearchBloc>().add(
+                        const ChangeSearchCategoryEvent(
+                          categoryId: null,
+                          categoryLabel: 'All',
+                        ),
+                      ),
+                );
+              }
+              final cat = cats[index - 1];
+              return _CategoryChip(
+                label: cat.name,
+                selected: state.selectedCategoryId == cat.id,
+                onTap: () => context.read<SearchBloc>().add(
+                      ChangeSearchCategoryEvent(
+                        categoryId: cat.id,
+                        categoryLabel: cat.name,
+                      ),
+                    ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────── RESULT COUNT HEADER ───────────────────────
+  SliverToBoxAdapter _buildResultsHeader(SearchState state) {
+    final showHeader =
+        state.results.isNotEmpty || state.totalCount > 0 || state.isLoading;
+    if (!showHeader) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+        child: Row(
+          children: [
+            Text(
+              state.isLoading
+                  ? 'Searching…'
+                  : '${state.totalCount} '
+                      '${state.totalCount == 1 ? 'result' : 'results'}',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            if (state.selectedCategoryId != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  state.selectedCategoryLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────── BODY (loading / empty / grid) ───────────────────────
+  List<Widget> _buildBody(SearchState state) {
+    // First load — show the shimmer grid, regardless of query/category.
+    if (state.isLoading && state.results.isEmpty) {
+      return [SliverToBoxAdapter(child: _buildShimmerGrid())];
+    }
+
+    if (state.errorMessage != null && state.results.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 48,
+                  color: AppColors.textGrey,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  state.errorMessage!,
+                  style: const TextStyle(
+                    color: AppColors.textGrey,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => context
+                      .read<SearchBloc>()
+                      .add(const RetrySearchEvent()),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Try again'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+    }
+
+    if (state.results.isEmpty) {
+      // Empty results AFTER a successful load. The wording differs based
+      // on whether the user filtered down to nothing or the catalogue is
+      // genuinely empty.
+      if (state.query.trim().isNotEmpty) {
+        return [
+          _buildHintSliver(
+            'No books match "${state.query.trim()}"',
+            icon: '🔍',
+          ),
+        ];
+      }
+      if (state.selectedCategoryId != null) {
+        return [
+          _buildHintSliver(
+            'No books in this category yet.',
+            icon: '📚',
+          ),
+        ];
+      }
+      return [
+        _buildHintSliver(
+          'No books available right now.',
+          icon: '📚',
+        ),
+      ];
+    }
+
+    return [
+      // Inline note when the user is mid-typing (1 char). We still show
+      // the browse results below so the screen isn't blank.
+      if (state.tooShortQuery)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Type at least 2 characters to search the catalogue.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 0.55,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final book = state.results[index];
+              return _SearchBookCard(
+                book: book,
+                onTap: () => context.push('/book/${book.id}'),
+              );
+            },
+            childCount: state.results.length,
+          ),
+        ),
+      ),
+      if (state.isLoadingMore)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          ),
+        ),
+      if (!state.hasMore && state.results.isNotEmpty)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Text(
+                'You\'ve reached the end',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ),
+          ),
+        ),
+    ];
+  }
+
+  Widget _buildHintSliver(String message, {String icon = '✨'}) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 44)),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -496,54 +484,39 @@ class _SearchPageState extends State<SearchPage> {
   }
 }
 
-class _CartIconBadge extends StatelessWidget {
-  final int count;
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
-  const _CartIconBadge({required this.count, required this.onTap});
+
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: selected ? null : Border.all(color: AppColors.divider),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : AppColors.textGrey,
             ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            const Center(
-              child: Icon(Icons.shopping_cart_outlined, color: AppColors.textDark, size: 22),
-            ),
-            if (count > 0)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      count > 9 ? '9+' : '$count',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -552,23 +525,23 @@ class _CartIconBadge extends StatelessWidget {
 
 class _SearchBookCard extends StatelessWidget {
   final BookCard book;
-  final bool isPurchased;
-  final bool isInCart;
   final VoidCallback onTap;
-  final VoidCallback onAddToCart;
 
-  const _SearchBookCard({
-    required this.book,
-    required this.isPurchased,
-    required this.isInCart,
-    required this.onTap,
-    required this.onAddToCart,
-  });
+  const _SearchBookCard({required this.book, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = book.price > book.effectivePrice;
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      bloc: sl<LibraryBloc>(),
+      builder: (context, state) {
+        final isOwned = state is LibraryLoaded &&
+            state.books.any((b) => b.bookId == book.id);
+        return _buildCard(context, isOwned);
+      },
+    );
+  }
 
+  Widget _buildCard(BuildContext context, bool isOwned) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -577,79 +550,142 @@ class _SearchBookCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
+          border: Border.all(color: AppColors.divider.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover Image
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Image.network(
-                      book.coverImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
-                        color: AppColors.primaryLight,
-                        child: const Center(
-                          child: Icon(Icons.book, color: AppColors.primary, size: 28),
-                        ),
+                  Hero(
+                    tag: 'book-cover-${book.id}',
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
                       ),
+                      child: book.coverImageUrl.startsWith('http')
+                          ? Image.network(
+                              book.coverImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) =>
+                                  _coverFallback(),
+                            )
+                          : _coverFallback(),
                     ),
                   ),
-                  // Rating Badge (Top-Right)
+                  // Rating badge — search response doesn't include
+                  // averageRating today, so most cards will show "—".
                   Positioned(
                     top: 8,
-                    right: 8,
+                    left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                          const Icon(
+                            Icons.star_rounded,
+                            color: AppColors.gold,
+                            size: 11,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             book.averageRating > 0
                                 ? book.averageRating.toStringAsFixed(1)
-                                : '0.0',
+                                : '—',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textDark,
                               fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // Purchased/Owned Badge (Top-Left)
-                  if (isPurchased)
+                  if (isOwned)
                     Positioned(
                       top: 8,
-                      left: 8,
+                      right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.successGreen,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.successGreen.withOpacity(0.4),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 9,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              'OWNED',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (book.isFree)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.successGreen,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          'OWNED',
+                          'FREE',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
@@ -657,7 +693,6 @@ class _SearchBookCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Info Details
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
@@ -681,74 +716,50 @@ class _SearchBookCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textGrey,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      // Price Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (book.effectivePrice == 0)
-                              const Text(
-                                'Free',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.successGreen,
-                                ),
-                              )
-                            else ...[
-                              if (hasDiscount)
-                                Text(
-                                  '\$${book.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: AppColors.textGrey,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                              Text(
-                                '\$${book.effectivePrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Add to Cart Button
-                      if (!isPurchased)
-                        GestureDetector(
-                          onTap: isInCart ? null : onAddToCart,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: isInCart ? AppColors.textGrey : AppColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              isInCart
-                                  ? Icons.shopping_bag_outlined
-                                  : Icons.add_shopping_cart_rounded,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                          ),
-                        ),
-                    ],
+                  const SizedBox(height: 8),
+                  PriceTag(
+                    priceUSD: book.priceUSD,
+                    priceFeathers: book.priceTokens,
+                    isFree: book.isFree,
+                    compact: true,
                   ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _coverFallback() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            book.title,
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
         ),
       ),
     );

@@ -5,6 +5,13 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/user_model.dart';
 
+/// OTP purposes — must match backend `OtpPurpose` enum byte values.
+class OtpPurpose {
+  static const int emailVerification = 1;
+  static const int forgotPassword = 2;
+  static const int changeEmail = 3;
+}
+
 abstract class AuthRemoteDataSource {
   Future<UserModel> register({
     required String firstName,
@@ -19,7 +26,27 @@ abstract class AuthRemoteDataSource {
   Future<UserModel> login({required String email, required String password});
 
   Future<void> logout();
-  Future<void> resetPassword({required String email});
+
+  /// Sends an OTP to the given email for the given purpose.
+  Future<void> sendOtp({required String email, required int purpose});
+
+  /// Verifies the supplied OTP code. Throws on failure.
+  Future<void> verifyOtp({
+    required String email,
+    required String code,
+    required int purpose,
+  });
+
+  /// Triggers a password-reset email (server sends a `ForgotPassword` OTP).
+  Future<void> forgotPassword({required String email});
+
+  /// Resets the password using the OTP delivered via `forgotPassword`.
+  Future<void> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+    required String confirmNewPassword,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -148,16 +175,103 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> resetPassword({required String email}) async {
+  Future<void> sendOtp({required String email, required int purpose}) async {
     try {
-      await dioClient.dio.post(
-        ApiConstants.resetPassword,
-        data: {'email': email},
+      final response = await dioClient.dio.post(
+        ApiConstants.otpSend,
+        data: {'email': email, 'purpose': purpose},
       );
+      _ensureOtpSuccess(response.statusCode, response.data);
     } on DioException catch (e) {
       _handleDioException(e);
       rethrow;
     }
+  }
+
+  @override
+  Future<void> verifyOtp({
+    required String email,
+    required String code,
+    required int purpose,
+  }) async {
+    try {
+      final response = await dioClient.dio.post(
+        ApiConstants.otpVerify,
+        data: {'email': email, 'code': code, 'purpose': purpose},
+      );
+      _ensureOtpSuccess(response.statusCode, response.data);
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      final response = await dioClient.dio.post(
+        ApiConstants.forgotPassword,
+        data: {'email': email},
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw ServerException(
+          _extractMessage(response.data) ??
+              'Could not send reset code. Try again.',
+        );
+      }
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      final response = await dioClient.dio.post(
+        ApiConstants.resetPassword,
+        data: {
+          'email': email,
+          'otpCode': otpCode,
+          'newPassword': newPassword,
+          'confirmNewPassword': confirmNewPassword,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw ServerException(
+          _extractMessage(response.data) ??
+              'Could not reset password. Try again.',
+        );
+      }
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    }
+  }
+
+  /// `/api/otp/send` and `/api/otp/verify` always return JSON
+  /// `{ success: bool, message: string }`. Backend returns 200 on success and
+  /// 400 with the same envelope on failure — but with `validateStatus: <500`
+  /// even the 400 lands here as a normal response, so we must inspect both.
+  void _ensureOtpSuccess(int? statusCode, dynamic body) {
+    final isHttpOk = statusCode != null && statusCode >= 200 && statusCode < 300;
+    final bodySuccess = body is Map && body['success'] == true;
+    if (isHttpOk && (body is! Map || bodySuccess)) return;
+    final message = _extractMessage(body) ?? 'OTP request failed.';
+    throw ServerException(message);
+  }
+
+  String? _extractMessage(dynamic data) {
+    if (data is Map) {
+      final raw = data['message'] ?? data['Message'];
+      if (raw is String && raw.isNotEmpty) return raw;
+    }
+    return null;
   }
 
   void _handleDioException(DioException e) {
@@ -173,24 +287,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         break;
     }
 
+    final message = _extractMessage(e.response?.data);
+
     // Handle HTTP errors
     switch (e.response?.statusCode) {
       case 400:
-        throw ServerException(e.response?.data['message'] ?? 'Bad request');
+        throw ServerException(message ?? 'Bad request');
       case 401:
-        throw UnauthorizedException(
-          e.response?.data['message'] ?? 'Unauthorized',
-        );
+        throw UnauthorizedException(message ?? 'Unauthorized');
       case 404:
-        throw NotFoundException(e.response?.data['message'] ?? 'Not found');
+        throw NotFoundException(message ?? 'Not found');
       case 409:
-        throw ServerException(
-          e.response?.data['message'] ?? 'Email already exists',
-        );
+        throw ServerException(message ?? 'Conflict');
       default:
-        throw ServerException(
-          e.response?.data['message'] ?? 'Something went wrong',
-        );
+        throw ServerException(message ?? 'Something went wrong');
     }
   }
 }

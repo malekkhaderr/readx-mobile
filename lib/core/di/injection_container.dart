@@ -1,11 +1,20 @@
 import 'package:get_it/get_it.dart';
+import '../../features/library/data/datasources/library_remote_datasource.dart';
+import '../../features/library/presentation/bloc/library_bloc.dart';
+import '../../features/quotes/data/datasources/quotes_remote_datasource.dart';
+import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
+import '../../features/search/data/datasources/search_remote_datasource.dart';
+import '../../features/search/presentation/bloc/search_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecases/forgot_password_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
+import '../../features/auth/domain/usecases/send_otp_usecase.dart';
+import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
@@ -23,6 +32,7 @@ import '../../features/notifications/data/repositories/notifications_repository_
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../features/notifications/domain/usecases/get_notifications_usecase.dart';
 import '../../features/notifications/domain/usecases/mark_all_notifications_read_usecase.dart';
+import '../../features/notifications/domain/usecases/mark_one_notification_read_usecase.dart';
 import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
 import '../../features/author_dashboard/data/datasources/author_dashboard_remote_datasource.dart';
 import '../../features/author_dashboard/data/repositories/author_dashboard_repository_impl.dart';
@@ -51,7 +61,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => sharedPreferences);
 
   // ─── Core ───────────────────────────────────────────
-  sl.registerLazySingleton<DioClient>(() => DioClient());
+  sl.registerLazySingleton<DioClient>(() => DioClient(prefs: sl()));
 
   // Restore auth token from cache so profile loads without re-login
   final cachedToken = sharedPreferences.getString('CACHED_AUTH_TOKEN');
@@ -67,7 +77,10 @@ Future<void> init() async {
       loginUseCase: sl(),
       registerUseCase: sl(),
       logoutUseCase: sl(),
+      forgotPasswordUseCase: sl(),
       resetPasswordUseCase: sl(),
+      sendOtpUseCase: sl(),
+      verifyOtpUseCase: sl(),
     ),
   );
 
@@ -75,7 +88,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
+  sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
   sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
+  sl.registerLazySingleton(() => SendOtpUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyOtpUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -124,6 +140,37 @@ Future<void> init() async {
   sl.registerLazySingleton<BooksService>(
       () => BooksService(dioClient: sl()));
 
+  // ─── Library ──────────────────────────────────────────
+
+  sl.registerLazySingleton<LibraryRemoteDataSource>(
+    () => LibraryRemoteDataSource(dioClient: sl()),
+  );
+
+  // Lazy singleton so home + library tab share the same instance
+  // (lets the home page show "Owned" badges using library state).
+  sl.registerLazySingleton(
+    () => LibraryBloc(dataSource: sl()),
+  );
+
+  // ─── Quotes ──────────────────────────────────────────
+
+  sl.registerLazySingleton<QuotesRemoteDataSource>(
+    () => QuotesRemoteDataSource(dioClient: sl()),
+  );
+
+  sl.registerLazySingleton(
+    () => QuotesBloc(dataSource: sl()),
+  );
+
+  // ─── Search ──────────────────────────────────────────
+
+  sl.registerLazySingleton<SearchRemoteDataSource>(
+    () => SearchRemoteDataSource(dioClient: sl()),
+  );
+
+  // Factory so each entry to the Search tab starts with a clean state.
+  sl.registerFactory(() => SearchBloc(dataSource: sl()));
+
   // ─── Notifications ─────────────────────────────────────
 
   // Bloc
@@ -131,12 +178,14 @@ Future<void> init() async {
     () => NotificationsBloc(
       getNotificationsUseCase: sl(),
       markAllNotificationsReadUseCase: sl(),
+      markOneNotificationReadUseCase: sl(),
     ),
   );
 
   // Use Cases
   sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
   sl.registerLazySingleton(() => MarkAllNotificationsReadUseCase(sl()));
+  sl.registerLazySingleton(() => MarkOneNotificationReadUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<NotificationsRepository>(

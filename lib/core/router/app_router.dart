@@ -6,10 +6,13 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/auth/presentation/pages/otp_page.dart';
 import '../../features/auth/presentation/pages/new_password_page.dart';
+import '../../features/auth/presentation/pages/new_password_args.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/library_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/quotes/presentation/pages/quotes_page.dart';
+import '../../features/quotes/presentation/pages/add_quote_page.dart';
+import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/reader/presentation/pages/reading_page.dart';
 import '../../features/reader/presentation/pages/epub_reader_page.dart';
@@ -32,6 +35,86 @@ import '../../features/author_dashboard/data/models/author_book_model.dart';
 // Global key for navigator (needed for push from within shell)
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+// ─────────────────────────────────────────────────────────
+// Reusable transition builders
+// ─────────────────────────────────────────────────────────
+
+/// Slide from right + fade. Used for auth flow.
+CustomTransitionPage<T> _slideFadePage<T>({
+  required LocalKey? key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 350),
+    reverseTransitionDuration: const Duration(milliseconds: 280),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.08, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Smooth fade. Used for tabs and primary screens.
+CustomTransitionPage<T> _fadePage<T>({
+  required LocalKey? key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 200),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: child,
+      );
+    },
+  );
+}
+
+/// Scale + fade. Used for modal-like full-screen pushes (book details).
+CustomTransitionPage<T> _scaleFadePage<T>({
+  required LocalKey? key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 380),
+    reverseTransitionDuration: const Duration(milliseconds: 280),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.94, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -41,44 +124,76 @@ class AppRouter {
       // ── Onboarding ──────────────────────────────────
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomePage(),
+        pageBuilder: (context, state) => _fadePage(
+          key: state.pageKey,
+          child: const WelcomePage(),
+        ),
       ),
 
       // ── Auth ────────────────────────────────────────
-      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: const LoginPage(),
+        ),
+      ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterPage(),
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: const RegisterPage(),
+        ),
       ),
 
       // ── Email Verification ──────────────────────────
       GoRoute(
         path: '/otp',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final email = state.extra is String ? state.extra as String : '';
-          return OtpPage(email: email, isPasswordReset: false);
+          return _slideFadePage(
+            key: state.pageKey,
+            child: OtpPage(email: email, isPasswordReset: false),
+          );
         },
       ),
 
       // ── Forgot Password ─────────────────────────────
       GoRoute(
         path: '/forgot-password',
-        builder: (context, state) => const ForgotPasswordPage(),
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: const ForgotPasswordPage(),
+        ),
       ),
       GoRoute(
         path: '/reset-otp',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final email = state.extra is String ? state.extra as String : '';
-          return OtpPage(email: email, isPasswordReset: true);
+          return _slideFadePage(
+            key: state.pageKey,
+            child: OtpPage(email: email, isPasswordReset: true),
+          );
         },
       ),
       GoRoute(
         path: '/new-password',
-        builder: (context, state) {
-          final email = state.extra is String ? state.extra as String : '';
-          return NewPasswordPage(email: email);
+        pageBuilder: (context, state) {
+          final extra = state.extra;
+          // Reset flow always pushes a `NewPasswordArgs` carrying the OTP code,
+          // because `/api/users/reset-password` re-validates the code.
+          // Allow a bare String fallback so a deep link without an OTP still
+          // renders (the user will hit a backend validation error on submit).
+          final args = extra is NewPasswordArgs
+              ? extra
+              : NewPasswordArgs(email: extra is String ? extra : '', otpCode: '');
+          return _slideFadePage(
+            key: state.pageKey,
+            child: NewPasswordPage(args: args),
+          );
         },
       ),
+
       // ── Main App Shell (Bottom Navigation) ──────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -90,7 +205,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomePage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const HomePage()),
               ),
             ],
           ),
@@ -99,7 +215,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/library',
-                builder: (context, state) => const LibraryPage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const LibraryPage()),
               ),
             ],
           ),
@@ -108,7 +225,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/search',
-                builder: (context, state) => const SearchPage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const SearchPage()),
               ),
             ],
           ),
@@ -117,7 +235,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/quotes',
-                builder: (context, state) => const QuotesPage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const QuotesPage()),
               ),
             ],
           ),
@@ -126,49 +245,55 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) => const ProfilePage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const ProfilePage()),
               ),
             ],
           ),
         ],
       ),
 
-      // ── Author App Shell (Bottom Navigation) ────────
+      // ── Author Shell (Dashboard / Requests / Profile) ─
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AuthorMainShell(navigationShell: navigationShell);
         },
         branches: [
-          // Tab 0: Dashboard
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/author',
-                builder: (context, state) => const AuthorDashboardPage(),
+                pageBuilder: (context, state) => _fadePage(
+                  key: state.pageKey,
+                  child: const AuthorDashboardPage(),
+                ),
               ),
             ],
           ),
-          // Tab 1: Requests
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/author/books',
-                builder: (context, state) => const AuthorBooksPage(),
+                path: '/author/requests',
+                pageBuilder: (context, state) => _fadePage(
+                  key: state.pageKey,
+                  child: const AuthorBooksPage(),
+                ),
               ),
             ],
           ),
-          // Tab 2: Profile (reuses reader profile page)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/author/profile',
-                builder: (context, state) => const ProfilePage(),
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const ProfilePage()),
               ),
             ],
           ),
         ],
       ),
 
+      // ── Author Statistics / Book Detail (modals) ───────
       GoRoute(
         path: '/author/book_detail',
         parentNavigatorKey: _rootNavigatorKey,
@@ -188,61 +313,96 @@ class AppRouter {
       GoRoute(
         path: '/book/:bookId',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final bookId = state.pathParameters['bookId'] ?? '1';
-          return BlocProvider<ProfileBloc>.value(
-            value: sl<ProfileBloc>(),
-            child: BookDetailsPage(bookId: bookId),
+          return _scaleFadePage(
+            key: state.pageKey,
+            child: BlocProvider<ProfileBloc>.value(
+              value: sl<ProfileBloc>(),
+              child: BookDetailsPage(bookId: bookId),
+            ),
           );
         },
       ),
 
-      // ── Shop Book Reader (full-screen, no bottom nav) ────
+      // ── Add a Quote (manual or pre-filled from reader) ─────
+      GoRoute(
+        path: '/add-quote',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final args = state.extra is AddQuoteArgs
+              ? state.extra as AddQuoteArgs
+              : const AddQuoteArgs();
+          return _slideFadePage(
+            key: state.pageKey,
+            child: BlocProvider<QuotesBloc>.value(
+              value: sl<QuotesBloc>(),
+              child: AddQuotePage(args: args),
+            ),
+          );
+        },
+      ),
+
+      // ── Shop Book Reader (full-screen) ─────────────
       GoRoute(
         path: '/shop-reader/:bookId',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final bookId = state.pathParameters['bookId'] ?? 'sb1';
-          return ShopReaderPage(bookId: bookId);
-        },
-      ),
-
-      // ── Reader (full-screen, no bottom nav) ─────────
-      GoRoute(
-        path: '/reader/:bookId/:chapter',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
-          final bookId = state.pathParameters['bookId'] ?? '1';
-          final chapter = int.tryParse(state.pathParameters['chapter'] ?? '1') ?? 1;
-          return ReadingPage(bookId: bookId, chapterNumber: chapter);
-        },
-      ),
-
-      // ── EPUB Reader (full-screen, no bottom nav) ─────
-      GoRoute(
-        path: '/epub-reader',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
-          final epubUrl = state.uri.queryParameters['url'] ?? '';
-          final bookTitle = state.uri.queryParameters['title'] ?? 'Epub Reader';
-          final bookIdStr = state.uri.queryParameters['id'] ?? '1';
-          final cleanedId = bookIdStr.replaceAll('api_', '');
-          final bookId = int.tryParse(cleanedId) ?? 1;
-          return EpubReaderPage(
-            bookId: bookId,
-            epubUrl: epubUrl,
-            bookTitle: bookTitle,
+          return _slideFadePage(
+            key: state.pageKey,
+            child: ShopReaderPage(bookId: bookId),
           );
         },
       ),
 
-      // ── Notifications (full-screen, no bottom nav) ────
+      // ── Reader (full-screen) ─────────
+      GoRoute(
+        path: '/reader/:bookId/:chapter',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final bookId = state.pathParameters['bookId'] ?? '1';
+          final chapter =
+              int.tryParse(state.pathParameters['chapter'] ?? '1') ?? 1;
+          return _slideFadePage(
+            key: state.pageKey,
+            child: ReadingPage(bookId: bookId, chapterNumber: chapter),
+          );
+        },
+      ),
+
+      // ── EPUB Reader (full-screen) ─────
+      GoRoute(
+        path: '/epub-reader',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final epubUrl = state.uri.queryParameters['url'] ?? '';
+          final bookTitle =
+              state.uri.queryParameters['title'] ?? 'Epub Reader';
+          final bookIdStr = state.uri.queryParameters['id'] ?? '1';
+          final cleanedId = bookIdStr.replaceAll('api_', '');
+          final bookId = int.tryParse(cleanedId) ?? 1;
+          return _slideFadePage(
+            key: state.pageKey,
+            child: EpubReaderPage(
+              bookId: bookId,
+              epubUrl: epubUrl,
+              bookTitle: bookTitle,
+            ),
+          );
+        },
+      ),
+
+      // ── Notifications (full-screen) ────
       GoRoute(
         path: '/notifications',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => Scaffold(
-          backgroundColor: AppColors.background,
-          body: SafeArea(child: const NotificationsPage()),
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: const SafeArea(child: NotificationsPage()),
+          ),
         ),
       ),
 
