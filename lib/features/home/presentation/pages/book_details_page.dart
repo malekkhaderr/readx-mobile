@@ -1158,7 +1158,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Widget _buildRatingRow(BookDetail book) {
     final rating = book.averageRating;
     final hasRating = rating > 0;
-    final ratingsCount = _ratingsResponse?.totalCount ?? 0;
+    // Prefer the book-level count (always present, even before the paged
+    // /ratings call returns) and fall back to the response when present.
+    final ratingsCount =
+        book.ratingsCount > 0 ? book.ratingsCount : _ratingsResponse?.totalCount ?? 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
