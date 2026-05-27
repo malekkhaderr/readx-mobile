@@ -10,6 +10,8 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/library_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/quotes/presentation/pages/quotes_page.dart';
+import '../../features/quotes/presentation/pages/add_quote_page.dart';
+import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/reader/presentation/pages/reading_page.dart';
 import '../../features/reader/presentation/pages/epub_reader_page.dart';
@@ -247,6 +249,24 @@ class AppRouter {
             child: BlocProvider<ProfileBloc>.value(
               value: sl<ProfileBloc>(),
               child: BookDetailsPage(bookId: bookId),
+            ),
+          );
+        },
+      ),
+
+      // ── Add a Quote (manual or pre-filled from reader) ─────
+      GoRoute(
+        path: '/add-quote',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final args = state.extra is AddQuoteArgs
+              ? state.extra as AddQuoteArgs
+              : const AddQuoteArgs();
+          return _slideFadePage(
+            key: state.pageKey,
+            child: BlocProvider<QuotesBloc>.value(
+              value: sl<QuotesBloc>(),
+              child: AddQuotePage(args: args),
             ),
           );
         },

@@ -7,8 +7,11 @@ import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
-import '../../../shop/data/models/mock_shop_data.dart';
-import '../widgets/reward_store_sheet.dart';
+// Reward store imports removed (the section was hidden — see below).
+import '../../../library/presentation/bloc/library_bloc.dart';
+import '../../../library/presentation/bloc/library_event.dart';
+import '../../../quotes/presentation/bloc/quotes_bloc.dart';
+import '../../../quotes/presentation/bloc/quotes_event.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -27,6 +30,11 @@ class ProfilePage extends StatelessWidget {
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthUnauthenticated) {
+            // Wipe per-user blocs so the next user starts clean and doesn't
+            // briefly see the previous user's profile/library/quotes.
+            sl<ProfileBloc>().add(const ResetProfileEvent());
+            sl<LibraryBloc>().add(const ResetLibraryEvent());
+            sl<QuotesBloc>().add(const ResetQuotesEvent());
             // Once successfully logged out locally, redirect to welcome
             context.go('/welcome');
           } else if (state is AuthError) {
@@ -135,7 +143,12 @@ class _ProfileBodyState extends State<_ProfileBody> {
           ),
         ]),
       ),
-    );
+    ).whenComplete(() {
+      // Dispose the controllers when the sheet closes — otherwise each
+      // open-edit cycle leaks two TextEditingControllers permanently.
+      nameController.dispose();
+      emailController.dispose();
+    });
   }
 
   @override
@@ -241,7 +254,10 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 _ProfileStatsRow(dashboard: dashboard),
                 if (dashboard.completedBooks.isNotEmpty) _CompletedBooksSection(books: dashboard.completedBooks),
                 _ReadingRitualsSection(dashboard: dashboard),
-                _RewardStoreSection(feathersAvailable: dashboard.cubes),
+                // Reward Store hidden — backend rewards system is not built yet
+                // and the section was using MockShopData. Re-enable when the
+                // real /api/rewards endpoint exists.
+                // _RewardStoreSection(feathersAvailable: dashboard.cubes),
                 _TrophyGridSection(trophies: dashboard.trophies),
               ] else
                 _EmptyDashboard(profile: profile),
@@ -528,67 +544,9 @@ class _RitualDay extends StatelessWidget {
 }
 
 // ── Reward Store ─────────────────────────────────────────────
-class _RewardStoreSection extends StatelessWidget {
-  final int feathersAvailable;
-  const _RewardStoreSection({required this.feathersAvailable});
-
-  String get _formattedFeathers => feathersAvailable >= 1000 ? '${(feathersAvailable / 1000).toStringAsFixed(1)}k' : '$feathersAvailable';
-
-  @override
-  Widget build(BuildContext context) {
-    final rewardItems = MockShopData.featuredRewards;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Reward Store', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-          GestureDetector(
-            onTap: () => showRewardStoreSheet(context),
-            child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)), child: const Text('OPEN STORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary, letterSpacing: 0.5))),
-          ),
-        ]),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))]),
-          child: Row(children: [
-            Image.asset('assets/images/purple_feather.png', width: 28, height: 28, fit: BoxFit.contain),
-            const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(_formattedFeathers, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, height: 1)),
-              Text('Feathers Available', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
-            ]),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => showRewardStoreSheet(context),
-              child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(10)), child: const Text('View Rewards', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600))),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 14),
-        Row(children: rewardItems.take(3).map((item) => Expanded(child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
-          child: GestureDetector(
-            onTap: () => showRewardStoreSheet(context),
-            child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.4), borderRadius: BorderRadius.circular(12)), child: Column(children: [
-              Text(item.emoji, style: const TextStyle(fontSize: 22)),
-              const SizedBox(height: 4),
-              Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textDark)),
-              const SizedBox(height: 2),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Image.asset('assets/images/purple_feather.png', width: 10, height: 10, fit: BoxFit.contain),
-                const SizedBox(width: 2),
-                Text('${item.price}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
-              ]),
-            ])),
-          ),
-        ))).toList()),
-      ]),
-    );
-  }
-}
+// _RewardStoreSection removed — backend rewards system isn't implemented
+// yet and the section was driven entirely by MockShopData. The Reward Store
+// will return when there's a real /api/rewards endpoint.
 
 // ── Trophy Grid ──────────────────────────────────────────────
 class _TrophyGridSection extends StatelessWidget {

@@ -42,10 +42,8 @@ class BookCard {
   final String coverImageUrl;
   final bool isPublished;
   final int viewCount;
-  final double price;
-  final double effectivePrice;
-  final double? discountPercentage;
-  final String? discountType;
+  final double priceUSD;
+  final double priceTokens;
   final double averageRating;
 
   BookCard({
@@ -57,12 +55,16 @@ class BookCard {
     required this.coverImageUrl,
     required this.isPublished,
     required this.viewCount,
-    required this.price,
-    required this.effectivePrice,
-    this.discountPercentage,
-    this.discountType,
+    required this.priceUSD,
+    required this.priceTokens,
     required this.averageRating,
   });
+
+  bool get isFree => priceUSD == 0;
+
+  // Backward compat for any existing code
+  double get price => priceUSD;
+  double get effectivePrice => priceUSD;
 
   factory BookCard.fromJson(Map<String, dynamic> json) {
     return BookCard(
@@ -74,10 +76,10 @@ class BookCard {
       coverImageUrl: json['coverImageUrl'] as String? ?? '',
       isPublished: json['isPublished'] as bool? ?? true,
       viewCount: json['viewCount'] as int? ?? 0,
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      effectivePrice: (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
-      discountPercentage: (json['discountPercentage'] as num?)?.toDouble(),
-      discountType: json['discountType'] as String?,
+      priceUSD: (json['priceUSD'] as num?)?.toDouble() ??
+          (json['price'] as num?)?.toDouble() ?? 0.0,
+      priceTokens: (json['priceTokens'] as num?)?.toDouble() ??
+          (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
     );
   }

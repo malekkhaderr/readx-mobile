@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +26,7 @@ class _OtpPageState extends State<OtpPage> {
   bool _isLoading = false;
   int _resendSeconds = 60;
   bool _canResend = false;
+  Timer? _resendTimer;
 
   @override
   void initState() {
@@ -32,23 +35,31 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   void _startResendTimer() {
+    // Cancel any in-flight ticker so we don't get two timers double-decrementing
+    // when the user rapidly taps "Resend".
+    _resendTimer?.cancel();
     setState(() {
       _resendSeconds = 60;
       _canResend = false;
     });
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() {
         _resendSeconds--;
-        if (_resendSeconds <= 0) _canResend = true;
+        if (_resendSeconds <= 0) {
+          _canResend = true;
+          t.cancel();
+        }
       });
-      return _resendSeconds > 0;
     });
   }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     for (final c in _controllers) c.dispose();
     for (final f in _focusNodes) f.dispose();
     super.dispose();
@@ -71,18 +82,20 @@ class _OtpPageState extends State<OtpPage> {
     if (!_isComplete) return;
     setState(() => _isLoading = true);
 
-    // TODO: call OTP verification API
+    // TODO: call OTP verification API (P0-1 — backend OTP wiring blocker).
+    // For now we simulate a successful verification so the flow doesn't
+    // dead-end. After registration the user is sent to the login screen so
+    // they can sign in with the credentials they just created.
     await Future.delayed(const Duration(seconds: 1));
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (widget.isPasswordReset) {
-        // Go to new password page
-        context.go('/new-password', extra: widget.email);
-      } else {
-        // Go to home after registration
-        // TODO: navigate to home
-      }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (widget.isPasswordReset) {
+      context.go('/new-password', extra: widget.email);
+    } else {
+      // Registration verification done — send the user to login so they can
+      // sign in with their new account.
+      context.go('/login');
     }
   }
 

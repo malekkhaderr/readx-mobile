@@ -10,6 +10,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({required this.getMeUseCase}) : super(const ProfileInitial()) {
     on<LoadProfileEvent>(_onLoadProfile);
     on<RefreshProfileEvent>(_onRefreshProfile);
+    on<ResetProfileEvent>((_, emit) => emit(const ProfileInitial()));
   }
 
   Future<void> _onLoadProfile(
