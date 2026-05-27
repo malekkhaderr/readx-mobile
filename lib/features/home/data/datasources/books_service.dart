@@ -224,7 +224,16 @@ class BooksService {
     }
   }
 
-  Future<void> updateReadingProgress(int bookId, int currentPage, int readingTimeMinutes) async {
+  /// Pushes a *delta* of reading time + the latest current page to the
+  /// backend. Per the API contract `readingTimeMinutes` is the time read
+  /// **since the last successful call** — the backend adds it to the server-
+  /// side total and computes streak / tokens off the increment. Callers must
+  /// reset their stopwatch on success (see ReadingSessionTracker).
+  Future<ProgressUpdateResult> updateReadingProgress(
+    int bookId,
+    int currentPage,
+    int readingTimeMinutes,
+  ) async {
     final response = await dioClient.dio.put(
       '${ApiConstants.readingSessions}/$bookId/progress',
       data: {
@@ -246,6 +255,17 @@ class BooksService {
             : null,
       );
     }
+
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      return ProgressUpdateResult.fromJson(data);
+    }
+    return const ProgressUpdateResult(
+      currentPage: 0,
+      progressPercentage: 0,
+      isCompleted: false,
+      tokensEarned: 0,
+    );
   }
 
   /// Buy book with USD. Returns the response body on success.
@@ -318,6 +338,35 @@ class BooksService {
     } catch (e) {
       return false;
     }
+  }
+}
+
+/// Lightweight projection of `ReadingSessionResponse` returned by the
+/// progress endpoint. Only carries the fields the reader UI actually
+/// reacts to.
+class ProgressUpdateResult {
+  final int currentPage;
+  final int progressPercentage;
+  final bool isCompleted;
+
+  /// Tokens awarded by *this* update only (the backend computes them from
+  /// the delta minutes the client just submitted).
+  final int tokensEarned;
+
+  const ProgressUpdateResult({
+    required this.currentPage,
+    required this.progressPercentage,
+    required this.isCompleted,
+    required this.tokensEarned,
+  });
+
+  factory ProgressUpdateResult.fromJson(Map<String, dynamic> json) {
+    return ProgressUpdateResult(
+      currentPage: (json['currentPage'] as num?)?.toInt() ?? 0,
+      progressPercentage: (json['progressPercentage'] as num?)?.toInt() ?? 0,
+      isCompleted: json['isCompleted'] == true,
+      tokensEarned: (json['tokensEarned'] as num?)?.toInt() ?? 0,
+    );
   }
 }
 
