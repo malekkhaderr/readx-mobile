@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -184,10 +185,10 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
     if (deltaMinutes <= 0) return;
 
     _saveInFlight = true;
+    final cleanId =
+        widget.bookId.replaceAll('api_', '').replaceAll('sb', '');
+    final bookIdInt = int.tryParse(cleanId) ?? 1;
     try {
-      final cleanId =
-          widget.bookId.replaceAll('api_', '').replaceAll('sb', '');
-      final bookIdInt = int.tryParse(cleanId) ?? 1;
       final result = await sl<BooksService>().updateReadingProgress(
         bookIdInt,
         _currentPage,
@@ -204,6 +205,33 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
       }
       debugPrint(
           'DEBUG SHOP READER: Saved progress delta=${deltaMinutes}m, tokensEarned=${result.tokensEarned}.');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      } else if (e.response?.statusCode == 404) {
+        // No server-side session — self-heal once.
+        try {
+          await sl<BooksService>().startReadingSession(bookIdInt);
+          final retry = await sl<BooksService>().updateReadingProgress(
+            bookIdInt,
+            _currentPage,
+            deltaMinutes,
+          );
+          _lastSaveAt = now;
+          if (retry.tokensEarned > 0) {
+            _tokensEarnedThisSession += retry.tokensEarned;
+          }
+          if (retry.isCompleted) {
+            _sessionCompleted = true;
+            _progressTimer?.cancel();
+          }
+        } catch (retryErr) {
+          debugPrint('DEBUG SHOP READER: self-heal failed: $retryErr');
+        }
+      } else {
+        debugPrint('DEBUG SHOP READER: Failed updating session progress: $e');
+      }
     } catch (e) {
       debugPrint('DEBUG SHOP READER: Failed updating session progress: $e');
     } finally {

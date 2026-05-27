@@ -204,12 +204,21 @@ class BooksService {
 
   Future<Map<String, dynamic>?> getReadingSession(int bookId) async {
     try {
-      final response = await dioClient.dio.get('${ApiConstants.readingSessions}/$bookId');
-      return response.data as Map<String, dynamic>?;
+      final response =
+          await dioClient.dio.get('${ApiConstants.readingSessions}/$bookId');
+      // DioClient.validateStatus allows 4xx through as normal responses,
+      // so we must inspect the status manually. 404 means "no session yet"
+      // — surface that as null so the caller can call /start. Without this
+      // check, we'd return the error envelope `{statusCode, message,...}`
+      // as if it were a session, which then 404s every /progress call.
+      final code = response.statusCode ?? 0;
+      if (code == 404) return null;
+      if (code < 200 || code >= 300) return null;
+      final data = response.data;
+      if (data is Map<String, dynamic>) return data;
+      return null;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        return null;
-      }
+      if (e.response?.statusCode == 404) return null;
       rethrow;
     } catch (e) {
       rethrow;
@@ -217,10 +226,21 @@ class BooksService {
   }
 
   Future<void> startReadingSession(int bookId) async {
-    try {
-      await dioClient.dio.post('${ApiConstants.readingSessions}/$bookId/start');
-    } catch (e) {
-      rethrow;
+    final response = await dioClient.dio
+        .post('${ApiConstants.readingSessions}/$bookId/start');
+    final code = response.statusCode ?? 0;
+    if (code < 200 || code >= 300) {
+      // DioClient.validateStatus allows 4xx through, so we have to throw
+      // manually — otherwise the reader thinks the session exists and the
+      // next /progress call 404s.
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        message: response.data is Map<String, dynamic>
+            ? (response.data['message']?.toString())
+            : null,
+      );
     }
   }
 

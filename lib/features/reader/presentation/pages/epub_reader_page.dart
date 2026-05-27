@@ -510,6 +510,30 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
             'Reading session already completed on the server — disabling further progress saves.');
         _sessionCompleted = true;
         _progressTimer?.cancel();
+      } else if (e.response?.statusCode == 404) {
+        // No server-side session for this book. Self-heal by starting one
+        // and retrying the save once. This covers stale-state edge cases
+        // (e.g. an earlier bug where init thought a session existed).
+        debugPrint(
+            'No reading session on the server — calling /start and retrying once.');
+        try {
+          await sl<BooksService>().startReadingSession(widget.bookId);
+          final retry = await sl<BooksService>().updateReadingProgress(
+            widget.bookId,
+            _currentPage,
+            deltaMinutes,
+          );
+          _lastSaveAt = now;
+          if (retry.tokensEarned > 0) {
+            _tokensEarnedThisSession += retry.tokensEarned;
+          }
+          if (retry.isCompleted) {
+            _sessionCompleted = true;
+            _progressTimer?.cancel();
+          }
+        } catch (retryErr) {
+          debugPrint('Self-heal failed, giving up this tick: $retryErr');
+        }
       } else {
         debugPrint('Failed to save reading progress: $e');
       }

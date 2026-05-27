@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:readx/core/di/injection_container.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
@@ -201,9 +202,9 @@ class _ReadingPageState extends State<ReadingPage> {
     if (deltaMinutes <= 0) return;
 
     _saveInFlight = true;
+    final bookIdInt =
+        int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
     try {
-      final bookIdInt =
-          int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
       final result = await sl<BooksService>().updateReadingProgress(
         bookIdInt,
         _currentPage,
@@ -221,6 +222,33 @@ class _ReadingPageState extends State<ReadingPage> {
       }
       debugPrint(
           'DEBUG READING: Saved progress delta=${deltaMinutes}m, tokensEarned=${result.tokensEarned}.');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      } else if (e.response?.statusCode == 404) {
+        // No server-side session — self-heal once.
+        try {
+          await sl<BooksService>().startReadingSession(bookIdInt);
+          final retry = await sl<BooksService>().updateReadingProgress(
+            bookIdInt,
+            _currentPage,
+            deltaMinutes,
+          );
+          _lastSaveAt = now;
+          if (retry.tokensEarned > 0) {
+            _tokensEarnedThisSession += retry.tokensEarned;
+          }
+          if (retry.isCompleted) {
+            _sessionCompleted = true;
+            _progressTimer?.cancel();
+          }
+        } catch (retryErr) {
+          debugPrint('DEBUG READING: self-heal failed: $retryErr');
+        }
+      } else {
+        debugPrint('DEBUG READING: Failed updating session progress: $e');
+      }
     } catch (e) {
       debugPrint('DEBUG READING: Failed updating session progress: $e');
     } finally {
