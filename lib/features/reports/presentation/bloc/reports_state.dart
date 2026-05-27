@@ -13,6 +13,8 @@ class ReportsInitial extends ReportsState {}
 
 class ReportsLoading extends ReportsState {}
 
+class ReportSubmitting extends ReportsState {}
+
 class ReportReasonsLoaded extends ReportsState {
   final List<ReportReasonEntity> reasons;
 

@@ -22,6 +22,7 @@ import '../../features/shop/presentation/pages/shop_reader_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/reports/presentation/pages/my_reports_page.dart';
 import '../constants/app_theme.dart';
+import '../../features/ai_chat/presentation/pages/ai_chat_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
@@ -417,6 +418,16 @@ class AppRouter {
         path: '/reports',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const MyReportsPage(),
+      ),
+
+      // ── AI Chat (full-screen) ─────────────────────────
+      GoRoute(
+        path: '/ai-chat',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: const AiChatPage(),
+        ),
       ),
     ],
   );

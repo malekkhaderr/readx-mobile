@@ -8,7 +8,7 @@ class SubmitReportUseCase {
   SubmitReportUseCase(this.repository);
 
   Future<Either<Failure, void>> call({
-    required int reasonId,
+    int? reasonId,
     String? customReason,
     String? description,
   }) async {

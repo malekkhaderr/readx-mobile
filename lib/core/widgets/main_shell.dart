@@ -7,6 +7,7 @@ import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_event.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 import '../../features/home/presentation/bloc/home_event.dart';
+import '../../features/ai_chat/presentation/widgets/owl_chat_fab.dart';
 
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -25,7 +26,18 @@ class MainShell extends StatelessWidget {
         ),
       ],
       child: Scaffold(
-        body: navigationShell,
+        body: Stack(
+          children: [
+            navigationShell,
+            Positioned(
+              right: 16,
+              bottom: 80,
+              child: OwlChatFab(
+                onTap: () => context.push('/ai-chat'),
+              ),
+            ),
+          ],
+        ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,

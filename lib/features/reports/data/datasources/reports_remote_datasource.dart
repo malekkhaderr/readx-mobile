@@ -9,7 +9,7 @@ abstract class ReportsRemoteDataSource {
   Future<List<ReportReasonModel>> getReportReasons();
   Future<List<ReportModel>> getMyReports();
   Future<void> submitReport({
-    required int reasonId,
+    int? reasonId,
     String? customReason,
     String? description,
   });
@@ -56,13 +56,13 @@ class ReportsRemoteDataSourceImpl implements ReportsRemoteDataSource {
 
   @override
   Future<void> submitReport({
-    required int reasonId,
+    int? reasonId,
     String? customReason,
     String? description,
   }) async {
     try {
-      final data = {
-        'reasonId': reasonId,
+      final data = <String, dynamic>{
+        if (reasonId != null) 'reasonId': reasonId,
         if (customReason != null && customReason.isNotEmpty)
           'customReason': customReason,
         if (description != null && description.isNotEmpty)

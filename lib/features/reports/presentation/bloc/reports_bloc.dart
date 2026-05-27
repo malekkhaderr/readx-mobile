@@ -42,7 +42,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
 
   Future<void> _onSubmitReport(
       SubmitReportEvent event, Emitter<ReportsState> emit) async {
-    emit(ReportsLoading());
+    emit(ReportSubmitting());
     final result = await submitReportUseCase(
       reasonId: event.reasonId,
       customReason: event.customReason,
