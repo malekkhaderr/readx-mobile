@@ -243,8 +243,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _ActionButton(label: 'Edit Profile', icon: Icons.edit_outlined, onTap: _showEditProfile),
                 const SizedBox(width: 10),
-                _ActionButton(label: 'Summaries', icon: Icons.summarize_outlined, isPrimary: true, onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reading summaries coming soon!'), duration: Duration(seconds: 1)));
+                _ActionButton(label: 'My Reports', icon: Icons.report_gmailerrorred_outlined, isPrimary: true, onTap: () {
+                  context.push('/reports');
                 }),
               ]),
               const SizedBox(height: 8),
@@ -458,6 +458,36 @@ class _AuthorProfileBody extends StatelessWidget {
                               ),
                             ),
                             const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                    _divider(),
+                    InkWell(
+                      onTap: () => context.push('/reports'),
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                              child: const Icon(Icons.report_gmailerrorred_rounded, size: 18, color: AppColors.error),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('My Reports', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+                                  SizedBox(height: 2),
+                                  Text('View & Submit Reports', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.error)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: AppColors.error),
                           ],
                         ),
                       ),

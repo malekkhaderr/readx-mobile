@@ -17,6 +17,7 @@ import '../../features/home/presentation/pages/book_details_page.dart';
 import '../widgets/main_shell.dart';
 import '../../features/shop/presentation/pages/shop_reader_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/reports/presentation/pages/my_reports_page.dart';
 import '../constants/app_theme.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -249,6 +250,13 @@ class AppRouter {
           backgroundColor: AppColors.background,
           body: SafeArea(child: const NotificationsPage()),
         ),
+      ),
+
+      // ── Reports (full-screen, no bottom nav) ──────────
+      GoRoute(
+        path: '/reports',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const MyReportsPage(),
       ),
     ],
   );
