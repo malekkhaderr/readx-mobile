@@ -17,6 +17,8 @@ import 'package:readx/features/home/data/models/book_detail_model.dart';
 import 'package:readx/features/library/presentation/bloc/library_bloc.dart';
 import 'package:readx/features/library/presentation/bloc/library_event.dart';
 import 'package:readx/features/library/presentation/bloc/library_state.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_event.dart';
 import 'package:readx/features/quotes/presentation/pages/add_quote_page.dart';
 import 'package:readx/core/data/book_repository.dart';
 import 'package:html/dom.dart' as dom;
@@ -49,14 +51,22 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
 
   // Reading Session State
   int _currentPage = 0;
-  DateTime? _sessionStartTime;
-  int _elapsedMinutesOffset = 0;
+  /// Timestamp of the last successful progress save. We send DELTAS to the
+  /// backend (`readingTimeMinutes` since this anchor), then reset it on a
+  /// successful save so we don't double-count minutes already credited.
+  DateTime? _lastSaveAt;
   bool _sessionInitialized = false;
   bool _isResuming = false;
   // Latched once the backend returns 409 ("session already completed").
   // After that we stop calling the /progress endpoint to avoid a retry storm.
   bool _sessionCompleted = false;
   Timer? _progressTimer;
+  /// Tokens earned across all `/progress` calls in this reader visit. Used
+  /// to show the "Great job! +N tokens" snackbar on exit.
+  int _tokensEarnedThisSession = 0;
+  /// In-flight guard so the 30-second timer can't pile up if the network
+  /// hiccups and a save takes longer than the interval.
+  bool _saveInFlight = false;
   final ValueNotifier<dynamic> _progressNotifier = ValueNotifier<dynamic>(null);
   int _totalPages = 1;
   int _totalParagraphs = 100;
@@ -282,17 +292,19 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     // page total in onDocumentLoaded(). The backend's totalPages was
     // inconsistent with the actual content for many books.
 
-    // Initialize session with backend
+    // Initialize session with backend.
+    //
+    // Resume note: the backend tracks the cumulative time server-side, so we
+    // only need to know `currentPage` to resume the right place. The local
+    // stopwatch starts fresh from the moment the page opens.
     try {
       final session = await sl<BooksService>().getReadingSession(widget.bookId);
       if (session == null) {
         await sl<BooksService>().startReadingSession(widget.bookId);
         _currentPage = 1;
-        _elapsedMinutesOffset = 0;
         _isResuming = false;
       } else {
         _currentPage = session['currentPage'] ?? 1;
-        _elapsedMinutesOffset = session['readingTimeMinutes'] ?? 0;
         _isResuming = _currentPage > 1;
         // If the backend already marked this session as completed, the
         // /progress endpoint will reject every save with 409. Try to start
@@ -311,7 +323,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           }
         }
       }
-      _sessionStartTime = DateTime.now();
+      _lastSaveAt = DateTime.now();
       _sessionInitialized = true;
       await BookRepository.updateProgress(
         widget.bookId.toString(),
@@ -319,10 +331,11 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         _currentPage,
         totalPages: _totalPages > 1 ? _totalPages : null,
       );
-      debugPrint('DEBUG READER: Initialized backend session. currentPage: $_currentPage, isResuming: $_isResuming');
+      debugPrint(
+          'DEBUG READER: Initialized backend session. currentPage: $_currentPage, isResuming: $_isResuming');
     } catch (e) {
       debugPrint('DEBUG READER: Failed to initialize backend session: $e');
-      _sessionStartTime = DateTime.now();
+      _lastSaveAt = DateTime.now();
       _isResuming = _currentPage > 1;
       _sessionInitialized = true;
       try {
@@ -427,12 +440,12 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   Future<void> _saveProgress() async {
-    if (_sessionStartTime == null) return;
+    if (_lastSaveAt == null) return;
+    if (_saveInFlight) return;
 
     // If the backend already told us the session is finished, stop hitting
     // the endpoint — otherwise every 30-second tick spams a 409 forever.
     if (_sessionCompleted) {
-      // Still keep the local progress up to date.
       await BookRepository.updateProgress(
         widget.bookId.toString(),
         1,
@@ -442,24 +455,53 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       return;
     }
 
-    final elapsedMinutes =
-        DateTime.now().difference(_sessionStartTime!).inMinutes;
-    final totalMinutes = _elapsedMinutesOffset + elapsedMinutes;
-    try {
-      debugPrint(
-          'Saving reading progress: currentPage=$_currentPage, readingTimeMinutes=$totalMinutes');
-      await sl<BooksService>().updateReadingProgress(
-        widget.bookId,
-        _currentPage,
-        totalMinutes,
-      );
+    // Compute the *delta* — minutes read since the last successful save —
+    // and snapshot `now` BEFORE the network call so any minutes that
+    // accumulate while the request is in flight roll into the next batch.
+    final now = DateTime.now();
+    final deltaMinutes = now.difference(_lastSaveAt!).inMinutes;
+
+    if (deltaMinutes <= 0) {
+      // Nothing to credit yet, but still mirror the page locally so the
+      // home/library "Continue reading" stays in sync after page turns.
       await BookRepository.updateProgress(
         widget.bookId.toString(),
         1,
         _currentPage,
         totalPages: _totalPages > 1 ? _totalPages : null,
       );
-      debugPrint('Updated local BookRepository progress to $_currentPage pages.');
+      return;
+    }
+
+    _saveInFlight = true;
+    try {
+      debugPrint(
+          'Saving reading progress: currentPage=$_currentPage, deltaMinutes=$deltaMinutes');
+      final result = await sl<BooksService>().updateReadingProgress(
+        widget.bookId,
+        _currentPage,
+        deltaMinutes,
+      );
+
+      // Reset the stopwatch only after a successful credit so a failed
+      // save doesn't lose the user's reading time.
+      _lastSaveAt = now;
+      if (result.tokensEarned > 0) {
+        _tokensEarnedThisSession += result.tokensEarned;
+        debugPrint(
+            'Earned ${result.tokensEarned} tokens (session total: $_tokensEarnedThisSession).');
+      }
+      if (result.isCompleted) {
+        _sessionCompleted = true;
+        _progressTimer?.cancel();
+      }
+
+      await BookRepository.updateProgress(
+        widget.bookId.toString(),
+        1,
+        _currentPage,
+        totalPages: _totalPages > 1 ? _totalPages : null,
+      );
     } on DioException catch (e) {
       // 409 = backend completed the session. Latch our flag so we stop
       // calling progress for the rest of this reader session.
@@ -468,6 +510,30 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
             'Reading session already completed on the server — disabling further progress saves.');
         _sessionCompleted = true;
         _progressTimer?.cancel();
+      } else if (e.response?.statusCode == 404) {
+        // No server-side session for this book. Self-heal by starting one
+        // and retrying the save once. This covers stale-state edge cases
+        // (e.g. an earlier bug where init thought a session existed).
+        debugPrint(
+            'No reading session on the server — calling /start and retrying once.');
+        try {
+          await sl<BooksService>().startReadingSession(widget.bookId);
+          final retry = await sl<BooksService>().updateReadingProgress(
+            widget.bookId,
+            _currentPage,
+            deltaMinutes,
+          );
+          _lastSaveAt = now;
+          if (retry.tokensEarned > 0) {
+            _tokensEarnedThisSession += retry.tokensEarned;
+          }
+          if (retry.isCompleted) {
+            _sessionCompleted = true;
+            _progressTimer?.cancel();
+          }
+        } catch (retryErr) {
+          debugPrint('Self-heal failed, giving up this tick: $retryErr');
+        }
       } else {
         debugPrint('Failed to save reading progress: $e');
       }
@@ -480,6 +546,8 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       );
     } catch (e) {
       debugPrint('Failed to save reading progress: $e');
+    } finally {
+      _saveInFlight = false;
     }
   }
 
@@ -490,6 +558,38 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         _saveProgress();
       }
     });
+  }
+
+  /// Final flush + side-effects when the user is leaving the reader. Called
+  /// from the back button and the system pop. After the last save we ask
+  /// the ProfileBloc to refetch /users/me so the dashboard's streak +
+  /// token balance reflect what the backend just credited, and we surface
+  /// the cumulative tokens earned from this visit as a snackbar.
+  Future<void> _handleExit() async {
+    await _saveProgress();
+    // Fire-and-forget profile refresh so the dashboard tile updates the
+    // moment the user lands back on it.
+    try {
+      sl<ProfileBloc>().add(const RefreshProfileEvent());
+    } catch (_) {/* bloc not registered yet — ignore */}
+
+    if (!mounted) return;
+    final earned = _tokensEarnedThisSession;
+    if (earned <= 0) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          earned == 1
+              ? 'Great job! You earned 1 token this session.'
+              : 'Great job! You earned $earned tokens this session.',
+        ),
+        backgroundColor: const Color(0xFF6B5BFF),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _showError(String title, String details) {
@@ -544,7 +644,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await _saveProgress();
+        await _handleExit();
         return true;
       },
       child: Scaffold(
@@ -555,7 +655,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new, color: _textColor, size: 20),
             onPressed: () async {
-              await _saveProgress();
+              await _handleExit();
               if (context.mounted) {
                 Navigator.of(context).pop();
               }

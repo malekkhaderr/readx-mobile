@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/constants/app_theme.dart';
 import 'core/di/injection_container.dart' as di;
+import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
 import 'core/data/book_repository.dart';
 
@@ -21,6 +22,14 @@ void main() async {
 
   await di.init();
   await BookRepository.init();
+
+  // Once DI is built we can register the 401 hook against the same router
+  // instance the app will use, so authenticated requests that come back 401
+  // (e.g. expired token) bounce the user back to /welcome.
+  di.sl<DioClient>().registerUnauthorizedHandler(() {
+    AppRouter.router.go('/welcome');
+  });
+
   runApp(const MyApp());
 }
 

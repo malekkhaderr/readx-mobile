@@ -20,6 +20,7 @@ class BookDetail {
   final double priceUSD;
   final double priceTokens;
   final double averageRating;
+  final int ratingsCount;
 
   BookDetail({
     required this.id,
@@ -43,6 +44,7 @@ class BookDetail {
     required this.priceUSD,
     required this.priceTokens,
     required this.averageRating,
+    required this.ratingsCount,
   });
 
   bool get isFree => priceUSD == 0;
@@ -80,6 +82,7 @@ class BookDetail {
       priceTokens: (json['priceTokens'] as num?)?.toDouble() ??
           (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
+      ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

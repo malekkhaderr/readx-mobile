@@ -34,6 +34,10 @@ dependencies:
   # State Management
   flutter_bloc: ^8.1.5
   equatable: ^2.0.5
+  # Search debounce + switchMap on the SearchBloc event stream. Bloc
+  # already depends on this transitively but we declare it so updates to
+  # bloc don't accidentally drop it.
+  stream_transform: ^2.1.0
 
   # Dependency Injection
   get_it: ^7.6.7

@@ -12,6 +12,7 @@ import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
 import '../../../quotes/presentation/bloc/quotes_bloc.dart';
 import '../../../quotes/presentation/bloc/quotes_event.dart';
+import '../../../auth/data/datasources/auth_remote_datasource.dart' show OtpPurpose;
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -190,8 +191,19 @@ class _ProfileBodyState extends State<_ProfileBody> {
                     const SizedBox(width: 8),
                     const Expanded(child: Text('Please verify your email address.', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.w500))),
                     GestureDetector(
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent!'))),
-                      child: const Text('Resend', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
+                      onTap: () {
+                        context.read<AuthBloc>().add(SendOtpEvent(
+                              email: profile.email,
+                              purpose: OtpPurpose.emailVerification,
+                            ));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Sending verification code…'),
+                          ),
+                        );
+                        context.go('/otp', extra: profile.email);
+                      },
+                      child: const Text('Verify', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
                     ),
                   ]),
                 ),
@@ -352,8 +364,19 @@ class _AuthorProfileBody extends StatelessWidget {
                     const SizedBox(width: 8),
                     const Expanded(child: Text('Please verify your email address.', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.w500))),
                     GestureDetector(
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent!'))),
-                      child: const Text('Resend', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
+                      onTap: () {
+                        context.read<AuthBloc>().add(SendOtpEvent(
+                              email: profile.email,
+                              purpose: OtpPurpose.emailVerification,
+                            ));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Sending verification code…'),
+                          ),
+                        );
+                        context.go('/otp', extra: profile.email);
+                      },
+                      child: const Text('Verify', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
                     ),
                   ]),
                 ),
