@@ -13,6 +13,13 @@ class LoadSearchCategoriesEvent extends SearchEvent {
   const LoadSearchCategoriesEvent();
 }
 
+/// Initial browse fetch when the user opens the Search tab without any
+/// query — pulls the paged list from /api/books so the screen is never
+/// empty. Also used after the user clears the search field.
+class LoadInitialBooksEvent extends SearchEvent {
+  const LoadInitialBooksEvent();
+}
+
 /// Fired by the SearchPage every time the user types. The bloc is
 /// responsible for debouncing — handlers don't run for every keystroke,
 /// only after the user has paused typing.

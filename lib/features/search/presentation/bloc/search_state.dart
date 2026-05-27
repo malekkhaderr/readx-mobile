@@ -47,10 +47,6 @@ class SearchState extends Equatable {
     this.tooShortQuery = false,
   });
 
-  /// True when the user has interacted at all — controls whether we render
-  /// the empty-state hero or the result grid.
-  bool get hasSearched => query.isNotEmpty || selectedCategoryId != null;
-
   SearchState copyWith({
     String? query,
     int? selectedCategoryId,

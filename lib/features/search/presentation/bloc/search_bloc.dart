@@ -16,6 +16,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
   SearchBloc({required this.dataSource}) : super(const SearchState()) {
     on<LoadSearchCategoriesEvent>(_onLoadCategories);
+    on<LoadInitialBooksEvent>(_onLoadInitial);
     on<QueryChangedEvent>(
       _onQueryChanged,
       transformer: _debounceTransformer(),
@@ -43,6 +44,19 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(state.copyWith(categories: cats));
   }
 
+  Future<void> _onLoadInitial(
+    LoadInitialBooksEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    if (state.results.isNotEmpty || state.isLoading) return;
+    emit(state.copyWith(isLoading: true, clearError: true));
+    await _runFetch(
+      emit,
+      term: state.query.trim(),
+      categoryId: state.selectedCategoryId,
+    );
+  }
+
   Future<void> _onQueryChanged(
     QueryChangedEvent event,
     Emitter<SearchState> emit,
@@ -50,35 +64,31 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final raw = event.query;
     final trimmed = raw.trim();
 
-    // Empty query → reset to the pre-search hero. Backend rejects an empty
-    // SearchTerm with a 400 (model validation) so we never call it.
+    // Empty query → fall back to browse mode (paged /api/books) so the
+    // user keeps seeing the catalogue even with no search term.
     if (trimmed.isEmpty) {
       emit(state.copyWith(
         query: raw,
-        results: const [],
-        totalCount: 0,
-        pageNumber: 1,
-        hasMore: false,
-        isLoading: false,
+        isLoading: true,
         tooShortQuery: false,
         clearError: true,
       ));
+      await _runFetch(emit, term: '', categoryId: state.selectedCategoryId);
       return;
     }
 
-    // 1-char query → soft-block: don't hit the server (would be a 400),
-    // but tell the UI to show a "type 2+ chars" hint.
+    // 1-char query → still browse mode (the backend would reject /search,
+    // and the user expects "almost typing" to show *something*). Surface
+    // the "Type 2+ chars" hint as an inline note so they know the search
+    // hasn't kicked in yet.
     if (trimmed.length == 1) {
       emit(state.copyWith(
         query: raw,
-        results: const [],
-        totalCount: 0,
-        pageNumber: 1,
-        hasMore: false,
-        isLoading: false,
+        isLoading: true,
         tooShortQuery: true,
         clearError: true,
       ));
+      await _runFetch(emit, term: '', categoryId: state.selectedCategoryId);
       return;
     }
 
@@ -89,7 +99,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       clearError: true,
     ));
 
-    await _runSearch(emit, term: trimmed, categoryId: state.selectedCategoryId);
+    await _runFetch(emit, term: trimmed, categoryId: state.selectedCategoryId);
   }
 
   Future<void> _onChangeCategory(
@@ -97,26 +107,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     Emitter<SearchState> emit,
   ) async {
     final trimmedQuery = state.query.trim();
-    // The backend's /search endpoint requires a SearchTerm of at least 2
-    // characters; selecting a category alone isn't enough. Stage the chip
-    // in state so the user sees their pick is active, but defer the
-    // actual query until they've typed something.
-    if (trimmedQuery.length < 2) {
-      emit(state.copyWith(
-        selectedCategoryId: event.categoryId,
-        clearSelectedCategory: event.categoryId == null,
-        selectedCategoryLabel: event.categoryLabel,
-        results: const [],
-        totalCount: 0,
-        pageNumber: 1,
-        hasMore: false,
-        isLoading: false,
-        tooShortQuery: trimmedQuery.length == 1,
-        clearError: true,
-      ));
-      return;
-    }
-
     emit(state.copyWith(
       selectedCategoryId: event.categoryId,
       clearSelectedCategory: event.categoryId == null,
@@ -124,9 +114,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       isLoading: true,
       clearError: true,
     ));
-    await _runSearch(
+    // Browse mode picks /api/books (which supports categoryId on its own);
+    // search mode picks /api/books/search (which requires the term).
+    await _runFetch(
       emit,
-      term: trimmedQuery,
+      term: trimmedQuery.length >= 2 ? trimmedQuery : '',
       categoryId: event.categoryId,
     );
   }
@@ -139,12 +131,19 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(state.copyWith(isLoadingMore: true, clearError: true));
 
     try {
-      final response = await dataSource.search(
-        term: state.query.trim(),
-        categoryId: state.selectedCategoryId,
-        pageNumber: state.pageNumber + 1,
-        pageSize: _pageSize,
-      );
+      final term = state.query.trim();
+      final response = term.length >= 2
+          ? await dataSource.search(
+              term: term,
+              categoryId: state.selectedCategoryId,
+              pageNumber: state.pageNumber + 1,
+              pageSize: _pageSize,
+            )
+          : await dataSource.browse(
+              categoryId: state.selectedCategoryId,
+              pageNumber: state.pageNumber + 1,
+              pageSize: _pageSize,
+            );
       emit(state.copyWith(
         results: [...state.results, ...response.items],
         totalCount: response.totalCount,
@@ -166,25 +165,35 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     Emitter<SearchState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, clearError: true));
-    await _runSearch(
+    await _runFetch(
       emit,
       term: state.query.trim(),
       categoryId: state.selectedCategoryId,
     );
   }
 
-  Future<void> _runSearch(
+  /// Routes the fetch to either `/api/books/search` (when `term` is ≥ 2
+  /// chars — the backend's hard floor for the search endpoint) or
+  /// `/api/books` (for browse / category-only / 1-char queries). Both
+  /// return the same paged shape so the bloc state model is unchanged.
+  Future<void> _runFetch(
     Emitter<SearchState> emit, {
     required String term,
     int? categoryId,
   }) async {
     try {
-      final response = await dataSource.search(
-        term: term,
-        categoryId: categoryId,
-        pageNumber: 1,
-        pageSize: _pageSize,
-      );
+      final response = term.length >= 2
+          ? await dataSource.search(
+              term: term,
+              categoryId: categoryId,
+              pageNumber: 1,
+              pageSize: _pageSize,
+            )
+          : await dataSource.browse(
+              categoryId: categoryId,
+              pageNumber: 1,
+              pageSize: _pageSize,
+            );
       if (emit.isDone) return;
       emit(state.copyWith(
         results: response.items,

@@ -19,9 +19,11 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       // Factory: every entry to the tab gets a clean SearchBloc so old
-      // searches don't bleed into a fresh visit.
-      create: (_) =>
-          sl<SearchBloc>()..add(const LoadSearchCategoriesEvent()),
+      // searches don't bleed into a fresh visit. We immediately fire the
+      // categories + initial-books fetches so the screen is never empty.
+      create: (_) => sl<SearchBloc>()
+        ..add(const LoadSearchCategoriesEvent())
+        ..add(const LoadInitialBooksEvent()),
       child: const _SearchView(),
     );
   }
@@ -276,10 +278,7 @@ class _SearchViewState extends State<_SearchView> {
 
   // ─────────────────────── BODY (loading / empty / grid) ───────────────────────
   List<Widget> _buildBody(SearchState state) {
-    if (state.tooShortQuery) {
-      return [_buildHintSliver('Type at least 2 characters to search.')];
-    }
-
+    // First load — show the shimmer grid, regardless of query/category.
     if (state.isLoading && state.results.isEmpty) {
       return [SliverToBoxAdapter(child: _buildShimmerGrid())];
     }
@@ -321,19 +320,70 @@ class _SearchViewState extends State<_SearchView> {
     }
 
     if (state.results.isEmpty) {
-      // Two distinct empty states: pre-search (no query yet) vs. post-search
-      // (we hit the API and it returned 0). The hero version is friendlier
-      // for the first-impression case.
-      if (!state.hasSearched) {
-        return [_buildHeroEmpty()];
+      // Empty results AFTER a successful load. The wording differs based
+      // on whether the user filtered down to nothing or the catalogue is
+      // genuinely empty.
+      if (state.query.trim().isNotEmpty) {
+        return [
+          _buildHintSliver(
+            'No books match "${state.query.trim()}"',
+            icon: '🔍',
+          ),
+        ];
       }
-      final label = state.query.trim().isNotEmpty
-          ? 'No books match "${state.query.trim()}"'
-          : 'No books in this category';
-      return [_buildHintSliver(label, icon: '🔍')];
+      if (state.selectedCategoryId != null) {
+        return [
+          _buildHintSliver(
+            'No books in this category yet.',
+            icon: '📚',
+          ),
+        ];
+      }
+      return [
+        _buildHintSliver(
+          'No books available right now.',
+          icon: '📚',
+        ),
+      ];
     }
 
     return [
+      // Inline note when the user is mid-typing (1 char). We still show
+      // the browse results below so the screen isn't blank.
+      if (state.tooShortQuery)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Type at least 2 characters to search the catalogue.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverGrid(
@@ -399,55 +449,6 @@ class _SearchViewState extends State<_SearchView> {
                 style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textGrey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroEmpty() {
-    return SliverFillRemaining(
-      hasScrollBody: false,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.travel_explore_rounded,
-                  color: AppColors.primary,
-                  size: 44,
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Search the catalogue',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Type a title, an author, or a phrase from the\n'
-                'description. Pick a category to narrow it down.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textGrey,
-                  height: 1.4,
                 ),
               ),
             ],

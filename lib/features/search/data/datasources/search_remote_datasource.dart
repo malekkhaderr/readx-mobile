@@ -9,10 +9,9 @@ class SearchRemoteDataSource {
 
   SearchRemoteDataSource({required this.dioClient});
 
-  /// Calls `GET /api/books/search`. The backend rejects search terms of
-  /// length 1 with a 400 ValidationException, so callers SHOULD pre-guard;
-  /// we surface a friendly message if it slips through. Empty strings are
-  /// fine and return the full unfiltered page.
+  /// Calls `GET /api/books/search`. The backend rejects empty / 1-char
+  /// search terms with a 400, so callers SHOULD pre-guard. Used by the
+  /// SearchBloc only when the user has typed ≥ 2 characters.
   Future<SearchBooksResponse> search({
     required String term,
     int? categoryId,
@@ -30,9 +29,33 @@ class SearchRemoteDataSource {
     if (languageId != null) query['languageId'] = languageId;
     if (minimumRating != null) query['minimumRating'] = minimumRating;
 
+    return _getPaged('${ApiConstants.books}/search', query);
+  }
+
+  /// Calls `GET /api/books` — the plain list endpoint that does NOT
+  /// require a search term. Used in "browse" mode (no query yet, or only
+  /// a category filter) so the user always sees something instead of an
+  /// empty page. Reuses the same paged response shape as /search.
+  Future<SearchBooksResponse> browse({
+    int? categoryId,
+    int pageNumber = 1,
+    int pageSize = 20,
+  }) async {
+    final query = <String, dynamic>{
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    };
+    if (categoryId != null) query['categoryId'] = categoryId;
+    return _getPaged(ApiConstants.books, query);
+  }
+
+  Future<SearchBooksResponse> _getPaged(
+    String path,
+    Map<String, dynamic> query,
+  ) async {
     try {
       final response = await dioClient.dio.get(
-        '${ApiConstants.books}/search',
+        path,
         queryParameters: query,
       );
       // DioClient.validateStatus < 500 lets 4xx through — must inspect.
