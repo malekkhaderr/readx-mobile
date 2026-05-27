@@ -17,6 +17,7 @@ import '../../data/datasources/books_service.dart';
 import '../../data/models/book_detail_model.dart';
 import '../../data/models/book_comment_model.dart';
 import '../../data/models/rating_review_model.dart';
+import '../widgets/rate_book_sheet.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
 import '../../../profile/presentation/bloc/profile_event.dart';
@@ -53,6 +54,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   // Ratings State
   RatingReviewsResponse? _ratingsResponse;
   bool _loadingRatings = false;
+
+  /// Current user's existing rating for this book — pre-fills the rate sheet
+  /// and toggles the rate button between "Rate this book" and "Update rating".
+  RatingReviewItem? _myRating;
+  bool _loadingMyRating = false;
 
   int? _editingCommentId;
   final TextEditingController _editCommentController = TextEditingController();
@@ -138,6 +144,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       }
       _loadComments();
       _loadRatings();
+      _loadMyRating();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -176,6 +183,92 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         setState(() => _loadingRatings = false);
       }
+    }
+  }
+
+  Future<void> _loadMyRating() async {
+    if (_book == null) return;
+    setState(() => _loadingMyRating = true);
+    try {
+      final mine = await sl<BooksService>().getMyRating(_book!.id);
+      if (mounted) {
+        setState(() {
+          _myRating = mine;
+          _loadingMyRating = false;
+        });
+      }
+    } catch (_) {
+      // 401 is handled by the global Dio interceptor; everything else falls
+      // through silently — the user just won't see the "Update" affordance.
+      if (mounted) setState(() => _loadingMyRating = false);
+    }
+  }
+
+  Future<void> _openRateSheet() async {
+    final book = _book;
+    if (book == null) return;
+
+    final result = await showRateBookSheet(
+      context: context,
+      bookId: book.id,
+      bookTitle: book.title,
+      booksService: sl<BooksService>(),
+      existingRating: _myRating,
+    );
+    if (result == null || !mounted) return;
+
+    if (result.deleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your rating was removed.'),
+          backgroundColor: AppColors.textGrey,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      setState(() => _myRating = null);
+      // Reload aggregate + paged list from the server so the new average
+      // is reflected; the UI doesn't try to recompute it locally because we
+      // don't have ratingsCount client-side.
+      await _refreshBookAndRatings();
+      return;
+    }
+
+    final submitted = result.submitted;
+    if (submitted != null) {
+      final wasFirstRating = _myRating == null;
+      setState(() => _myRating = submitted);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            wasFirstRating ? 'Thanks for rating!' : 'Rating updated.',
+          ),
+          backgroundColor: AppColors.successGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _refreshBookAndRatings();
+    }
+  }
+
+  /// Re-fetches both the book detail (for the new aggregate `averageRating`)
+  /// and the paged review list. Done in parallel so the user isn't waiting
+  /// twice.
+  Future<void> _refreshBookAndRatings() async {
+    final book = _book;
+    if (book == null) return;
+    try {
+      final results = await Future.wait([
+        sl<BooksService>().getBookDetail(book.id, incrementView: false),
+        sl<BooksService>().getRatings(book.id),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _book = results[0] as BookDetail;
+        _ratingsResponse = results[1] as RatingReviewsResponse;
+      });
+    } catch (_) {
+      // The submit already succeeded; if the refresh fails, the next page
+      // open will pick up fresh data. Stay silent.
     }
   }
 
@@ -1062,34 +1155,103 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     final hasRating = rating > 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
         children: [
-          AnimatedStars(
-            rating: hasRating ? rating : 0,
-            size: 18,
-            filledColor: AppColors.gold,
-            emptyColor: AppColors.textLight,
-            duration: const Duration(milliseconds: 900),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedStars(
+                rating: hasRating ? rating : 0,
+                size: 18,
+                filledColor: AppColors.gold,
+                emptyColor: AppColors.textLight,
+                duration: const Duration(milliseconds: 900),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                hasRating ? rating.toStringAsFixed(1) : 'No ratings',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              if (_comments.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  '(${_comments.length} ${_comments.length == 1 ? 'review' : 'reviews'})',
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            hasRating ? rating.toStringAsFixed(1) : 'No ratings',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-          if (_comments.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Text(
-              '(${_comments.length} ${_comments.length == 1 ? 'review' : 'reviews'})',
-              style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
-            ),
+          // Show the rate button only for purchased books — backend rejects
+          // ratings unless the caller has a completed reading session, so
+          // gating it here saves a round-trip + a 403 toast.
+          if (_isOwned) ...[
+            const SizedBox(height: 12),
+            _buildRateButton(),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRateButton() {
+    final mine = _myRating;
+    final hasMyRating = mine != null;
+    final loading = _loadingMyRating;
+
+    return GestureDetector(
+      onTap: loading ? null : _openRateSheet,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: hasMyRating
+              ? AppColors.primaryLight
+              : Colors.white.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: hasMyRating
+                ? AppColors.primary
+                : AppColors.primary.withOpacity(0.4),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasMyRating ? Icons.star_rounded : Icons.star_outline_rounded,
+              size: 16,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            if (loading)
+              const SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              )
+            else
+              Text(
+                hasMyRating
+                    ? 'Your rating: ${mine.rating.toStringAsFixed(1)} · Tap to update'
+                    : 'Rate this book',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

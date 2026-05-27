@@ -10,11 +10,11 @@ class BooksService {
 
   BooksService({required this.dioClient});
 
-  Future<BookDetail> getBookDetail(int id) async {
+  Future<BookDetail> getBookDetail(int id, {bool incrementView = true}) async {
     try {
       final response = await dioClient.dio.get(
         '${ApiConstants.books}/$id',
-        queryParameters: {'incrementViewCount': true},
+        queryParameters: {'incrementViewCount': incrementView},
       );
       return BookDetail.fromJson(response.data);
     } catch (e) {
@@ -50,6 +50,72 @@ class BooksService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Returns the current user's review for [bookId] or null if they haven't
+  /// rated it yet (backend returns 404 with `{message}` in that case, which
+  /// `validateStatus < 500` lets through as a normal Response).
+  Future<RatingReviewItem?> getMyRating(int bookId) async {
+    try {
+      final response = await dioClient.dio
+          .get('${ApiConstants.books}/$bookId/ratings/me');
+      final code = response.statusCode ?? 0;
+      if (code == 404) return null;
+      if (code >= 200 && code < 300 && response.data is Map<String, dynamic>) {
+        return RatingReviewItem.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Upserts the current user's rating for [bookId]. Backend enforces:
+  ///   - rating ∈ [0.5, 5.0] in 0.5 steps
+  ///   - a completed reading session for the book exists
+  /// Throws [RatingException] on 4xx with the backend message.
+  Future<RatingReviewItem> upsertRating(int bookId, double rating) async {
+    try {
+      final response = await dioClient.dio.post(
+        '${ApiConstants.books}/$bookId/ratings',
+        data: {'rating': rating},
+      );
+      final code = response.statusCode ?? 0;
+      if (code >= 200 && code < 300 && response.data is Map<String, dynamic>) {
+        return RatingReviewItem.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      }
+      throw _extractRatingError(code, response.data);
+    } on DioException catch (e) {
+      throw _extractRatingError(e.response?.statusCode ?? 0, e.response?.data);
+    }
+  }
+
+  /// Deletes the current user's review for [bookId]. Backend returns 204.
+  Future<void> deleteMyRating(int bookId) async {
+    try {
+      final response =
+          await dioClient.dio.delete('${ApiConstants.books}/$bookId/ratings');
+      final code = response.statusCode ?? 0;
+      if (code == 204 || code == 200) return;
+      throw _extractRatingError(code, response.data);
+    } on DioException catch (e) {
+      throw _extractRatingError(e.response?.statusCode ?? 0, e.response?.data);
+    }
+  }
+
+  RatingException _extractRatingError(int code, dynamic data) {
+    String message = 'Could not save your rating. Please try again.';
+    if (data is Map<String, dynamic>) {
+      message = (data['message'] ?? data['error'] ?? message).toString();
+    } else if (data is String && data.isNotEmpty) {
+      message = data;
+    }
+    return RatingException(statusCode: code, message: message);
   }
 
   Future<void> addComment(int bookId, String body) async {
@@ -262,6 +328,27 @@ class BuyException implements Exception {
   bool get isAlreadyOwned =>
       statusCode == 409 ||
       message.toLowerCase().contains('already');
+
+  bool get isUnauthorized => statusCode == 401;
+
+  @override
+  String toString() => message;
+}
+
+class RatingException implements Exception {
+  final int statusCode;
+  final String message;
+  RatingException({required this.statusCode, required this.message});
+
+  /// Backend throws ForbiddenAccessException → 403 when the user hasn't
+  /// completed a reading session for the book yet. We surface this as a
+  /// dedicated UI state so the rate sheet can explain *why* it's blocked
+  /// instead of just showing the raw message.
+  bool get requiresCompletedReading =>
+      statusCode == 403 ||
+      message.toLowerCase().contains('complete reading') ||
+      message.toLowerCase().contains('finish reading') ||
+      message.toLowerCase().contains('completed');
 
   bool get isUnauthorized => statusCode == 401;
 
