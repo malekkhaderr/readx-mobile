@@ -34,6 +34,9 @@ class BookDetailsPage extends StatefulWidget {
   State<BookDetailsPage> createState() => _BookDetailsPageState();
 }
 
+/// Which engagement tab the user is currently viewing.
+enum _EngagementTab { ratings, discussions }
+
 class _BookDetailsPageState extends State<BookDetailsPage> {
   BookDetail? _book;
   bool _isLoading = true;
@@ -59,6 +62,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   /// and toggles the rate button between "Rate this book" and "Update rating".
   RatingReviewItem? _myRating;
   bool _loadingMyRating = false;
+
+  /// Active engagement tab (Ratings & Reviews vs Discussions). Defaults to
+  /// Ratings because that's the more authoritative signal a buyer wants
+  /// when first opening a book.
+  _EngagementTab _activeTab = _EngagementTab.ratings;
 
   int? _editingCommentId;
   final TextEditingController _editCommentController = TextEditingController();
@@ -290,7 +298,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _commentsError = 'Could not load reviews.';
+          _commentsError = 'Could not load discussions.';
           _loadingComments = false;
         });
       }
@@ -308,7 +316,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Review submitted successfully!'),
+            content: Text('Comment posted!'),
             backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
           ),
@@ -318,7 +326,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to submit review. Please try again.'),
+            content: Text('Failed to post comment. Please try again.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -337,7 +345,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Review deleted.'),
+            content: Text('Comment deleted.'),
             backgroundColor: AppColors.textGrey,
             behavior: SnackBarBehavior.floating,
           ),
@@ -347,7 +355,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to delete review.'),
+            content: Text('Failed to delete comment.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -369,7 +377,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Review updated!'),
+            content: Text('Comment updated!'),
             backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
           ),
@@ -379,7 +387,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to update review.'),
+            content: Text('Failed to update comment.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -928,13 +936,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         const SizedBox(height: 8),
                         FadeSlideIn(
                           delay: const Duration(milliseconds: 550),
-                          child: _buildRatingsSection(),
-                        ),
-                        const SizedBox(height: 28),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 600),
-                          child: _buildReviewsSection(
-                              currentUserId, currentUserFullName),
+                          child: _buildEngagementSection(
+                            currentUserId,
+                            currentUserFullName,
+                          ),
                         ),
                         const SizedBox(height: 32),
                       ],
@@ -1153,46 +1158,38 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Widget _buildRatingRow(BookDetail book) {
     final rating = book.averageRating;
     final hasRating = rating > 0;
+    final ratingsCount = _ratingsResponse?.totalCount ?? 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedStars(
-                rating: hasRating ? rating : 0,
-                size: 18,
-                filledColor: AppColors.gold,
-                emptyColor: AppColors.textLight,
-                duration: const Duration(milliseconds: 900),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                hasRating ? rating.toStringAsFixed(1) : 'No ratings',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
-              if (_comments.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(
-                  '(${_comments.length} ${_comments.length == 1 ? 'review' : 'reviews'})',
-                  style:
-                      const TextStyle(fontSize: 12, color: AppColors.textGrey),
-                ),
-              ],
-            ],
+          AnimatedStars(
+            rating: hasRating ? rating : 0,
+            size: 18,
+            filledColor: AppColors.gold,
+            emptyColor: AppColors.textLight,
+            duration: const Duration(milliseconds: 900),
           ),
-          // Show the rate button only for purchased books — backend rejects
-          // ratings unless the caller has a completed reading session, so
-          // gating it here saves a round-trip + a 403 toast.
-          if (_isOwned) ...[
-            const SizedBox(height: 12),
-            _buildRateButton(),
+          const SizedBox(width: 8),
+          Text(
+            hasRating ? rating.toStringAsFixed(1) : 'No ratings',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          if (ratingsCount > 0) ...[
+            const SizedBox(width: 6),
+            Text(
+              '($ratingsCount ${ratingsCount == 1 ? 'rating' : 'ratings'})',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textGrey,
+              ),
+            ),
           ],
         ],
       ),
@@ -1769,39 +1766,314 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   // ─────────────────── REVIEWS ───────────────────
 
-  Widget _buildRatingsSection() {
-    if (_loadingRatings) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primary)));
-    }
-    if (_ratingsResponse == null || _ratingsResponse!.reviews.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+  /// The two-tab section near the bottom of the page. Tab A is the official
+  /// star-rating + textual review feed; Tab B is the open discussion thread.
+  Widget _buildEngagementSection(
+    String? currentUserId,
+    String? currentUserFullName,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(height: 48, thickness: 1, color: Color(0xFFEEEEEE)),
-          Text(
-            'User Ratings & Reviews (${_ratingsResponse!.totalCount})',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
-              letterSpacing: -0.5,
+          const Divider(height: 32, thickness: 1, color: Color(0xFFEEEEEE)),
+          _buildEngagementTabBar(),
+          const SizedBox(height: 18),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.04),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey(_activeTab),
+              child: _activeTab == _EngagementTab.ratings
+                  ? _buildRatingsTab()
+                  : _buildDiscussionsTab(
+                      currentUserId, currentUserFullName),
             ),
           ),
-          const SizedBox(height: 20),
-          ..._ratingsResponse!.reviews.map((r) => _buildRatingCard(r)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEngagementTabBar() {
+    final ratingsCount = _ratingsResponse?.totalCount ?? 0;
+    final discussionsCount = _comments.length;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _engagementTabButton(
+              tab: _EngagementTab.ratings,
+              icon: Icons.star_rounded,
+              label: 'Ratings',
+              count: ratingsCount,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _engagementTabButton(
+              tab: _EngagementTab.discussions,
+              icon: Icons.forum_rounded,
+              label: 'Discussions',
+              count: discussionsCount,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _engagementTabButton({
+    required _EngagementTab tab,
+    required IconData icon,
+    required String label,
+    required int count,
+  }) {
+    final selected = _activeTab == tab;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _activeTab = tab),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? Colors.white : AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: selected ? Colors.white : AppColors.textDark,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white.withOpacity(0.2)
+                      : AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRatingsTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Always show the rate pill at the top of the Ratings tab so the
+        // user can act regardless of whether other people have rated yet.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _buildRateButton(),
+        ),
+        const SizedBox(height: 20),
+        if (_loadingRatings)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          )
+        else if (_ratingsResponse == null ||
+            _ratingsResponse!.reviews.isEmpty)
+          _buildEmptyRatings()
+        else
+          ..._ratingsResponse!.reviews.map(_buildRatingCard),
+      ],
+    );
+  }
+
+  Widget _buildEmptyRatings() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.star_outline_rounded,
+              color: AppColors.primary,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'No ratings yet',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Be the first reader to leave a rating.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Body of Tab B — discussions feed (the existing comments code, now
+  /// rendered without the wrapper header since the tab bar provides context).
+  Widget _buildDiscussionsTab(
+    String? currentUserId,
+    String? currentUserFullName,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAddCommentInput(),
+        const SizedBox(height: 20),
+        if (_loadingComments)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          )
+        else if (_commentsError != null && _comments.isEmpty)
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  _commentsError!,
+                  style: const TextStyle(color: AppColors.error),
+                ),
+                TextButton(
+                  onPressed: _loadComments,
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          )
+        else if (_comments.isEmpty)
+          _buildEmptyDiscussions()
+        else
+          Column(
+            children: _comments
+                .map((c) =>
+                    _buildCommentItem(c, currentUserId, currentUserFullName))
+                .toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyDiscussions() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.forum_rounded,
+              color: AppColors.primary,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Start the discussion',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Ask a question or share your thoughts on this book.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildRatingCard(RatingReviewItem review) {
+    final isMine = _myRating != null && _myRating!.id == review.id;
+    final initial = (review.readerName?.isNotEmpty ?? false)
+        ? review.readerName![0].toUpperCase()
+        : '?';
+    final body = review.reviewText?.trim() ?? '';
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1813,7 +2085,12 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(
+          color: isMine
+              ? AppColors.primary.withOpacity(0.45)
+              : Colors.grey.withOpacity(0.12),
+          width: isMine ? 1.4 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1821,181 +2098,96 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           Row(
             children: [
               CircleAvatar(
-                radius: 16,
+                radius: 18,
                 backgroundColor: AppColors.primaryLight,
                 child: Text(
-                  review.readerName?.isNotEmpty == true ? review.readerName![0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                  initial,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  review.readerName ?? 'Anonymous',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: AppColors.textDark,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    review.rating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            review.readerName ?? 'Anonymous',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                        if (isMine) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'You',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _StaticStars(rating: review.rating),
+                        const SizedBox(width: 8),
+                        Text(
+                          review.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '· ${DateFormat.yMMMd().format(review.createdAt)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          if (review.reviewText != null && review.reviewText!.isNotEmpty) ...[
+          if (body.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              review.reviewText!,
+              body,
               style: const TextStyle(
                 fontSize: 14,
-                color: AppColors.textGrey,
+                color: AppColors.textDark,
                 height: 1.5,
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          Text(
-            DateFormat.yMMMd().format(review.createdAt),
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewsSection(String? currentUserId, String? currentUserFullName) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Reader Reviews',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (_comments.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${_comments.length}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              const Spacer(),
-              if (_loadingComments)
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildAddCommentInput(),
-          const SizedBox(height: 20),
-          if (_commentsError != null && _comments.isEmpty)
-            Center(
-              child: Column(
-                children: [
-                  Text(_commentsError!,
-                      style: const TextStyle(color: AppColors.error)),
-                  TextButton(
-                    onPressed: _loadComments,
-                    child: const Text('Try Again'),
-                  ),
-                ],
-              ),
-            )
-          else if (_comments.isEmpty && !_loadingComments)
-            _buildEmptyReviews()
-          else
-            Column(
-              children: _comments
-                  .map((c) =>
-                      _buildCommentItem(c, currentUserId, currentUserFullName))
-                  .toList(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyReviews() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider, style: BorderStyle.solid),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.rate_review_rounded,
-                color: AppColors.primary, size: 26),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'No reviews yet',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Be the first to share your thoughts',
-            style: TextStyle(fontSize: 12, color: AppColors.textGrey),
-          ),
         ],
       ),
     );
@@ -2024,7 +2216,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             maxLines: 3,
             style: const TextStyle(fontSize: 14, color: AppColors.textDark),
             decoration: const InputDecoration(
-              hintText: 'Share your thoughts about this book...',
+              hintText: 'Ask a question or share a thought about this book…',
               hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14),
               fillColor: Colors.transparent,
               filled: true,
@@ -2413,4 +2605,31 @@ class _StatPill {
   final String label;
   final String value;
   _StatPill({required this.icon, required this.label, required this.value});
+}
+
+/// Compact 5-star row for review cards. Renders full / half / empty stars
+/// from a 0–5 double in 0.5 increments. Cheap stateless paint, no animation.
+class _StaticStars extends StatelessWidget {
+  final double rating;
+
+  const _StaticStars({required this.rating});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        final star = i + 1;
+        final IconData icon;
+        if (rating >= star) {
+          icon = Icons.star_rounded;
+        } else if (rating >= star - 0.5) {
+          icon = Icons.star_half_rounded;
+        } else {
+          icon = Icons.star_outline_rounded;
+        }
+        return Icon(icon, size: 14, color: AppColors.gold);
+      }),
+    );
+  }
 }

@@ -22,7 +22,7 @@ class RateBookSheetResult {
 /// Opens the rate-book bottom sheet.
 ///
 /// `existingRating` is non-null when the user already has a review and we want
-/// to pre-fill the stars + show a "Remove rating" button.
+/// to pre-fill the stars + review text + show a "Remove rating" button.
 Future<RateBookSheetResult?> showRateBookSheet({
   required BuildContext context,
   required int bookId,
@@ -61,24 +61,56 @@ class _RateBookSheet extends StatefulWidget {
 }
 
 class _RateBookSheetState extends State<_RateBookSheet> {
+  /// Backend caps the textual review at a sane size. Keep client + server in
+  /// agreement so we don't silently truncate something the server accepts.
+  static const int _maxTextLength = 1000;
+
   /// Currently-selected rating, in 0.5-step increments. 0 means "not chosen".
   late double _rating;
+  late final TextEditingController _textController;
+  late final String _initialText;
+
   bool _submitting = false;
   bool _deleting = false;
   String? _errorMessage;
-  bool _blockedByReadingSession = false;
 
   @override
   void initState() {
     super.initState();
     _rating = widget.existingRating?.rating ?? 0;
+    _initialText = widget.existingRating?.reviewText ?? '';
+    _textController = TextEditingController(text: _initialText);
+    _textController.addListener(_onTextChanged);
   }
 
-  bool get _canSubmit =>
-      _rating > 0 &&
-      !_submitting &&
-      !_deleting &&
-      _rating != widget.existingRating?.rating;
+  @override
+  void dispose() {
+    _textController.removeListener(_onTextChanged);
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    // Trigger a rebuild so the submit button re-evaluates `_canSubmit`
+    // when the user types into the review text field.
+    setState(() {});
+  }
+
+  String get _trimmedText => _textController.text.trim();
+
+  /// True if the form has anything that differs from the user's existing
+  /// review — either the rating or the text. We require at least one star to
+  /// be selected; the text alone isn't enough since rating is mandatory.
+  bool get _canSubmit {
+    if (_rating <= 0) return false;
+    if (_submitting || _deleting) return false;
+
+    final existingRating = widget.existingRating?.rating;
+    final ratingChanged =
+        existingRating == null || existingRating != _rating;
+    final textChanged = _trimmedText != _initialText.trim();
+    return ratingChanged || textChanged;
+  }
 
   /// Tap on the i-th star (1..5) toggles between half and full to match the
   /// 0.5-step granularity the backend accepts. First tap on a fresh star
@@ -94,7 +126,6 @@ class _RateBookSheetState extends State<_RateBookSheet> {
         _rating = tappedValue;
       }
       _errorMessage = null;
-      _blockedByReadingSession = false;
     });
   }
 
@@ -103,21 +134,20 @@ class _RateBookSheetState extends State<_RateBookSheet> {
     setState(() {
       _submitting = true;
       _errorMessage = null;
-      _blockedByReadingSession = false;
     });
     try {
-      final result =
-          await widget.booksService.upsertRating(widget.bookId, _rating);
+      final result = await widget.booksService.upsertRating(
+        widget.bookId,
+        _rating,
+        text: _trimmedText.isEmpty ? null : _trimmedText,
+      );
       if (!mounted) return;
       Navigator.of(context).pop(RateBookSheetResult.submitted(result));
     } on RatingException catch (e) {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _blockedByReadingSession = e.requiresCompletedReading;
-        _errorMessage = e.requiresCompletedReading
-            ? 'Finish reading the book first, then come back to rate it.'
-            : e.message;
+        _errorMessage = e.message;
       });
     } catch (_) {
       if (!mounted) return;
@@ -169,68 +199,72 @@ class _RateBookSheetState extends State<_RateBookSheet> {
         24,
         24 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            isEditing ? 'Update your rating' : 'Rate this book',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            widget.bookTitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 28),
-          _buildStars(),
-          const SizedBox(height: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              ratingLabel,
-              key: ValueKey(ratingLabel),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 18),
+            Text(
+              isEditing ? 'Update your review' : 'Rate this book',
               style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
               ),
             ),
-          ),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 16),
-            _buildErrorBanner(),
+            const SizedBox(height: 6),
+            Text(
+              widget.bookTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _buildStars(),
+            const SizedBox(height: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                ratingLabel,
+                key: ValueKey(ratingLabel),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildReviewField(),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              _buildErrorBanner(),
+            ],
+            const SizedBox(height: 24),
+            _buildSubmitButton(isEditing: isEditing),
+            if (isEditing) ...[
+              const SizedBox(height: 8),
+              _buildDeleteButton(),
+            ],
+            const SizedBox(height: 4),
           ],
-          const SizedBox(height: 24),
-          _buildSubmitButton(),
-          if (isEditing) ...[
-            const SizedBox(height: 8),
-            _buildDeleteButton(),
-          ],
-          const SizedBox(height: 4),
-        ],
+        ),
       ),
     );
   }
@@ -262,10 +296,82 @@ class _RateBookSheetState extends State<_RateBookSheet> {
     );
   }
 
+  Widget _buildReviewField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Write a review',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '(optional)',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textGrey.withOpacity(0.9),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '${_textController.text.length}/$_maxTextLength',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _textController,
+          maxLength: _maxTextLength,
+          maxLines: 4,
+          minLines: 3,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText:
+                'Share what stood out — characters, pacing, ideas you took away…',
+            hintStyle:
+                const TextStyle(fontSize: 13, color: AppColors.textGrey),
+            counterText: '',
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.divider),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.divider),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.6),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textDark,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildErrorBanner() {
-    final color = _blockedByReadingSession
-        ? AppColors.warningOrange
-        : AppColors.error;
+    const color = AppColors.error;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -275,18 +381,12 @@ class _RateBookSheetState extends State<_RateBookSheet> {
       ),
       child: Row(
         children: [
-          Icon(
-            _blockedByReadingSession
-                ? Icons.menu_book_rounded
-                : Icons.error_outline_rounded,
-            size: 18,
-            color: color,
-          ),
+          const Icon(Icons.error_outline_rounded, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               _errorMessage ?? '',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -298,7 +398,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton({required bool isEditing}) {
     return ElevatedButton(
       onPressed: _canSubmit ? _submit : null,
       style: ElevatedButton.styleFrom(
@@ -317,7 +417,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
               ),
             )
           : Text(
-              widget.existingRating != null ? 'Update Rating' : 'Submit Rating',
+              isEditing ? 'Update Review' : 'Submit Review',
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -344,7 +444,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
               ),
             )
           : const Text(
-              'Remove my rating',
+              'Remove my review',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
     );

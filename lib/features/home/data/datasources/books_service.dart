@@ -73,15 +73,23 @@ class BooksService {
     }
   }
 
-  /// Upserts the current user's rating for [bookId]. Backend enforces:
-  ///   - rating ∈ [0.5, 5.0] in 0.5 steps
-  ///   - a completed reading session for the book exists
-  /// Throws [RatingException] on 4xx with the backend message.
-  Future<RatingReviewItem> upsertRating(int bookId, double rating) async {
+  /// Upserts the current user's rating + optional written review for
+  /// [bookId]. Backend enforces `rating ∈ [0.5, 5.0]` in 0.5 steps; the text
+  /// is optional — pass null/empty to leave it blank or to clear an existing
+  /// one. Throws [RatingException] on 4xx with the backend message.
+  Future<RatingReviewItem> upsertRating(
+    int bookId,
+    double rating, {
+    String? text,
+  }) async {
     try {
+      final cleanText = text?.trim();
       final response = await dioClient.dio.post(
         '${ApiConstants.books}/$bookId/ratings',
-        data: {'rating': rating},
+        data: {
+          'rating': rating,
+          'text': (cleanText == null || cleanText.isEmpty) ? null : cleanText,
+        },
       );
       final code = response.statusCode ?? 0;
       if (code >= 200 && code < 300 && response.data is Map<String, dynamic>) {
@@ -340,17 +348,8 @@ class RatingException implements Exception {
   final String message;
   RatingException({required this.statusCode, required this.message});
 
-  /// Backend throws ForbiddenAccessException → 403 when the user hasn't
-  /// completed a reading session for the book yet. We surface this as a
-  /// dedicated UI state so the rate sheet can explain *why* it's blocked
-  /// instead of just showing the raw message.
-  bool get requiresCompletedReading =>
-      statusCode == 403 ||
-      message.toLowerCase().contains('complete reading') ||
-      message.toLowerCase().contains('finish reading') ||
-      message.toLowerCase().contains('completed');
-
   bool get isUnauthorized => statusCode == 401;
+  bool get isNotFound => statusCode == 404;
 
   @override
   String toString() => message;
