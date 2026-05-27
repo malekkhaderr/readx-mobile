@@ -3,10 +3,12 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/repositories/author_dashboard_repository.dart';
 import '../datasources/author_dashboard_remote_datasource.dart';
-import '../models/author_dashboard_model.dart';
 import '../models/author_book_model.dart';
+import '../models/author_dashboard_model.dart';
 import '../models/author_statistics_model.dart';
 import '../models/publisher_request_model.dart';
+import '../models/author_quotes_stats_model.dart';
+import '../models/author_quote_model.dart';
 
 class AuthorDashboardRepositoryImpl implements AuthorDashboardRepository {
   final AuthorDashboardRemoteDataSource remoteDataSource;
@@ -68,6 +70,30 @@ class AuthorDashboardRepositoryImpl implements AuthorDashboardRepository {
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthorQuotesStatsModel>> getQuotesStats() async {
+    try {
+      final stats = await remoteDataSource.getQuotesStats();
+      return Right(stats);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedAuthorQuotesResponse>> getBookQuotes(int bookId, {int page = 1, int limit = 10}) async {
+    try {
+      final quotes = await remoteDataSource.getBookQuotes(bookId, page: page, limit: limit);
+      return Right(quotes);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

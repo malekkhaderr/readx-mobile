@@ -31,6 +31,8 @@ import '../../features/author_dashboard/domain/usecases/get_author_dashboard_use
 import '../../features/author_dashboard/domain/usecases/get_author_books_usecase.dart';
 import '../../features/author_dashboard/domain/usecases/get_author_statistics_usecase.dart';
 import '../../features/author_dashboard/domain/usecases/publisher_requests_usecases.dart';
+import '../../features/author_dashboard/domain/usecases/get_author_quotes_stats_usecase.dart';
+import '../../features/author_dashboard/domain/usecases/get_author_book_quotes_usecase.dart';
 import '../../features/author_dashboard/presentation/bloc/author_dashboard_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -151,6 +153,8 @@ Future<void> init() async {
       submitAddBookRequestUseCase: sl(),
       submitModifyBookRequestUseCase: sl(),
       submitRemoveBookRequestUseCase: sl(),
+      getAuthorQuotesStatsUseCase: sl(),
+      getAuthorBookQuotesUseCase: sl(),
     ),
   );
 
@@ -163,6 +167,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SubmitAddBookRequestUseCase(sl()));
   sl.registerLazySingleton(() => SubmitModifyBookRequestUseCase(sl()));
   sl.registerLazySingleton(() => SubmitRemoveBookRequestUseCase(sl()));
+  sl.registerLazySingleton(() => GetAuthorQuotesStatsUseCase(sl()));
+  sl.registerLazySingleton(() => GetAuthorBookQuotesUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthorDashboardRepository>(

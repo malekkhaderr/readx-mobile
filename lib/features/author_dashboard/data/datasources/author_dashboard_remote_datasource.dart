@@ -6,11 +6,15 @@ import '../models/author_dashboard_model.dart';
 import '../models/author_book_model.dart';
 import '../models/author_statistics_model.dart';
 import '../models/publisher_request_model.dart';
+import '../models/author_quotes_stats_model.dart';
+import '../models/author_quote_model.dart';
 
 abstract class AuthorDashboardRemoteDataSource {
   Future<AuthorDashboardOverview> getDashboard();
   Future<List<AuthorBook>> getBooks();
   Future<AuthorStatistics> getStatistics({int? bookId, int? categoryId});
+  Future<AuthorQuotesStatsModel> getQuotesStats();
+  Future<PaginatedAuthorQuotesResponse> getBookQuotes(int bookId, {int page = 1, int limit = 10});
 
   Future<List<PublisherRequestModel>> getMyRequests();
   Future<void> submitAddBookRequest(AddBookRequestModel request);
@@ -95,6 +99,51 @@ class AuthorDashboardRemoteDataSourceImpl
 
       throw ServerException(
         response.data?['message'] ?? 'Failed to load statistics',
+      );
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AuthorQuotesStatsModel> getQuotesStats() async {
+    try {
+      final response = await dioClient.dio.get(ApiConstants.authorQuotesStats);
+
+      if (response.statusCode == 200 && response.data != null) {
+        return AuthorQuotesStatsModel.fromJson(response.data as Map<String, dynamic>);
+      }
+
+      throw ServerException(
+        response.data?['message'] ?? 'Failed to load quotes statistics',
+      );
+    } on DioException catch (e) {
+      _handleDioException(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PaginatedAuthorQuotesResponse> getBookQuotes(int bookId, {int page = 1, int limit = 10}) async {
+    try {
+      final queryParameters = <String, dynamic>{
+        'bookId': bookId,
+        'page': page,
+        'limit': limit,
+      };
+
+      final response = await dioClient.dio.get(
+        ApiConstants.authorQuotes,
+        queryParameters: queryParameters,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return PaginatedAuthorQuotesResponse.fromJson(response.data as Map<String, dynamic>);
+      }
+
+      throw ServerException(
+        response.data?['message'] ?? 'Failed to load book quotes',
       );
     } on DioException catch (e) {
       _handleDioException(e);

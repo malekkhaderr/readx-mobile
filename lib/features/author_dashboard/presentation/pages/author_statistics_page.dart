@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../bloc/author_dashboard_bloc.dart';
 import '../widgets/author_book_reviews_sheet.dart';
+import '../../data/models/author_book_model.dart';
 
 class AuthorStatisticsPage extends StatefulWidget {
   const AuthorStatisticsPage({super.key});
@@ -35,6 +36,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: false,
+        leading: BackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -67,7 +69,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Overview
-                      _buildOverviewCard(stats),
+                      _buildOverviewCard(stats, state is AuthorStatisticsLoaded ? state.quotesStats : null),
                       const SizedBox(height: 32),
                       
                       const Text(
@@ -88,7 +90,11 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: stats.bookStatistics.length,
                           itemBuilder: (context, index) {
-                            return _buildBookStatCard(stats.bookStatistics[index]);
+                            return _buildBookStatCard(
+                              stats.bookStatistics[index],
+                              state is AuthorStatisticsLoaded ? state.quotesStats : null,
+                              bloc.cachedBooks,
+                            );
                           },
                         ),
                     ],
@@ -104,7 +110,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
     );
   }
 
-  Widget _buildOverviewCard(dynamic stats) {
+  Widget _buildOverviewCard(dynamic stats, dynamic quotesStats) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -137,6 +143,8 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
               _buildMetricColumn(Icons.auto_stories, stats.totalReads.toString(), 'Reads'),
               Container(width: 1, height: 40, color: Colors.white24),
               _buildMetricColumn(Icons.star, stats.averageRating.toStringAsFixed(1), 'Rating'),
+              Container(width: 1, height: 40, color: Colors.white24),
+              _buildMetricColumn(Icons.format_quote_rounded, quotesStats?.totalQuotesCount.toString() ?? '-', 'Quotes'),
             ],
           ),
         ],
@@ -169,13 +177,39 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
     );
   }
 
-  Widget _buildBookStatCard(dynamic bookStat) {
+  Widget _buildBookStatCard(dynamic bookStat, dynamic quotesStats, List<AuthorBook>? cachedBooks) {
+    int quotesCount = 0;
+    if (quotesStats != null) {
+      final q = quotesStats.bookQuoteCounts.where((b) => b.bookId == bookStat.bookId).toList();
+      if (q.isNotEmpty) quotesCount = q.first.quotesCount;
+    }
+
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
       elevation: 0,
       child: InkWell(
-        onTap: () => context.push('/book/${bookStat.bookId}'),
+        onTap: () {
+          AuthorBook? authorBook;
+          if (cachedBooks != null) {
+            for (final b in cachedBooks) {
+              if (b.id == bookStat.bookId) {
+                authorBook = b;
+                break;
+              }
+            }
+          }
+
+          if (authorBook != null) {
+            context.push('/author/book_detail', extra: {
+              'book': authorBook,
+              'quotesCount': quotesCount,
+            });
+          } else {
+            // Fallback if not in cache
+            context.push('/book/${bookStat.bookId}');
+          }
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
@@ -209,6 +243,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                   _buildSmallStat(Icons.visibility_rounded, bookStat.viewCount.toString(), 'Views'),
                   _buildSmallStat(Icons.auto_stories_rounded, bookStat.readCount.toString(), 'Reads'),
                   _buildSmallStat(Icons.star_rounded, bookStat.averageRating.toStringAsFixed(1), 'Rating'),
+                  _buildSmallStat(Icons.format_quote_rounded, quotesCount.toString(), 'Quotes'),
                   _buildSmallStat(Icons.comment_rounded, bookStat.ratingsCount.toString(), 'Ratings', onTap: () {
                     AuthorBookReviewsSheet.show(context, bookStat.bookId, bookStat.title);
                   }),

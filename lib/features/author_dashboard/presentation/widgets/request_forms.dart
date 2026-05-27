@@ -23,9 +23,26 @@ class _AddBookRequestFormState extends State<AddBookRequestForm> {
   final _pagesController = TextEditingController();
   final _messageController = TextEditingController();
   
-  // Dummy values for now, can be replaced with real category/language dropdowns
-  int _categoryId = 1;
-  int _languageId = 1;
+  int? _categoryId;
+  int? _languageId;
+
+  // Static options since there's no endpoint for this in the app currently.
+  final Map<int, String> _categories = {
+    1: 'Fiction',
+    2: 'Non-Fiction',
+    3: 'Science',
+    4: 'History',
+    5: 'Biography',
+    6: 'Fantasy',
+  };
+
+  final Map<int, String> _languages = {
+    1: 'English',
+    2: 'Arabic',
+    3: 'Spanish',
+    4: 'French',
+    5: 'German',
+  };
 
   @override
   void dispose() {
@@ -48,8 +65,8 @@ class _AddBookRequestFormState extends State<AddBookRequestForm> {
         coverImageUrl: _coverController.text,
         isbn: _isbnController.text,
         summary: _summaryController.text,
-        categoryId: _categoryId,
-        languageId: _languageId,
+        categoryId: _categoryId ?? 1,
+        languageId: _languageId ?? 1,
         price: double.tryParse(_priceController.text) ?? 0.0,
         totalPages: int.tryParse(_pagesController.text) ?? 0,
         requestMessage: _messageController.text,
@@ -72,6 +89,20 @@ class _AddBookRequestFormState extends State<AddBookRequestForm> {
           _buildTextField('Cover Image URL', _coverController, isRequired: true),
           _buildTextField('ISBN', _isbnController),
           _buildTextField('Summary', _summaryController, maxLines: 3),
+          _buildDropdownField(
+            'Category',
+            _categoryId,
+            _categories,
+            (value) => setState(() => _categoryId = value),
+          ),
+          const SizedBox(height: 16),
+          _buildDropdownField(
+            'Language',
+            _languageId,
+            _languages,
+            (value) => setState(() => _languageId = value),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildTextField('Price', _priceController, isNumber: true)),
@@ -128,6 +159,29 @@ class _AddBookRequestFormState extends State<AddBookRequestForm> {
       ),
     );
   }
+
+  Widget _buildDropdownField(String label, int? value, Map<int, String> options, ValueChanged<int?> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<int>(
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: AppColors.surface,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        ),
+        value: value,
+        items: options.entries.map((entry) {
+          return DropdownMenuItem<int>(
+            value: entry.key,
+            child: Text(entry.value),
+          );
+        }).toList(),
+        onChanged: onChanged,
+        validator: (val) => val == null ? 'Please select a $label' : null,
+      ),
+    );
+  }
 }
 
 class ModifyBookRequestForm extends StatefulWidget {
@@ -175,7 +229,10 @@ class _ModifyBookRequestFormState extends State<ModifyBookRequestForm> {
             items: widget.availableBooks.map((book) {
               return DropdownMenuItem<int>(
                 value: book.id,
-                child: Text(book.title, overflow: TextOverflow.ellipsis),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: Text(book.title, overflow: TextOverflow.ellipsis),
+                ),
               );
             }).toList(),
             onChanged: (value) => setState(() => _selectedBookId = value),
@@ -271,7 +328,10 @@ class _RemoveBookRequestFormState extends State<RemoveBookRequestForm> {
             items: widget.availableBooks.map((book) {
               return DropdownMenuItem<int>(
                 value: book.id,
-                child: Text(book.title, overflow: TextOverflow.ellipsis),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: Text(book.title, overflow: TextOverflow.ellipsis),
+                ),
               );
             }).toList(),
             onChanged: (value) => setState(() => _selectedBookId = value),
