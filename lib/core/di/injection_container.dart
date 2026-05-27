@@ -3,6 +3,8 @@ import '../../features/library/data/datasources/library_remote_datasource.dart';
 import '../../features/library/presentation/bloc/library_bloc.dart';
 import '../../features/quotes/data/datasources/quotes_remote_datasource.dart';
 import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
+import '../../features/search/data/datasources/search_remote_datasource.dart';
+import '../../features/search/presentation/bloc/search_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -159,6 +161,15 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => QuotesBloc(dataSource: sl()),
   );
+
+  // ─── Search ──────────────────────────────────────────
+
+  sl.registerLazySingleton<SearchRemoteDataSource>(
+    () => SearchRemoteDataSource(dioClient: sl()),
+  );
+
+  // Factory so each entry to the Search tab starts with a clean state.
+  sl.registerFactory(() => SearchBloc(dataSource: sl()));
 
   // ─── Notifications ─────────────────────────────────────
 
