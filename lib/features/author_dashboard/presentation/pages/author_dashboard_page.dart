@@ -11,6 +11,10 @@ import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../notifications/presentation/bloc/notifications_bloc.dart';
+import '../../../notifications/presentation/bloc/notifications_event.dart';
+import '../../../notifications/presentation/bloc/notifications_state.dart';
+import '../../../../core/di/injection_container.dart';
 
 class AuthorDashboardPage extends StatelessWidget {
   const AuthorDashboardPage({super.key});
@@ -117,30 +121,106 @@ class AuthorDashboardPage extends StatelessWidget {
                         ),
                       ),
                       // Notifications Bell
-                      GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const NotificationsPage(),
-                          );
+                      BlocProvider<NotificationsBloc>(
+                        create: (context) {
+                          final bloc = sl<NotificationsBloc>();
+                          final profileState = sl<ProfileBloc>().state;
+                          if (profileState is ProfileLoaded) {
+                            bloc.add(FetchNotificationsEvent(profileState.profile.id));
+                          }
+                          return bloc;
                         },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2))
-                            ],
+                        child: BlocListener<ProfileBloc, ProfileState>(
+                          bloc: sl<ProfileBloc>(),
+                          listenWhen: (prev, curr) =>
+                              curr is ProfileLoaded && prev is! ProfileLoaded,
+                          listener: (context, profileState) {
+                            if (profileState is ProfileLoaded) {
+                              context.read<NotificationsBloc>().add(
+                                  FetchNotificationsEvent(profileState.profile.id));
+                            }
+                          },
+                          child: BlocBuilder<NotificationsBloc, NotificationsState>(
+                            builder: (context, state) {
+                              int unreadCount = 0;
+                              if (state is NotificationsLoaded) {
+                                unreadCount = state.notifications
+                                    .where((n) => !n.isRead)
+                                    .length;
+                              }
+
+                              return GestureDetector(
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => const NotificationsPage(),
+                                  ).then((_) {
+                                    // Refresh notifications when sheet closes to reflect any marked-as-read changes
+                                    final profileState = sl<ProfileBloc>().state;
+                                    if (profileState is ProfileLoaded) {
+                                      context.read<NotificationsBloc>().add(
+                                          FetchNotificationsEvent(
+                                              profileState.profile.id));
+                                    }
+                                  });
+                                },
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.05),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          )
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.notifications_outlined,
+                                        color: AppColors.textDark,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        top: -4,
+                                        right: -4,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 2),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.error,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '$unreadCount',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                          child: const Icon(Icons.notifications_outlined,
-                              color: AppColors.textDark, size: 20),
                         ),
                       ),
                     ],

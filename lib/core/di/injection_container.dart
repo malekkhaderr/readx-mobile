@@ -34,6 +34,13 @@ import '../../features/author_dashboard/domain/usecases/publisher_requests_useca
 import '../../features/author_dashboard/domain/usecases/get_author_quotes_stats_usecase.dart';
 import '../../features/author_dashboard/domain/usecases/get_author_book_quotes_usecase.dart';
 import '../../features/author_dashboard/presentation/bloc/author_dashboard_bloc.dart';
+import '../../features/reports/data/datasources/reports_remote_datasource.dart';
+import '../../features/reports/data/repositories/reports_repository_impl.dart';
+import '../../features/reports/domain/repositories/reports_repository.dart';
+import '../../features/reports/domain/usecases/get_my_reports_usecase.dart';
+import '../../features/reports/domain/usecases/get_report_reasons_usecase.dart';
+import '../../features/reports/domain/usecases/submit_report_usecase.dart';
+import '../../features/reports/presentation/bloc/reports_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -178,6 +185,32 @@ Future<void> init() async {
   // Data Source
   sl.registerLazySingleton<AuthorDashboardRemoteDataSource>(
     () => AuthorDashboardRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+  // ─── Reports ───────────────────────────────────────────
+
+  // Bloc
+  sl.registerFactory(
+    () => ReportsBloc(
+      getReportReasonsUseCase: sl(),
+      getMyReportsUseCase: sl(),
+      submitReportUseCase: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => GetReportReasonsUseCase(sl()));
+  sl.registerLazySingleton(() => GetMyReportsUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitReportUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ReportsRepository>(
+    () => ReportsRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data Source
+  sl.registerLazySingleton<ReportsRemoteDataSource>(
+    () => ReportsRemoteDataSourceImpl(dioClient: sl()),
   );
 }
 
