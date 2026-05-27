@@ -1272,8 +1272,19 @@ class _BookListCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────
 
 class _DailyTipBanner extends StatelessWidget {
+  static const List<String> _tips = [
+    'Reading 15 minutes before bed can improve your sleep quality by 68%. Try a chapter tonight!',
+    'Reading just 6 minutes a day can lower stress by up to 60%. Take a breath, take a book.',
+    'Re-reading a favourite passage builds long-term memory faster than reading something new.',
+    'Highlight a sentence that surprised you — quotes you collect become quotes you live by.',
+    'A short paragraph at lunch beats a long chapter you never start. Small bites win.',
+    'Books finished on weekends count double — your future self will remember the streak.',
+    'Try a different genre this week. The brain learns most from the unfamiliar.',
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final tip = _tips[DateTime.now().weekday % _tips.length];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -1330,7 +1341,7 @@ class _DailyTipBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Reading 15 minutes before bed can improve your sleep quality by 68%. Try a chapter tonight!',
+                    tip,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textDark.withOpacity(0.85),
