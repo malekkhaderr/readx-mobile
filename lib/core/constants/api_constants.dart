@@ -5,7 +5,7 @@ class ApiConstants {
   // Auth
   static const String register = '/users/create';
   static const String login = '/users/login';
-  static const String logout = '/auth/logout';
+  static const String logout = '/users/logout';
   static const String forgotPassword = '/users/forgot-password';
   static const String resetPassword = '/users/reset-password';
 

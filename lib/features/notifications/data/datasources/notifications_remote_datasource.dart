@@ -7,6 +7,7 @@ import '../models/notification_model.dart';
 abstract class NotificationsRemoteDataSource {
   Future<List<NotificationModel>> getNotifications(String userId);
   Future<void> markAllAsRead(String userId);
+  Future<void> markOneAsRead(String userId, int notificationId);
 }
 
 class NotificationsRemoteDataSourceImpl
@@ -60,10 +61,29 @@ class NotificationsRemoteDataSourceImpl
   @override
   Future<void> markAllAsRead(String userId) async {
     try {
-      final response = await dioClient.dio.put('${ApiConstants.notifications}/user/$userId/mark-all-read');
-      
+      final response = await dioClient.dio.put(
+        '${ApiConstants.notifications}/user/$userId/mark-all-read',
+      );
+
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ServerException('Failed to mark notifications as read');
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.message ?? 'Network error occurred');
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> markOneAsRead(String userId, int notificationId) async {
+    try {
+      final response = await dioClient.dio.patch(
+        '${ApiConstants.notifications}/user/$userId/$notificationId/mark-read',
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw ServerException('Failed to mark notification as read');
       }
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Network error occurred');

@@ -12,7 +12,10 @@ class BooksService {
 
   Future<BookDetail> getBookDetail(int id) async {
     try {
-      final response = await dioClient.dio.get('${ApiConstants.books}/$id?incrementView=1');
+      final response = await dioClient.dio.get(
+        '${ApiConstants.books}/$id',
+        queryParameters: {'incrementViewCount': true},
+      );
       return BookDetail.fromJson(response.data);
     } catch (e) {
       rethrow;

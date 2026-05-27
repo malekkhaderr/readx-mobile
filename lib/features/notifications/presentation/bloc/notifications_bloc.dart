@@ -2,19 +2,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
 import '../../domain/usecases/mark_all_notifications_read_usecase.dart';
+import '../../domain/usecases/mark_one_notification_read_usecase.dart';
 import 'notifications_event.dart';
 import 'notifications_state.dart';
 
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   final GetNotificationsUseCase getNotificationsUseCase;
   final MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase;
+  final MarkOneNotificationReadUseCase markOneNotificationReadUseCase;
 
   NotificationsBloc({
     required this.getNotificationsUseCase,
     required this.markAllNotificationsReadUseCase,
+    required this.markOneNotificationReadUseCase,
   }) : super(NotificationsInitial()) {
     on<FetchNotificationsEvent>(_onFetchNotifications);
     on<MarkAllNotificationsReadEvent>(_onMarkAllRead);
+    on<MarkOneNotificationReadEvent>(_onMarkOneRead);
   }
 
   Future<void> _onFetchNotifications(
@@ -78,5 +82,50 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         },
       );
     }
+  }
+
+  Future<void> _onMarkOneRead(
+    MarkOneNotificationReadEvent event,
+    Emitter<NotificationsState> emit,
+  ) async {
+    if (state is! NotificationsLoaded) return;
+    final currentState = state as NotificationsLoaded;
+
+    // Already read — skip both the optimistic update and the API call.
+    final target = currentState.notifications.firstWhere(
+      (n) => n.id == event.notificationId,
+      orElse: () => currentState.notifications.first,
+    );
+    if (target.isRead) return;
+
+    final updated = currentState.notifications
+        .map(
+          (n) => n.id == event.notificationId
+              ? NotificationEntity(
+                  id: n.id,
+                  type: n.type,
+                  title: n.title,
+                  message: n.message,
+                  isRead: true,
+                  createdAt: n.createdAt,
+                )
+              : n,
+        )
+        .toList();
+    emit(NotificationsLoaded(notifications: updated));
+
+    final result = await markOneNotificationReadUseCase(
+      event.userId,
+      event.notificationId,
+    );
+
+    result.fold(
+      (failure) {
+        emit(NotificationsError(message: failure.message));
+        // Revert the optimistic update so the dot reappears.
+        emit(currentState);
+      },
+      (_) {/* already optimistically updated */},
+    );
   }
 }

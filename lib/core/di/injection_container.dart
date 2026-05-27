@@ -30,6 +30,7 @@ import '../../features/notifications/data/repositories/notifications_repository_
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../features/notifications/domain/usecases/get_notifications_usecase.dart';
 import '../../features/notifications/domain/usecases/mark_all_notifications_read_usecase.dart';
+import '../../features/notifications/domain/usecases/mark_one_notification_read_usecase.dart';
 import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
 import '../../features/author_dashboard/data/datasources/author_dashboard_remote_datasource.dart';
 import '../../features/author_dashboard/data/repositories/author_dashboard_repository_impl.dart';
@@ -166,12 +167,14 @@ Future<void> init() async {
     () => NotificationsBloc(
       getNotificationsUseCase: sl(),
       markAllNotificationsReadUseCase: sl(),
+      markOneNotificationReadUseCase: sl(),
     ),
   );
 
   // Use Cases
   sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
   sl.registerLazySingleton(() => MarkAllNotificationsReadUseCase(sl()));
+  sl.registerLazySingleton(() => MarkOneNotificationReadUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<NotificationsRepository>(
