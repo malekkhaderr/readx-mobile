@@ -394,16 +394,53 @@ class _AuthorProfileBody extends StatelessWidget {
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              '✍️  Author',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  '✍️  Author',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
+                                      size: 14,
+                                      color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      profile.isEmailVerified ? 'Verified' : 'Not Verified',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            profile.email,
+                            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -413,84 +450,30 @@ class _AuthorProfileBody extends StatelessWidget {
               ),
 
               // ── Profile Info Fields ────────────────────────
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
-                ),
-                child: Column(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 1.0,
                   children: [
-                    _InfoTile(icon: Icons.badge_outlined, label: 'Author ID', value: '#${profile.id}'),
-                    _divider(),
-                    _InfoTile(icon: Icons.email_outlined, label: 'Email', value: profile.email),
-                    _divider(),
-                    _InfoTile(
-                      icon: profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
-                      label: 'Email Status',
-                      value: profile.isEmailVerified ? 'Verified' : 'Not Verified',
-                      valueColor: profile.isEmailVerified ? AppColors.successGreen : AppColors.error,
+                    _ModernGridTile(
+                      icon: Icons.badge_outlined,
+                      label: 'Author ID',
+                      value: '#${profile.id}',
+                      iconColor: AppColors.primary,
+                      iconBgColor: AppColors.primaryLight,
                     ),
-                    _divider(),
-                    InkWell(
-                      onTap: () => context.push('/author/statistics'),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-                              child: const Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.primary),
-                            ),
-                            const SizedBox(width: 14),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Detailed Statistics', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
-                                  SizedBox(height: 2),
-                                  Text('View Quotes & Book Stats', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
-                          ],
-                        ),
-                      ),
-                    ),
-                    _divider(),
-                    InkWell(
+                    _ModernGridTile(
+                      icon: Icons.report_gmailerrorred_rounded,
+                      label: 'My Reports',
+                      value: 'View & Submit',
+                      iconColor: AppColors.error,
+                      iconBgColor: AppColors.error.withOpacity(0.1),
                       onTap: () => context.push('/reports'),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                              child: const Icon(Icons.report_gmailerrorred_rounded, size: 18, color: AppColors.error),
-                            ),
-                            const SizedBox(width: 14),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('My Reports', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
-                                  SizedBox(height: 2),
-                                  Text('View & Submit Reports', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.error)),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right_rounded, color: AppColors.error),
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -564,9 +547,7 @@ class _AuthorProfileBody extends StatelessWidget {
                           final book = books[index];
                           return _AuthorBookGridCard(
                             book: book,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => AuthorBookDetailPage(book: book)),
-                            ),
+                            onTap: () => context.push('/author/book_detail', extra: {'book': book}),
                           );
                         },
                       ),
@@ -605,41 +586,73 @@ class _AuthorProfileBody extends StatelessWidget {
     );
   }
 
-  Widget _divider() => const Divider(height: 1, indent: 52);
 }
 
-// ── Info Tile (author profile detail row) ─────────────────────
-class _InfoTile extends StatelessWidget {
+class _ModernGridTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color iconColor;
+  final Color iconBgColor;
   final Color? valueColor;
-  const _InfoTile({required this.icon, required this.label, required this.value, this.valueColor});
+  final VoidCallback? onTap;
+
+  const _ModernGridTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.iconColor,
+    required this.iconBgColor,
+    this.valueColor,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 18, color: AppColors.primary),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 2),
-                Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textDark)),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, size: 28, color: iconColor),
+            ),
+            const Spacer(),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: valueColor ?? AppColors.textDark),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
