@@ -16,6 +16,7 @@ import '../../../library/presentation/bloc/library_event.dart';
 import '../../data/datasources/books_service.dart';
 import '../../data/models/book_detail_model.dart';
 import '../../data/models/book_comment_model.dart';
+import '../../data/models/rating_review_model.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_state.dart';
 import '../../../profile/presentation/bloc/profile_event.dart';
@@ -48,6 +49,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   String? _commentsError;
   final TextEditingController _commentController = TextEditingController();
   bool _submittingComment = false;
+
+  // Ratings State
+  RatingReviewsResponse? _ratingsResponse;
+  bool _loadingRatings = false;
 
   int? _editingCommentId;
   final TextEditingController _editCommentController = TextEditingController();
@@ -132,6 +137,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         });
       }
       _loadComments();
+      _loadRatings();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -152,6 +158,24 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     });
     if (mounted) {
       setState(() => _comments = sorted);
+    }
+  }
+
+  Future<void> _loadRatings() async {
+    if (_book == null) return;
+    setState(() => _loadingRatings = true);
+    try {
+      final res = await sl<BooksService>().getRatings(_book!.id);
+      if (mounted) {
+        setState(() {
+          _ratingsResponse = res;
+          _loadingRatings = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingRatings = false);
+      }
     }
   }
 
@@ -807,6 +831,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         FadeSlideIn(
                           delay: const Duration(milliseconds: 500),
                           child: _buildAboutSection(book),
+                        ),
+                        const SizedBox(height: 8),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 550),
+                          child: _buildRatingsSection(),
                         ),
                         const SizedBox(height: 28),
                         FadeSlideIn(
@@ -1578,6 +1607,115 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   // ─────────────────── REVIEWS ───────────────────
 
+  Widget _buildRatingsSection() {
+    if (_loadingRatings) {
+      return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primary)));
+    }
+    if (_ratingsResponse == null || _ratingsResponse!.reviews.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(height: 48, thickness: 1, color: Color(0xFFEEEEEE)),
+          Text(
+            'User Ratings & Reviews (${_ratingsResponse!.totalCount})',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ..._ratingsResponse!.reviews.map((r) => _buildRatingCard(r)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingCard(RatingReviewItem review) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primaryLight,
+                child: Text(
+                  review.readerName?.isNotEmpty == true ? review.readerName![0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  review.readerName ?? 'Anonymous',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    review.rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (review.reviewText != null && review.reviewText!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              review.reviewText!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textGrey,
+                height: 1.5,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            DateFormat.yMMMd().format(review.createdAt),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildReviewsSection(String? currentUserId, String? currentUserFullName) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1595,9 +1733,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
+              const Text(
                 'Reader Reviews',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,

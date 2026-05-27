@@ -13,19 +13,23 @@ class HomeResponse {
 
   factory HomeResponse.fromJson(Map<String, dynamic> json) {
     return HomeResponse(
-      trendingBooks: (json['trendingBooks'] as List<dynamic>?)
+      trendingBooks:
+          (json['trendingBooks'] as List<dynamic>?)
               ?.map((e) => BookCard.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      recommendedBooks: (json['recommendedBooks'] as List<dynamic>?)
+      recommendedBooks:
+          (json['recommendedBooks'] as List<dynamic>?)
               ?.map((e) => BookCard.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      newlyAddedBooks: (json['newlyAddedBooks'] as List<dynamic>?)
+      newlyAddedBooks:
+          (json['newlyAddedBooks'] as List<dynamic>?)
               ?.map((e) => BookCard.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      categories: (json['categories'] as List<dynamic>?)
+      categories:
+          (json['categories'] as List<dynamic>?)
               ?.map((e) => BookCategory.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -100,7 +104,8 @@ class BookCategory {
     return BookCategory(
       categoryId: json['categoryId'] as int? ?? 0,
       categoryName: json['categoryName'] as String? ?? '',
-      books: (json['books'] as List<dynamic>?)
+      books:
+          (json['books'] as List<dynamic>?)
               ?.map((e) => BookCard.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

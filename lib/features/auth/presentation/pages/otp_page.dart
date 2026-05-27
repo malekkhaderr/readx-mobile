@@ -93,8 +93,12 @@ class _OtpPageState extends State<OtpPage> {
     if (widget.isPasswordReset) {
       context.go('/new-password', extra: widget.email);
     } else {
-      // Registration verification done — send the user to login so they can
-      // sign in with their new account.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email verified! Please log in.'),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
       context.go('/login');
     }
   }

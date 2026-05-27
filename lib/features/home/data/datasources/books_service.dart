@@ -3,6 +3,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/book_detail_model.dart';
 import '../models/book_comment_model.dart';
+import '../models/rating_review_model.dart';
 
 class BooksService {
   final DioClient dioClient;
@@ -28,6 +29,21 @@ class BooksService {
         },
       );
       return CommentListResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<RatingReviewsResponse> getRatings(int bookId, {int page = 1, int pageSize = 10}) async {
+    try {
+      final response = await dioClient.dio.get(
+        '${ApiConstants.books}/$bookId/ratings',
+        queryParameters: {
+          'pageNumber': page,
+          'pageSize': pageSize,
+        },
+      );
+      return RatingReviewsResponse.fromJson(response.data);
     } catch (e) {
       rethrow;
     }
