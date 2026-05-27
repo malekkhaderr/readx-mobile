@@ -22,7 +22,7 @@ class ApiConstants {
   static const String authorQuotes = '/Quotes/author';
 
   // Notifications
-  static const String notifications = '/notifications';
+  static const String notifications = '/Notifications';
 
   // Publisher Requests
   static const String publisherRequests = '/PublisherRequests';

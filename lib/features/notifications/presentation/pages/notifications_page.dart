@@ -143,6 +143,7 @@ class _NotificationsView extends StatelessWidget {
                           message: notification.message,
                           createdAt: notification.createdAt,
                           isRead: notification.isRead,
+                          type: notification.type,
                         );
                       },
                     ),
@@ -230,12 +231,14 @@ class _NotificationTile extends StatelessWidget {
   final String message;
   final DateTime createdAt;
   final bool isRead;
+  final int type;
 
   const _NotificationTile({
     required this.title,
     required this.message,
     required this.createdAt,
     required this.isRead,
+    required this.type,
   });
 
   String _formatTimeAgo(DateTime date) {
@@ -248,10 +251,68 @@ class _NotificationTile extends StatelessWidget {
     return 'Just now';
   }
 
+  IconData _getIcon() {
+    final t = title.toLowerCase();
+    final m = message.toLowerCase();
+    
+    if (t.contains('approve') || m.contains('approved')) {
+      return Icons.check_circle_rounded;
+    }
+    if (t.contains('reject') || m.contains('rejected')) {
+      return Icons.cancel_rounded;
+    }
+    if (t.contains('resolve') || m.contains('resolved')) {
+      return Icons.gavel_rounded;
+    }
+    if (t.contains('cancel') || m.contains('cancelled')) {
+      return Icons.block_rounded;
+    }
+    if (type == 4) {
+      return Icons.cancel_rounded;
+    }
+    
+    return Icons.notifications_rounded;
+  }
+
+  Color _getIconColor(bool isRead) {
+    if (isRead) return AppColors.textGrey;
+    
+    final t = title.toLowerCase();
+    final m = message.toLowerCase();
+    
+    if (t.contains('approve') || m.contains('approved') || t.contains('resolve') || m.contains('resolved')) {
+      return AppColors.successGreen;
+    }
+    if (t.contains('reject') || m.contains('rejected')) {
+      return AppColors.error;
+    }
+    if (t.contains('cancel') || m.contains('cancelled')) {
+      return AppColors.warningOrange;
+    }
+    
+    return AppColors.primary;
+  }
+
+  Color _getBgColor(bool isRead) {
+    if (isRead) return Colors.transparent;
+    
+    final t = title.toLowerCase();
+    final m = message.toLowerCase();
+    
+    if (t.contains('reject') || m.contains('rejected')) {
+      return AppColors.error.withOpacity(0.06);
+    }
+    if (t.contains('approve') || m.contains('approved') || t.contains('resolve') || m.contains('resolved')) {
+      return AppColors.successGreen.withOpacity(0.06);
+    }
+    
+    return AppColors.primaryLight.withOpacity(0.3);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: isRead ? Colors.transparent : AppColors.primaryLight.withOpacity(0.3),
+      color: _getBgColor(isRead),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,12 +320,14 @@ class _NotificationTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isRead ? AppColors.surface : AppColors.primaryLight,
+              color: isRead
+                  ? AppColors.surface
+                  : _getIconColor(isRead).withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.auto_awesome_rounded,
-              color: isRead ? AppColors.textGrey : AppColors.primary,
+              _getIcon(),
+              color: _getIconColor(isRead),
               size: 20,
             ),
           ),
