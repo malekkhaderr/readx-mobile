@@ -6,7 +6,12 @@ class ApiConstants {
   static const String register = '/users/create';
   static const String login = '/users/login';
   static const String logout = '/auth/logout';
-  static const String resetPassword = '/auth/reset-password';
+  static const String forgotPassword = '/users/forgot-password';
+  static const String resetPassword = '/users/reset-password';
+
+  // OTP
+  static const String otpSend = '/otp/send';
+  static const String otpVerify = '/otp/verify';
 
   // Users
   static const String users = '/users';

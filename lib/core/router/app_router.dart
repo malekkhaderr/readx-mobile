@@ -6,6 +6,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/auth/presentation/pages/otp_page.dart';
 import '../../features/auth/presentation/pages/new_password_page.dart';
+import '../../features/auth/presentation/pages/new_password_args.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/library_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
@@ -178,10 +179,17 @@ class AppRouter {
       GoRoute(
         path: '/new-password',
         pageBuilder: (context, state) {
-          final email = state.extra is String ? state.extra as String : '';
+          final extra = state.extra;
+          // Reset flow always pushes a `NewPasswordArgs` carrying the OTP code,
+          // because `/api/users/reset-password` re-validates the code.
+          // Allow a bare String fallback so a deep link without an OTP still
+          // renders (the user will hit a backend validation error on submit).
+          final args = extra is NewPasswordArgs
+              ? extra
+              : NewPasswordArgs(email: extra is String ? extra : '', otpCode: '');
           return _slideFadePage(
             key: state.pageKey,
-            child: NewPasswordPage(email: email),
+            child: NewPasswordPage(args: args),
           );
         },
       ),
@@ -245,7 +253,47 @@ class AppRouter {
         ],
       ),
 
-      // ── Book Details (scale + fade modal) ─────────────
+      // ── Author Shell (Dashboard / Requests / Profile) ─
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AuthorMainShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author',
+                pageBuilder: (context, state) => _fadePage(
+                  key: state.pageKey,
+                  child: const AuthorDashboardPage(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author/requests',
+                pageBuilder: (context, state) => _fadePage(
+                  key: state.pageKey,
+                  child: const AuthorBooksPage(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/author/profile',
+                pageBuilder: (context, state) =>
+                    _fadePage(key: state.pageKey, child: const ProfilePage()),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // ── Author Statistics / Book Detail (modals) ───────
       GoRoute(
         path: '/author/statistics',
         parentNavigatorKey: _rootNavigatorKey,

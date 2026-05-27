@@ -77,12 +77,83 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({required String email}) async {
+  Future<Either<Failure, void>> sendOtp({
+    required String email,
+    required int purpose,
+  }) async {
     try {
-      await remoteDataSource.resetPassword(email: email);
+      await remoteDataSource.sendOtp(email: email, purpose: purpose);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> verifyOtp({
+    required String email,
+    required String code,
+    required int purpose,
+  }) async {
+    try {
+      await remoteDataSource.verifyOtp(
+        email: email,
+        code: code,
+        purpose: purpose,
+      );
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> forgotPassword({required String email}) async {
+    try {
+      await remoteDataSource.forgotPassword(email: email);
+      return const Right(null);
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      await remoteDataSource.resetPassword(
+        email: email,
+        otpCode: otpCode,
+        newPassword: newPassword,
+        confirmNewPassword: confirmNewPassword,
+      );
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

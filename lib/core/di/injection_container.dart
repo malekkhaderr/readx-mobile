@@ -6,10 +6,13 @@ import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecases/forgot_password_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
+import '../../features/auth/domain/usecases/send_otp_usecase.dart';
+import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
@@ -55,7 +58,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => sharedPreferences);
 
   // ─── Core ───────────────────────────────────────────
-  sl.registerLazySingleton<DioClient>(() => DioClient());
+  sl.registerLazySingleton<DioClient>(() => DioClient(prefs: sl()));
 
   // Restore auth token from cache so profile loads without re-login
   final cachedToken = sharedPreferences.getString('CACHED_AUTH_TOKEN');
@@ -71,7 +74,10 @@ Future<void> init() async {
       loginUseCase: sl(),
       registerUseCase: sl(),
       logoutUseCase: sl(),
+      forgotPasswordUseCase: sl(),
       resetPasswordUseCase: sl(),
+      sendOtpUseCase: sl(),
+      verifyOtpUseCase: sl(),
     ),
   );
 
@@ -79,7 +85,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
+  sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
   sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
+  sl.registerLazySingleton(() => SendOtpUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyOtpUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
