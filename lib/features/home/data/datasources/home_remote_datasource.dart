@@ -13,22 +13,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
   @override
   Future<HomeResponse> getHome() async {
-    try {
-      final response = await dioClient.dio.get(ApiConstants.booksHome);
-      final homeData = HomeResponse.fromJson(response.data);
-
-      // Debug logging for image URLs
-      for (var b in homeData.trendingBooks) {
-        final rawUrl = b.coverImageUrl;
-        final parsedUrl = Uri.parse(rawUrl).toString();
-        print('Book: ${b.title}');
-        print('  Raw URL: $rawUrl');
-        print('  Parsed URL: $parsedUrl');
-      }
-
-      return homeData;
-    } catch (e) {
-      rethrow;
-    }
+    final response = await dioClient.dio.get(ApiConstants.booksHome);
+    return HomeResponse.fromJson(response.data);
   }
 }

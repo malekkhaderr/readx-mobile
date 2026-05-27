@@ -500,7 +500,7 @@ class _SearchBookCard extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16)),
-                      child: book.coverImageUrl.isNotEmpty
+                      child: book.coverImageUrl.startsWith('http')
                           ? Image.network(
                               book.coverImageUrl,
                               fit: BoxFit.cover,

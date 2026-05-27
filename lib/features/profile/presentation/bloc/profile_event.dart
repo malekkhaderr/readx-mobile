@@ -15,3 +15,8 @@ class LoadProfileEvent extends ProfileEvent {
 class RefreshProfileEvent extends ProfileEvent {
   const RefreshProfileEvent();
 }
+
+/// Wipe state on logout so the next user doesn't see stale profile data.
+class ResetProfileEvent extends ProfileEvent {
+  const ResetProfileEvent();
+}

@@ -721,7 +721,7 @@ class _FeaturedHeroCard extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: book.coverImageUrl.isNotEmpty
+                          child: book.coverImageUrl.startsWith('http')
                               ? CachedNetworkImage(
                                   imageUrl: book.coverImageUrl,
                                   fit: BoxFit.cover,
@@ -1024,7 +1024,10 @@ class _BookListCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: book.coverImageUrl.isNotEmpty
+                  // Only call CachedNetworkImage when the URL is a real http(s)
+                  // url; otherwise garbage like "test.com" or "1234" would
+                  // trigger a slow doomed network call before falling back.
+                  child: book.coverImageUrl.startsWith('http')
                       ? CachedNetworkImage(
                           imageUrl: book.coverImageUrl,
                           width: 130,
@@ -1190,26 +1193,35 @@ class _BookListCard extends StatelessWidget {
           ),
           ), // close Hero
           const SizedBox(height: 10),
-          Text(
-            book.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-              height: 1.3,
+          // Title — reserves a fixed 2-line slot so every card stays the same
+          // height regardless of whether the title is short or long. This
+          // matches the search-page grid alignment.
+          SizedBox(
+            height: 34, // 2 lines × 12.5px × 1.3 line-height ≈ 32.5px
+            child: Text(
+              book.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+                height: 1.3,
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            book.authorName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10.5,
-              color: AppColors.textGrey,
-              fontWeight: FontWeight.w500,
+          SizedBox(
+            height: 14, // 1 line author
+            child: Text(
+              book.authorName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10.5,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 6),

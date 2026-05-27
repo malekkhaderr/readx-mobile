@@ -1,4 +1,8 @@
 import 'package:get_it/get_it.dart';
+import '../../features/library/data/datasources/library_remote_datasource.dart';
+import '../../features/library/presentation/bloc/library_bloc.dart';
+import '../../features/quotes/data/datasources/quotes_remote_datasource.dart';
+import '../../features/quotes/presentation/bloc/quotes_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -123,6 +127,28 @@ Future<void> init() async {
       
   sl.registerLazySingleton<BooksService>(
       () => BooksService(dioClient: sl()));
+
+  // ─── Library ──────────────────────────────────────────
+
+  sl.registerLazySingleton<LibraryRemoteDataSource>(
+    () => LibraryRemoteDataSource(dioClient: sl()),
+  );
+
+  // Lazy singleton so home + library tab share the same instance
+  // (lets the home page show "Owned" badges using library state).
+  sl.registerLazySingleton(
+    () => LibraryBloc(dataSource: sl()),
+  );
+
+  // ─── Quotes ──────────────────────────────────────────
+
+  sl.registerLazySingleton<QuotesRemoteDataSource>(
+    () => QuotesRemoteDataSource(dioClient: sl()),
+  );
+
+  sl.registerLazySingleton(
+    () => QuotesBloc(dataSource: sl()),
+  );
 
   // ─── Notifications ─────────────────────────────────────
 

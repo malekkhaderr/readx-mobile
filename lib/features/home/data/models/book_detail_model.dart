@@ -17,10 +17,8 @@ class BookDetail {
   final int viewCount;
   final int readCount;
   final DateTime createdAt;
-  final double price;
-  final double effectivePrice;
-  final double? discountPercentage;
-  final String? discountType;
+  final double priceUSD;
+  final double priceTokens;
   final double averageRating;
 
   BookDetail({
@@ -42,12 +40,16 @@ class BookDetail {
     required this.viewCount,
     required this.readCount,
     required this.createdAt,
-    required this.price,
-    required this.effectivePrice,
-    this.discountPercentage,
-    this.discountType,
+    required this.priceUSD,
+    required this.priceTokens,
     required this.averageRating,
   });
+
+  bool get isFree => priceUSD == 0;
+
+  // Keep backward compat for UI that uses these
+  double get price => priceUSD;
+  double get effectivePrice => priceUSD;
 
   factory BookDetail.fromJson(Map<String, dynamic> json) {
     return BookDetail(
@@ -73,10 +75,10 @@ class BookDetail {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      effectivePrice: (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
-      discountPercentage: (json['discountPercentage'] as num?)?.toDouble(),
-      discountType: json['discountType'] as String?,
+      priceUSD: (json['priceUSD'] as num?)?.toDouble() ??
+          (json['price'] as num?)?.toDouble() ?? 0.0,
+      priceTokens: (json['priceTokens'] as num?)?.toDouble() ??
+          (json['effectivePrice'] as num?)?.toDouble() ?? 0.0,
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
     );
   }

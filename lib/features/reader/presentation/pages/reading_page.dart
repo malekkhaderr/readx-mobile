@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:readx/core/di/injection_container.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:readx/features/profile/presentation/bloc/profile_state.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
 import '../../../../core/data/quotes_repository.dart';
@@ -354,7 +356,7 @@ class _ReadingPageState extends State<ReadingPage> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() => textController.dispose());
   }
 
   @override
@@ -453,29 +455,48 @@ class _ReadingPageState extends State<ReadingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('🔥', style: TextStyle(fontSize: 12)),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '12 DAY STREAK',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    )
-                                  ],
-                                ),
+                              child: Builder(
+                                builder: (ctx) {
+                                  // Pull the real streak from ProfileBloc
+                                  // instead of showing a hardcoded value.
+                                  final ps = sl<ProfileBloc>().state;
+                                  final streak = ps is ProfileLoaded
+                                      ? (ps.profile.readerDashboard
+                                              ?.streakDays ??
+                                          0)
+                                      : 0;
+                                  if (streak <= 0) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryLight,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: AppColors.primary
+                                              .withOpacity(0.2)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('🔥',
+                                            style: TextStyle(fontSize: 12)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '$streak DAY${streak == 1 ? '' : ' '}STREAK',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(height: 24),
