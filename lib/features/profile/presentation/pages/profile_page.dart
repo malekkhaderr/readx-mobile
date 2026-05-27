@@ -432,6 +432,36 @@ class _AuthorProfileBody extends StatelessWidget {
                       value: profile.isEmailVerified ? 'Verified' : 'Not Verified',
                       valueColor: profile.isEmailVerified ? AppColors.successGreen : AppColors.error,
                     ),
+                    _divider(),
+                    InkWell(
+                      onTap: () => context.push('/author/statistics'),
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
+                              child: const Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.primary),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Detailed Statistics', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+                                  SizedBox(height: 2),
+                                  Text('View Quotes & Book Stats', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

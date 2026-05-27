@@ -22,7 +22,13 @@ import '../constants/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
-
+import '../../features/author_dashboard/presentation/pages/author_dashboard_page.dart';
+import '../../features/author_dashboard/presentation/pages/author_books_page.dart';
+import '../../features/author_dashboard/presentation/pages/author_main_shell.dart';
+import '../../features/author_dashboard/presentation/pages/author_statistics_page.dart';
+import '../../features/author_dashboard/presentation/pages/author_book_detail_page.dart';
+import '../../features/author_dashboard/data/models/author_book_model.dart';
+// Global key for navigator (needed for push from within shell)
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 // ─────────────────────────────────────────────────────────
@@ -237,6 +243,28 @@ class AppRouter {
       ),
 
       // ── Book Details (scale + fade modal) ─────────────
+      GoRoute(
+        path: '/author/statistics',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AuthorStatisticsPage(),
+      ),
+
+      GoRoute(
+        path: '/author/book_detail',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null || extra['book'] == null) {
+            // Fallback just in case, though it shouldn't happen.
+            return const Scaffold(body: Center(child: Text('Error: Book not found')));
+          }
+          return AuthorBookDetailPage(
+            book: extra['book'] as AuthorBook,
+            quotesCount: extra['quotesCount'] as int?,
+          );
+        },
+      ),
+
       GoRoute(
         path: '/book/:bookId',
         parentNavigatorKey: _rootNavigatorKey,

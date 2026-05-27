@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../data/models/author_quotes_stats_model.dart';
 import '../bloc/author_dashboard_bloc.dart';
 import '../widgets/author_book_list_card.dart';
 import '../pages/author_book_detail_page.dart';
@@ -153,6 +155,7 @@ class AuthorDashboardPage extends StatelessWidget {
                     final bloc = context.read<AuthorDashboardBloc>();
                     final dashboard = bloc.cachedDashboard;
                     final books = bloc.cachedBooks;
+                    final quotesStats = bloc.cachedQuotesStats;
 
                     // Loading
                     if ((state is AuthorDashboardLoading ||
@@ -409,11 +412,28 @@ class AuthorDashboardPage extends StatelessWidget {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _StatCard(
+                                        icon: Icons.format_quote_rounded,
+                                        value: _formatCount(quotesStats?.totalQuotesCount ?? 0),
+                                        label: 'Total Quotes',
+                                        color: Colors.purpleAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: const SizedBox(), // Empty for now, but balances the grid
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
                           // ── My Books Section ────────────────────
                           Padding(
@@ -507,15 +527,19 @@ class AuthorDashboardPage extends StatelessWidget {
                               itemCount: books.length,
                               itemBuilder: (context, index) {
                                 final book = books[index];
+                                final quoteCount = quotesStats?.bookQuoteCounts.firstWhere(
+                                  (q) => q.bookId == book.id,
+                                  orElse: () => BookQuoteCountModel(bookId: book.id, bookTitle: '', quotesCount: 0),
+                                ).quotesCount ?? 0;
+                                
                                 return AuthorBookListCard(
                                   book: book,
+                                  quotesCount: quoteCount,
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            AuthorBookDetailPage(book: book),
-                                      ),
-                                    );
+                                    context.push('/author/book_detail', extra: {
+                                      'book': book,
+                                      'quotesCount': quoteCount,
+                                    });
                                   },
                                 );
                               },

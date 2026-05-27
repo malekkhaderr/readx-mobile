@@ -5,11 +5,13 @@ import '../../data/models/author_book_model.dart';
 
 class AuthorBookListCard extends StatelessWidget {
   final AuthorBook book;
+  final int? quotesCount;
   final VoidCallback onTap;
 
   const AuthorBookListCard({
     super.key,
     required this.book,
+    this.quotesCount,
     required this.onTap,
   });
 
@@ -118,6 +120,14 @@ class AuthorBookListCard extends StatelessWidget {
                             value: book.averageRating.toStringAsFixed(1),
                             color: AppColors.warningOrange,
                           ),
+                          if (quotesCount != null && quotesCount! > 0) ...[
+                            const SizedBox(width: 8),
+                            _MetricChip(
+                              icon: Icons.format_quote_rounded,
+                              value: _formatCount(quotesCount!),
+                              color: Colors.purpleAccent,
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 10),

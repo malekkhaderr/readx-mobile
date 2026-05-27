@@ -18,6 +18,8 @@ class ApiConstants {
 
   // Quotes
   static const String quotes = '/quotes';
+  static const String authorQuotesStats = '/Quotes/author/stats';
+  static const String authorQuotes = '/Quotes/author';
 
   // Notifications
   static const String notifications = '/notifications';

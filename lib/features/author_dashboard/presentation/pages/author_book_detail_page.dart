@@ -4,14 +4,16 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../data/models/author_book_model.dart';
+import '../../data/models/author_quote_model.dart';
 import '../../data/datasources/author_dashboard_remote_datasource.dart';
 import '../../../home/data/datasources/books_service.dart';
 import '../../../home/data/models/book_comment_model.dart';
 
 class AuthorBookDetailPage extends StatefulWidget {
   final AuthorBook book;
+  final int? quotesCount;
 
-  const AuthorBookDetailPage({super.key, required this.book});
+  const AuthorBookDetailPage({super.key, required this.book, this.quotesCount});
 
   @override
   State<AuthorBookDetailPage> createState() => _AuthorBookDetailPageState();
@@ -36,20 +38,41 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
   bool _loadingMore = false;
   final ScrollController _commentsScrollController = ScrollController();
 
+  // Quotes
+  bool _quotesLoading = true;
+  String? _quotesError;
+  List<AuthorQuoteModel> _quotes = [];
+  int _quotesPage = 1;
+  bool _hasMoreQuotes = true;
+  bool _loadingMoreQuotes = false;
+  final ScrollController _quotesScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadStatistics();
     _loadComments();
+    _loadQuotes();
     _commentsScrollController.addListener(_onCommentsScroll);
+    _quotesScrollController.addListener(_onQuotesScroll);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _commentsScrollController.dispose();
+    _quotesScrollController.dispose();
     super.dispose();
+  }
+
+  void _onQuotesScroll() {
+    if (_quotesScrollController.position.pixels >=
+            _quotesScrollController.position.maxScrollExtent - 200 &&
+        !_loadingMoreQuotes &&
+        _hasMoreQuotes) {
+      _loadMoreQuotes();
+    }
   }
 
   void _onCommentsScroll() {
@@ -142,6 +165,60 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
       }
     } catch (_) {
       if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _loadQuotes({bool refresh = false}) async {
+    if (refresh) {
+      setState(() {
+        _quotesPage = 1;
+        _hasMoreQuotes = true;
+        _quotes = [];
+        _quotesLoading = true;
+        _quotesError = null;
+      });
+    }
+
+    try {
+      final res = await sl<AuthorDashboardRemoteDataSource>()
+          .getBookQuotes(widget.book.id, page: _quotesPage);
+      if (mounted) {
+        setState(() {
+          final filtered = res.items.where((q) => q.bookId == widget.book.id).toList();
+          _quotes.addAll(filtered);
+          _hasMoreQuotes = _quotesPage < res.totalPages;
+          _quotesLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _quotesError = 'Failed to load quotes.';
+          _quotesLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMoreQuotes() async {
+    if (_loadingMoreQuotes || !_hasMoreQuotes) return;
+    setState(() {
+      _loadingMoreQuotes = true;
+      _quotesPage++;
+    });
+    try {
+      final res = await sl<AuthorDashboardRemoteDataSource>()
+          .getBookQuotes(widget.book.id, page: _quotesPage);
+      if (mounted) {
+        setState(() {
+          final filtered = res.items.where((q) => q.bookId == widget.book.id).toList();
+          _quotes.addAll(filtered);
+          _hasMoreQuotes = _quotesPage < res.totalPages;
+          _loadingMoreQuotes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingMoreQuotes = false);
     }
   }
 
@@ -293,6 +370,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                 tabs: const [
                   Tab(text: 'Overview'),
                   Tab(text: 'Comments'),
+                  Tab(text: 'Quotes'),
                 ],
               ),
             ),
@@ -303,6 +381,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
           children: [
             _buildOverviewTab(book),
             _buildCommentsTab(),
+            _buildQuotesTab(),
           ],
         ),
       ),
@@ -459,6 +538,15 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
             color: const Color(0xFF9C27B0),
           ),
         ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatBox(
+            icon: Icons.format_quote_rounded,
+            label: 'Total Quotes',
+            value: widget.quotesCount?.toString() ?? '0',
+            color: Colors.purpleAccent,
+          ),
+        ),
       ],
     );
   }
@@ -572,6 +660,175 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
           }
           return _CommentCard(comment: _comments[index]);
         },
+      ),
+    );
+  }
+
+  Widget _buildQuotesTab() {
+    if (_quotesLoading && _quotes.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
+
+    if (_quotesError != null && _quotes.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text(_quotesError!,
+                style: const TextStyle(color: AppColors.textGrey)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _loadQuotes(refresh: true),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(140, 44),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_quotes.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.format_quote_rounded,
+                  size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No quotes yet',
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Readers haven\'t added any quotes for this book yet.',
+              style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _loadQuotes(refresh: true),
+      color: AppColors.primary,
+      child: ListView.builder(
+        controller: _quotesScrollController,
+        padding: const EdgeInsets.all(20),
+        itemCount: _quotes.length + (_loadingMoreQuotes ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _quotes.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child:
+                  Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            );
+          }
+          final quote = _quotes[index];
+          return _buildQuoteCard(quote);
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuoteCard(AuthorQuoteModel quote) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primaryLight,
+                child: Text(
+                  quote.readerName.isNotEmpty ? quote.readerName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  quote.readerName,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textDark),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (quote.createdAt != null)
+                Text(
+                  DateFormat.yMMMd().format(quote.createdAt!),
+                  style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '"${quote.content}"',
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'Page ${quote.pageNumber}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.thumb_up_alt_rounded, size: 14, color: AppColors.primary.withOpacity(0.7)),
+              const SizedBox(width: 4),
+              Text(quote.upvotes.toString(), style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              const SizedBox(width: 12),
+              Icon(Icons.thumb_down_alt_rounded, size: 14, color: AppColors.textGrey.withOpacity(0.7)),
+              const SizedBox(width: 4),
+              Text(quote.downvotes.toString(), style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            ],
+          ),
+        ],
       ),
     );
   }
