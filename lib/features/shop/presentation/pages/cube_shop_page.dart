@@ -48,7 +48,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(children: [
-          Text(item.emoji, style: const TextStyle(fontSize: 28)),
+          Text(item.emoji, style: TextStyle(fontSize: 28)),
           const SizedBox(width: 10),
           Expanded(child: Text(item.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
         ]),
@@ -56,7 +56,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.description, style: const TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4)),
+            Text(item.description, style: TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -68,7 +68,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
                   Row(children: [
                     Image.asset('assets/images/purple_feather.png', width: 18, height: 18, fit: BoxFit.contain),
                     const SizedBox(width: 4),
-                    Text('${item.price}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    Text('${item.price}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ]),
                 ],
               ),
@@ -78,7 +78,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -112,15 +112,15 @@ class _CubeShopPageState extends State<CubeShopPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
-              const Padding(
+              SizedBox(height: 16),
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text('Feather Shop', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textDark)),
               ),
@@ -166,7 +166,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
 
               // Daily Deals
               if (_filteredDeals.isNotEmpty) ...[
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text('Daily Deals', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                 ),
@@ -193,7 +193,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
 
               // Featured Rewards
               if (_filteredFeatured.isNotEmpty) ...[
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text('Featured Rewards', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                 ),
@@ -208,7 +208,7 @@ class _CubeShopPageState extends State<CubeShopPage> {
               ],
 
               if (_filteredDeals.isEmpty && _filteredFeatured.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(40),
                   child: Center(
                     child: Column(
@@ -241,9 +241,9 @@ class _CubeBalanceCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 16, offset: Offset(0, 6))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,9 +255,9 @@ class _CubeBalanceCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.add, color: Colors.white, size: 14),
+                    Icon(Icons.add, color: AppColors.surface, size: 14),
                     SizedBox(width: 4),
                     Text('Get Feathers', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                   ],
@@ -309,12 +309,12 @@ class _DealCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)),
-              child: Center(child: Text(item.emoji, style: const TextStyle(fontSize: 24))),
+              child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 24))),
             ),
             const SizedBox(height: 8),
-            Text(item.name, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+            Text(item.name, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark)),
             const SizedBox(height: 2),
-            Text(item.description, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
+            Text(item.description, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, color: AppColors.textGrey)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -365,7 +365,7 @@ class _FeaturedRewardCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)),
-              child: Center(child: Text(item.emoji, style: const TextStyle(fontSize: 26))),
+              child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 26))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -374,7 +374,7 @@ class _FeaturedRewardCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(item.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark))),
+                      Expanded(child: Text(item.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark))),
                       if (item.badge != null)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -382,23 +382,23 @@ class _FeaturedRewardCard extends StatelessWidget {
                             color: item.badge == 'New' ? AppColors.successGreen : item.badge == 'Rare' ? AppColors.warningOrange : AppColors.accent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(item.badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                          child: Text(item.badge!, style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
                         ),
                     ],
                   ),
                   const SizedBox(height: 3),
-                  Text(item.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: AppColors.textGrey, height: 1.3)),
+                  Text(item.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: AppColors.textGrey, height: 1.3)),
                 ],
               ),
             ),
             const SizedBox(width: 10),
             isPurchased
-                ? const Icon(Icons.check_circle, color: AppColors.successGreen, size: 24)
+                ? Icon(Icons.check_circle, color: AppColors.successGreen, size: 24)
                 : Column(
                     children: [
                       Image.asset('assets/images/purple_feather.png', width: 18, height: 18, fit: BoxFit.contain),
                       const SizedBox(height: 2),
-                      Text('${item.price}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                      Text('${item.price}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary)),
                     ],
                   ),
           ],

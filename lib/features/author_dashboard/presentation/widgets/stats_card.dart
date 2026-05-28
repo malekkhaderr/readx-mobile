@@ -38,7 +38,7 @@ class StatsCard extends StatelessWidget {
           if (emoji != null)
             Text(
               emoji!,
-              style: const TextStyle(fontSize: 24),
+              style: TextStyle(fontSize: 24),
             )
           else if (icon != null)
             Container(
@@ -68,7 +68,7 @@ class StatsCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,

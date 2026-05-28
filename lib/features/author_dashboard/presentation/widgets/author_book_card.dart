@@ -61,7 +61,7 @@ class AuthorBookCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Shimmer.fromColors(
                           baseColor: AppColors.primaryLight,
-                          highlightColor: Colors.white,
+                          highlightColor: AppColors.shimmer,
                           child: Container(color: AppColors.primaryLight),
                         ),
                         errorWidget: (context, url, error) => _buildPlaceholderCover(),
@@ -83,7 +83,7 @@ class AuthorBookCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           book.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textDark,
@@ -129,7 +129,7 @@ class AuthorBookCard extends StatelessWidget {
                           ),
                           child: Text(
                             book.categoryName!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
@@ -141,7 +141,7 @@ class AuthorBookCard extends StatelessWidget {
                       if (book.createdAt != null)
                         Text(
                           dateFormat.format(book.createdAt!),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             color: AppColors.textGrey,
                           ),
@@ -178,21 +178,21 @@ class AuthorBookCard extends StatelessWidget {
   Widget _buildPlaceholderCover() {
     return Container(
       color: AppColors.primaryLight,
-      child: const Center(
+      child: Center(
         child: Icon(Icons.book, color: AppColors.primary, size: 24),
       ),
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, {Color iconColor = AppColors.textGrey}) {
+  Widget _buildStatItem(IconData icon, String value, {Color? iconColor}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: iconColor),
+        Icon(icon, size: 13, color: iconColor ?? AppColors.textGrey),
         const SizedBox(width: 3),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textGrey,

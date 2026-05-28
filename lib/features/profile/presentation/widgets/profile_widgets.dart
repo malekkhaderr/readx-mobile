@@ -18,7 +18,7 @@ class ProfileHeader extends StatelessWidget {
           height: 90,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [AppColors.gradientStart, AppColors.gradientEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -38,7 +38,7 @@ class ProfileHeader extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           profile.name,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
@@ -206,7 +206,7 @@ class _ProfileStat extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
@@ -253,7 +253,7 @@ class ReadingRitualsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Reading Rituals',
                 style: TextStyle(
                   fontSize: 16,
@@ -276,22 +276,22 @@ class ReadingRitualsSection extends StatelessWidget {
           // Summary row
           Row(
             children: [
-              const Icon(Icons.access_time, size: 14, color: AppColors.textGrey),
+              Icon(Icons.access_time, size: 14, color: AppColors.textGrey),
               const SizedBox(width: 4),
               Text(
                 MockProfileData.totalReadingTime,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textDark,
                 ),
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.trending_up, size: 14, color: AppColors.successGreen),
+              Icon(Icons.trending_up, size: 14, color: AppColors.successGreen),
               const SizedBox(width: 4),
               Text(
                 MockProfileData.avgSessionTime,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textDark,
@@ -387,7 +387,7 @@ class TrophyGridSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Trophies & Runes',
             style: TextStyle(
               fontSize: 16,

@@ -37,7 +37,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   @override
   Future<Either<Failure, void>> submitReport({
-    required int reasonId,
+    int? reasonId,
     String? customReason,
     String? description,
   }) async {

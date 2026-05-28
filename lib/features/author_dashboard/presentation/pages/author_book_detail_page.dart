@@ -252,7 +252,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
     final book = widget.book;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
@@ -267,7 +267,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
+                child: Icon(Icons.arrow_back_ios_new_rounded,
                     color: Colors.white, size: 18),
               ),
             ),
@@ -319,7 +319,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                                 ),
                                 child: Text(
                                   book.categoryName!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600),
@@ -337,7 +337,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                               ),
                               child: Text(
                                 book.isPublished ? '✓ Published' : 'Draft',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600),
@@ -453,7 +453,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
               ),
               child: Text(
                 book.description!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textGrey,
                   height: 1.6,
@@ -519,7 +519,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
+        child: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
@@ -535,8 +535,8 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         child: Row(
           children: [
             Icon(Icons.info_outline, color: AppColors.textGrey, size: 20),
-            const SizedBox(width: 8),
-            const Expanded(
+            SizedBox(width: 8),
+            Expanded(
               child: Text(
                 'Statistics unavailable for this book.',
                 style: TextStyle(color: AppColors.textGrey, fontSize: 13),
@@ -615,7 +615,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
 
   Widget _buildCommentsTab() {
     if (_commentsLoading && _comments.isEmpty) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
@@ -625,10 +625,10 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            Icon(Icons.error_outline, color: AppColors.error, size: 48),
             const SizedBox(height: 16),
             Text(_commentsError!,
-                style: const TextStyle(color: AppColors.textGrey)),
+                style: TextStyle(color: AppColors.textGrey)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _loadComments(refresh: true),
@@ -656,19 +656,19 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.chat_bubble_outline_rounded,
+              child: Icon(Icons.chat_bubble_outline_rounded,
                   size: 40, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No comments yet',
               style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textDark),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Readers haven\'t commented on this book yet.',
               style: TextStyle(color: AppColors.textGrey, fontSize: 13),
             ),
@@ -686,7 +686,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         itemCount: _comments.length + (_loadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _comments.length) {
-            return const Padding(
+            return Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child:
                   Center(child: CircularProgressIndicator(color: AppColors.primary)),
@@ -700,7 +700,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
 
   Widget _buildQuotesTab() {
     if (_quotesLoading && _quotes.isEmpty) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
@@ -710,10 +710,10 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            Icon(Icons.error_outline, color: AppColors.error, size: 48),
             const SizedBox(height: 16),
             Text(_quotesError!,
-                style: const TextStyle(color: AppColors.textGrey)),
+                style: TextStyle(color: AppColors.textGrey)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _loadQuotes(refresh: true),
@@ -741,19 +741,19 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.format_quote_rounded,
+              child: Icon(Icons.format_quote_rounded,
                   size: 40, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No quotes yet',
               style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textDark),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Readers haven\'t added any quotes for this book yet.',
               style: TextStyle(color: AppColors.textGrey, fontSize: 13),
             ),
@@ -771,7 +771,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         itemCount: _quotes.length + (_loadingMoreQuotes ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _quotes.length) {
-            return const Padding(
+            return Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child:
                   Center(child: CircularProgressIndicator(color: AppColors.primary)),
@@ -809,14 +809,14 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                 backgroundColor: AppColors.primaryLight,
                 child: Text(
                   quote.readerName.isNotEmpty ? quote.readerName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   quote.readerName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textDark),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textDark),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -824,14 +824,14 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
               if (quote.createdAt != null)
                 Text(
                   DateFormat.yMMMd().format(quote.createdAt!),
-                  style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 12),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             '"${quote.content}"',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               height: 1.5,
               fontStyle: FontStyle.italic,
@@ -849,17 +849,17 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
                 ),
                 child: Text(
                   'Page ${quote.pageNumber}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w600),
                 ),
               ),
               const Spacer(),
               Icon(Icons.thumb_up_alt_rounded, size: 14, color: AppColors.primary.withOpacity(0.7)),
               const SizedBox(width: 4),
-              Text(quote.upvotes.toString(), style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              Text(quote.upvotes.toString(), style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
               const SizedBox(width: 12),
               Icon(Icons.thumb_down_alt_rounded, size: 14, color: AppColors.textGrey.withOpacity(0.7)),
               const SizedBox(width: 4),
-              Text(quote.downvotes.toString(), style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              Text(quote.downvotes.toString(), style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
             ],
           ),
         ],
@@ -869,7 +869,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
 
   Widget _gradientPlaceholder() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -926,7 +926,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
@@ -981,7 +981,7 @@ class _PerformanceTile extends StatelessWidget {
               children: [
                 Text(
                   label.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textGrey,
@@ -991,7 +991,7 @@ class _PerformanceTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
@@ -1045,7 +1045,7 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppColors.textDark,
@@ -1054,7 +1054,7 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+            style: TextStyle(fontSize: 12, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -1075,12 +1075,12 @@ class _DetailRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500)),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textDark,
                   fontWeight: FontWeight.w600)),
@@ -1123,7 +1123,7 @@ class _CommentCard extends StatelessWidget {
                 backgroundColor: AppColors.primaryLight,
                 child: Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 15),
@@ -1138,14 +1138,14 @@ class _CommentCard extends StatelessWidget {
                       comment.readerName.isNotEmpty
                           ? comment.readerName
                           : 'Anonymous',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                           color: AppColors.textDark),
                     ),
                     Text(
                       DateFormat.yMMMd().add_jm().format(comment.createdAt),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.textGrey),
                     ),
                   ],
@@ -1170,7 +1170,7 @@ class _CommentCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             comment.body,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               color: AppColors.textGrey,
               height: 1.5,

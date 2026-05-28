@@ -2,8 +2,10 @@ class CommentItem {
   final int id;
   final int bookId;
   final int readerProfileId;
+  final int userId;
   final String readerName;
   final String body;
+  final bool isSpoiler;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int upvoteCount;
@@ -14,8 +16,10 @@ class CommentItem {
     required this.id,
     required this.bookId,
     required this.readerProfileId,
+    this.userId = 0,
     required this.readerName,
     required this.body,
+    this.isSpoiler = false,
     required this.createdAt,
     this.updatedAt,
     required this.upvoteCount,
@@ -28,8 +32,10 @@ class CommentItem {
       id: json['id'] as int? ?? 0,
       bookId: json['bookId'] as int? ?? 0,
       readerProfileId: json['readerProfileId'] as int? ?? 0,
+      userId: json['userId'] as int? ?? 0,
       readerName: json['readerName'] as String? ?? 'Anonymous',
       body: json['body'] as String? ?? '',
+      isSpoiler: json['isSpoiler'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
@@ -46,8 +52,10 @@ class CommentItem {
     int? id,
     int? bookId,
     int? readerProfileId,
+    int? userId,
     String? readerName,
     String? body,
+    bool? isSpoiler,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? upvoteCount,
@@ -58,7 +66,9 @@ class CommentItem {
       id: id ?? this.id,
       bookId: bookId ?? this.bookId,
       readerProfileId: readerProfileId ?? this.readerProfileId,
+      userId: userId ?? this.userId,
       readerName: readerName ?? this.readerName,
+      isSpoiler: isSpoiler ?? this.isSpoiler,
       body: body ?? this.body,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

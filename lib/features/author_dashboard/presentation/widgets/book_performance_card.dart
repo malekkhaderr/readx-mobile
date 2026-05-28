@@ -52,12 +52,12 @@ class BookPerformanceCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 20),
+                      Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           book.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark,
@@ -74,7 +74,7 @@ class BookPerformanceCard extends StatelessWidget {
                         ),
                         child: Text(
                           'ID: #${book.id}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
@@ -130,7 +130,7 @@ class BookPerformanceCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
@@ -139,7 +139,7 @@ class BookPerformanceCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textGrey,

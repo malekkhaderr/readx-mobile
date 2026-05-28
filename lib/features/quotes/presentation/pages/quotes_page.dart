@@ -275,7 +275,7 @@ class _QuotesViewState extends State<_QuotesView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: Column(
         children: [
           _Header(controller: _tabController),
@@ -307,7 +307,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -331,7 +331,7 @@ class _Header extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.white.withOpacity(0.3)),
                 ),
-                child: const Icon(Icons.format_quote_rounded,
+                child: Icon(Icons.format_quote_rounded,
                     color: Colors.white, size: 28),
               ),
               const SizedBox(width: 14),
@@ -387,13 +387,13 @@ class _Header extends StatelessWidget {
             child: TabBar(
               controller: controller,
               indicator: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(10),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               labelColor: AppColors.primary,
-              unselectedLabelColor: Colors.white,
+              unselectedLabelColor: AppColors.textGrey,
               labelStyle: const TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w800,
               ),
@@ -524,7 +524,7 @@ class _FeedToolbar extends StatelessWidget {
             children: [
               Text(
                 '${state.items.length} ${state.items.length == 1 ? 'quote' : 'quotes'}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w600,
@@ -544,12 +544,12 @@ class _FeedToolbar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: state.hasActiveFilter
                         ? AppColors.primary
-                        : Colors.white,
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: state.hasActiveFilter
                           ? AppColors.primary
-                          : AppColors.divider.withOpacity(0.7),
+                          : AppColors.divider,
                     ),
                   ),
                   child: Row(
@@ -582,7 +582,7 @@ class _FeedToolbar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                   border:
                       Border.all(color: AppColors.divider.withOpacity(0.7)),
@@ -636,7 +636,7 @@ class _FeedToolbar extends StatelessWidget {
                         color: AppColors.error.withOpacity(0.10),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.clear_all_rounded,
@@ -686,7 +686,7 @@ class _FeedToolbar extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w800,
                 color: AppColors.primary,
@@ -696,7 +696,7 @@ class _FeedToolbar extends StatelessWidget {
           const SizedBox(width: 4),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(
+            child: Icon(
               Icons.close_rounded,
               size: 12,
               color: AppColors.primary,
@@ -806,8 +806,8 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
       padding: EdgeInsets.fromLTRB(
         20, 16, 20, MediaQuery.of(context).padding.bottom + 24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -824,7 +824,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Filter quotes',
             style: TextStyle(
               fontSize: 18,
@@ -832,8 +832,8 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: 4),
+          Text(
             'Narrow the feed by book or category. Leave both empty to see everything.',
             style: TextStyle(
               fontSize: 12,
@@ -841,9 +841,9 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           if (_loading) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 28),
               child: Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
@@ -875,7 +875,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Reset',
                       style: TextStyle(
                         color: AppColors.textGrey,
@@ -926,7 +926,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 13,
             color: AppColors.textDark,
@@ -948,12 +948,12 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
       child: DropdownButtonFormField<int?>(
         value: _selectedBook,
         isExpanded: true,
-        icon: const Padding(
+        icon: Padding(
           padding: EdgeInsets.only(right: 10),
           child: Icon(Icons.keyboard_arrow_down_rounded,
               color: AppColors.textGrey),
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           contentPadding:
               EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border: InputBorder.none,
@@ -963,7 +963,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
           hintStyle: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         items: <DropdownMenuItem<int?>>[
-          const DropdownMenuItem<int?>(
+          DropdownMenuItem<int?>(
             value: null,
             child: Text('Any book',
                 style: TextStyle(
@@ -977,7 +977,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
                   b.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textDark,
@@ -1001,12 +1001,12 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
       child: DropdownButtonFormField<int?>(
         value: _selectedCategory,
         isExpanded: true,
-        icon: const Padding(
+        icon: Padding(
           padding: EdgeInsets.only(right: 10),
           child: Icon(Icons.keyboard_arrow_down_rounded,
               color: AppColors.textGrey),
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           contentPadding:
               EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border: InputBorder.none,
@@ -1016,7 +1016,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
           hintStyle: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         items: <DropdownMenuItem<int?>>[
-          const DropdownMenuItem<int?>(
+          DropdownMenuItem<int?>(
             value: null,
             child: Text('Any category',
                 style: TextStyle(
@@ -1030,7 +1030,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
                   children: [
                     if (c.iconUrl != null && c.iconUrl!.isNotEmpty) ...[
                       Text(c.iconUrl!,
-                          style: const TextStyle(fontSize: 14)),
+                          style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 8),
                     ],
                     Expanded(
@@ -1038,7 +1038,7 @@ class _QuotesFilterSheetState extends State<_QuotesFilterSheet> {
                         c.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textDark,
@@ -1060,17 +1060,6 @@ class _PublicQuoteCard extends StatelessWidget {
   final int index;
   const _PublicQuoteCard({required this.quote, required this.index});
 
-  // Rotating accent palette for visual variety.
-  List<Color> get _accent {
-    const palettes = [
-      [Color(0xFF7B61FF), Color(0xFF9D8AFF)],
-      [Color(0xFFFF6B35), Color(0xFFFFA77B)],
-      [Color(0xFF00B8D4), Color(0xFF6FE6F8)],
-      [Color(0xFF4CAF50), Color(0xFF7DDB80)],
-    ];
-    return palettes[index % palettes.length];
-  }
-
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'just now';
@@ -1084,364 +1073,166 @@ class _PublicQuoteCard extends StatelessWidget {
   void _copy(BuildContext context) {
     final text = '"${quote.content}"\n\n— ${quote.bookTitle}, p.${quote.pageNumber}';
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Quote copied'),
-        backgroundColor: AppColors.successGreen,
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 1),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quote copied'), backgroundColor: AppColors.successGreen, behavior: SnackBarBehavior.floating, duration: Duration(seconds: 1)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final accent = _accent;
     var text = quote.content;
-    if (text.startsWith('"') && text.endsWith('"')) {
-      text = text.substring(1, text.length - 1);
-    }
+    if (text.startsWith('"') && text.endsWith('"')) text = text.substring(1, text.length - 1);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.divider.withOpacity(0.6), width: 0.8),
         boxShadow: [
-          BoxShadow(
-            color: accent[0].withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
+          BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Decorative big quote mark in the body
-            Positioned(
-              right: -14, top: 70,
-              child: Icon(Icons.format_quote_rounded,
-                  size: 120, color: accent[0].withOpacity(0.05)),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── HEADER STRIP — book cover + title + category + reader ──
-                Container(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        accent[0].withOpacity(0.10),
-                        accent[1].withOpacity(0.04),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _BookCoverThumb(
-                        bookId: quote.bookId,
-                        fallbackCategory: quote.categoryName ?? '',
-                        accent: accent,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Book title
-                            Text(
-                              quote.bookTitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textDark,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            // Category chip
-                            if (quote.categoryName != null &&
-                                quote.categoryName!.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: accent[0].withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.local_offer_rounded,
-                                        size: 9, color: accent[0]),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      quote.categoryName!,
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: accent[0],
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            const SizedBox(height: 6),
-                            // Reader info row
-                            Row(
-                              children: [
-                                Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(colors: accent),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      quote.readerName.isNotEmpty
-                                          ? quote.readerName[0].toUpperCase()
-                                          : '?',
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 9.5),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    quote.readerName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textDark,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 2,
-                                  height: 2,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.textGrey,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  _timeAgo(quote.createdAt),
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    color: AppColors.textGrey,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Copy action — top right
-                      InkWell(
-                        onTap: () => _copy(context),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.copy_rounded,
-                              size: 14, color: AppColors.textGrey),
-                        ),
-                      ),
-                    ],
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // ── QUOTE BODY ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Decorative left-border accent line with quote mark
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 3,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(Icons.format_quote_rounded, size: 22, color: AppColors.primary.withOpacity(0.35)),
+                const SizedBox(height: 8),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.textDark,
+                    height: 1.65,
+                    fontFamily: 'Georgia',
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.1,
                   ),
                 ),
-                // ── QUOTE BODY ──
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Solid quote glyph (small) for visual signal
-                      Icon(
-                        Icons.format_quote_rounded,
-                        size: 18,
-                        color: accent[0].withOpacity(0.55),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        text,
-                        style: const TextStyle(
-                          fontSize: 14.5,
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.textDark,
-                          height: 1.55,
-                          fontFamily: 'Georgia',
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Page badge
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.bookmark_outline_rounded,
-                                    size: 10, color: AppColors.textGrey),
-                                const SizedBox(width: 3),
-                                Text(
-                                  'p. ${quote.pageNumber}',
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    color: AppColors.textGrey,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              ])),
+            ]),
+            const SizedBox(height: 14),
+            // Source info: book + page
+            Row(children: [
+              _BookCoverThumb(bookId: quote.bookId, fallbackCategory: quote.categoryName ?? '', accent: [AppColors.primary, AppColors.primary]),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(quote.bookTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                const SizedBox(height: 2),
+                Text('Page ${quote.pageNumber}', style: TextStyle(fontSize: 10.5, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+              ])),
+              // Copy
+              GestureDetector(
+                onTap: () => _copy(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: AppColors.cardBackground, shape: BoxShape.circle, border: Border.all(color: AppColors.divider, width: 0.5)),
+                  child: Icon(Icons.copy_rounded, size: 13, color: AppColors.textGrey),
                 ),
-                // ── ACTION ROW (votes + net score) ──
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 14, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 1,
-                        color: AppColors.divider.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          _voteBtn(
-                            context: context,
-                            icon: quote.hasUpvoted
-                                ? Icons.thumb_up_rounded
-                                : Icons.thumb_up_outlined,
-                            count: quote.upvotes,
-                            active: quote.hasUpvoted,
-                            activeColor: AppColors.primary,
-                            vote: QuoteVote.upvote,
-                          ),
-                          const SizedBox(width: 8),
-                          _voteBtn(
-                            context: context,
-                            icon: quote.hasDownvoted
-                                ? Icons.thumb_down_rounded
-                                : Icons.thumb_down_outlined,
-                            count: quote.downvotes,
-                            active: quote.hasDownvoted,
-                            activeColor: AppColors.error,
-                            vote: QuoteVote.downvote,
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: quote.netScore > 0
-                                  ? AppColors.successGreen.withOpacity(0.12)
-                                  : (quote.netScore < 0
-                                      ? AppColors.error.withOpacity(0.10)
-                                      : AppColors.background),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              quote.netScore > 0
-                                  ? '+${quote.netScore}'
-                                  : '${quote.netScore}',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                                color: quote.netScore > 0
-                                    ? AppColors.successGreen
-                                    : (quote.netScore < 0
-                                        ? AppColors.error
-                                        : AppColors.textGrey),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ]),
+          ]),
         ),
-      ),
+        // ── FOOTER BAR ──
+        Container(
+          padding: const EdgeInsets.fromLTRB(22, 10, 18, 12),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
+          ),
+          child: Row(children: [
+            // Reader info — tappable
+            GestureDetector(
+              onTap: () => context.push('/reader-profile/${quote.userId}'),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 20, height: 20,
+                  decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), shape: BoxShape.circle),
+                  child: Center(child: Text(quote.readerName.isNotEmpty ? quote.readerName[0].toUpperCase() : '?', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 9))),
+                ),
+                const SizedBox(width: 6),
+                Flexible(child: Text(quote.readerName, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline, decorationColor: AppColors.primary.withOpacity(0.3)))),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 5), child: Text('·', style: TextStyle(color: AppColors.textLight, fontSize: 12))),
+            Text(_timeAgo(quote.createdAt), style: TextStyle(fontSize: 10.5, color: AppColors.textLight, fontWeight: FontWeight.w500)),
+            const Spacer(),
+            // Upvote — glowing when active
+            _GlowVoteBtn(context: context, quoteId: quote.id, count: quote.upvotes, active: quote.hasUpvoted, vote: QuoteVote.upvote),
+            const SizedBox(width: 6),
+            // Downvote
+            _voteBtn(context: context, count: quote.downvotes, active: quote.hasDownvoted, vote: QuoteVote.downvote),
+          ]),
+        ),
+      ]),
     );
   }
 
-  Widget _voteBtn({
-    required BuildContext context,
-    required IconData icon,
-    required int count,
-    required bool active,
-    required Color activeColor,
-    required QuoteVote vote,
-  }) {
+  Widget _voteBtn({required BuildContext context, required int count, required bool active, required QuoteVote vote}) {
     return GestureDetector(
-      onTap: () => context
-          .read<QuotesBloc>()
-          .add(VoteQuoteEvent(quoteId: quote.id, vote: vote)),
+      onTap: () => context.read<QuotesBloc>().add(VoteQuoteEvent(quoteId: quote.id, vote: vote)),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: active
-              ? activeColor.withOpacity(0.12)
-              : AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: active
-                  ? activeColor.withOpacity(0.3)
-                  : Colors.transparent),
+          color: active ? AppColors.error.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: active ? AppColors.error.withOpacity(0.3) : AppColors.divider, width: 0.8),
         ),
-        child: Row(
-          children: [
-            Icon(icon,
-                size: 13, color: active ? activeColor : AppColors.textGrey),
-            const SizedBox(width: 5),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: active ? activeColor : AppColors.textGrey,
-              ),
-            ),
-          ],
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.arrow_downward_rounded, size: 13, color: active ? AppColors.error : AppColors.textGrey),
+          const SizedBox(width: 3),
+          Text('$count', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: active ? AppColors.error : AppColors.textGrey)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Glowing Upvote Button ───────────────────────────────────────
+class _GlowVoteBtn extends StatelessWidget {
+  final BuildContext context;
+  final int quoteId;
+  final int count;
+  final bool active;
+  final QuoteVote vote;
+
+  const _GlowVoteBtn({required this.context, required this.quoteId, required this.count, required this.active, required this.vote});
+
+  @override
+  Widget build(BuildContext ctx) {
+    return GestureDetector(
+      onTap: () => context.read<QuotesBloc>().add(VoteQuoteEvent(quoteId: quoteId, vote: vote)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: active ? AppColors.primary.withOpacity(0.4) : AppColors.divider, width: active ? 1.2 : 0.8),
+          boxShadow: active ? [
+            BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 10, spreadRadius: 0),
+            BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, spreadRadius: 2),
+          ] : null,
         ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.arrow_upward_rounded, size: 14, color: active ? AppColors.primary : AppColors.textGrey),
+          const SizedBox(width: 4),
+          Text('$count', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: active ? AppColors.primary : AppColors.textGrey)),
+        ]),
       ),
     );
   }
@@ -1518,7 +1309,7 @@ class _MyQuoteCard extends StatelessWidget {
           '"${quote.content}"\n\n— ${quote.bookTitle}, p.${quote.pageNumber}',
     ));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Quote copied'),
         backgroundColor: AppColors.successGreen,
         behavior: SnackBarBehavior.floating,
@@ -1539,13 +1330,13 @@ class _MyQuoteCard extends StatelessWidget {
           quote.content.length > 80
               ? '${quote.content.substring(0, 80)}…'
               : quote.content,
-          style: const TextStyle(
+          style: TextStyle(
               fontStyle: FontStyle.italic, color: AppColors.textGrey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
+            child: Text('Cancel',
                 style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
@@ -1562,7 +1353,7 @@ class _MyQuoteCard extends StatelessWidget {
                 ),
               );
             },
-            child: const Text('Delete',
+            child: Text('Delete',
                 style: TextStyle(
                     color: AppColors.error,
                     fontWeight: FontWeight.w700)),
@@ -1574,7 +1365,7 @@ class _MyQuoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = const [AppColors.primary, AppColors.gradientEnd];
+    final accent = [AppColors.primary, AppColors.gradientEnd];
     var text = quote.content;
     if (text.startsWith('"') && text.endsWith('"')) {
       text = text.substring(1, text.length - 1);
@@ -1582,7 +1373,7 @@ class _MyQuoteCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -1635,7 +1426,7 @@ class _MyQuoteCard extends StatelessWidget {
                               quote.bookTitle,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textDark,
@@ -1664,7 +1455,7 @@ class _MyQuoteCard extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                const Text(
+                                Text(
                                   'You',
                                   style: TextStyle(
                                     fontSize: 11,
@@ -1724,10 +1515,11 @@ class _MyQuoteCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.7),
+                                color: AppColors.surface.withOpacity(0.7),
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.divider, width: 0.5),
                               ),
-                              child: const Icon(Icons.copy_rounded,
+                              child: Icon(Icons.copy_rounded,
                                   size: 13, color: AppColors.textGrey),
                             ),
                           ),
@@ -1741,7 +1533,7 @@ class _MyQuoteCard extends StatelessWidget {
                                 color: AppColors.error.withOpacity(0.10),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.delete_outline_rounded,
+                              child: Icon(Icons.delete_outline_rounded,
                                   size: 14, color: AppColors.error),
                             ),
                           ),
@@ -1764,7 +1556,7 @@ class _MyQuoteCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         text,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14.5,
                           fontStyle: FontStyle.italic,
                           color: AppColors.textDark,
@@ -1788,12 +1580,12 @@ class _MyQuoteCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.bookmark_outline_rounded,
+                                Icon(Icons.bookmark_outline_rounded,
                                     size: 10, color: AppColors.textGrey),
                                 const SizedBox(width: 3),
                                 Text(
                                   'p. ${quote.pageNumber}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10.5,
                                     color: AppColors.textGrey,
                                     fontWeight: FontWeight.w600,
@@ -1805,7 +1597,7 @@ class _MyQuoteCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             _timeAgo(quote.createdAt),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10.5,
                               color: AppColors.textGrey,
                               fontWeight: FontWeight.w500,
@@ -1947,7 +1739,7 @@ Widget _emptyTemplate({
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textDark),
@@ -1956,7 +1748,7 @@ Widget _emptyTemplate({
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12.5,
                 color: AppColors.textGrey,
                 height: 1.5,
@@ -1975,7 +1767,7 @@ Widget _emptyTemplate({
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.lightbulb_rounded,
                       size: 14, color: AppColors.primary),
                   SizedBox(width: 6),
@@ -2000,7 +1792,7 @@ class _LoadingList extends StatelessWidget {
   const _LoadingList();
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
         padding: EdgeInsets.only(top: 80),
         child: CircularProgressIndicator(color: AppColors.primary),
@@ -2027,14 +1819,14 @@ class _ErrorView extends StatelessWidget {
                 color: AppColors.error.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.cloud_off_rounded,
+              child: Icon(Icons.cloud_off_rounded,
                   size: 36, color: AppColors.error),
             ),
             const SizedBox(height: 14),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500),
@@ -2042,7 +1834,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded,
+              icon: Icon(Icons.refresh_rounded,
                   color: Colors.white, size: 18),
               label: const Text('Try Again',
                   style: TextStyle(

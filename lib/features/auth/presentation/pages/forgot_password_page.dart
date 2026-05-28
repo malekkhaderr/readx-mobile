@@ -75,7 +75,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: AppColors.background,
+    
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
@@ -89,7 +89,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_ios,
                                 color: AppColors.primary,
                               ),
@@ -110,7 +110,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height * 0.60,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(32),
@@ -124,7 +124,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // ── Title ────────────────────────
-                          const Text(
+                          Text(
                             'Forgot Password?',
                             style: TextStyle(
                               fontSize: 28,
@@ -132,8 +132,8 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'No worries! Enter your email and we\'ll send you a reset code.',
                             style: TextStyle(
                               fontSize: 14,
@@ -143,7 +143,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                           const SizedBox(height: 32),
 
                           // ── Email ────────────────────────
-                          const Text(
+                          Text(
                             'Email Address',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -162,7 +162,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                               }
                             },
                             validator: _validateEmail,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Enter your email',
                               prefixIcon: Icon(
                                 Icons.email,
@@ -192,13 +192,13 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 'Remember your password? ',
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(
                                 onPressed: () => context.go('/login'),
-                                child: const Text(
+                                child: Text(
                                   'Log in',
                                   style: TextStyle(
                                     color: AppColors.primary,

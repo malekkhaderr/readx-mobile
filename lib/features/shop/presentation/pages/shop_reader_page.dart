@@ -282,7 +282,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
               children: [
                 const Text('📭', style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 12),
-                const Text('Book not found', style: TextStyle(fontSize: 16, color: AppColors.textGrey)),
+                Text('Book not found', style: TextStyle(fontSize: 16, color: AppColors.textGrey)),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
@@ -296,7 +296,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
     }
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.ivory,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -350,7 +350,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                             )
                           ],
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textDark),
+                        child: Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textDark),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -362,11 +362,11 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                             book.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
                           ),
                           Text(
                             'by ${book.author} · Page $_currentPage of $_totalPages',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
+                            style: TextStyle(fontSize: 11, color: AppColors.textGrey),
                           ),
                         ],
                       ),
@@ -393,7 +393,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('📖', style: TextStyle(fontSize: 12)),
@@ -408,7 +408,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                       // Title
                       Text(
                         book.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
@@ -419,7 +419,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                       const SizedBox(height: 6),
                       Text(
                         'by ${book.author}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textGrey, fontStyle: FontStyle.italic),
+                        style: TextStyle(fontSize: 13, color: AppColors.textGrey, fontStyle: FontStyle.italic),
                       ),
                       const SizedBox(height: 24),
   
@@ -427,7 +427,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                       if (book.sampleText.isNotEmpty) ...[
                         _DropCapParagraph(text: book.sampleText),
                       ] else ...[
-                        const Text(
+                        Text(
                           'This is a preview of the book. The full content will be available after purchase.',
                           style: TextStyle(
                             fontSize: 15,
@@ -450,7 +450,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                                 color: AppColors.primaryLight.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: const Text(
+                              child: Text(
                                 '— End of Preview —',
                                 style: TextStyle(fontSize: 13, color: AppColors.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
                               ),
@@ -458,7 +458,7 @@ class _ShopReaderPageState extends State<ShopReaderPage> {
                             const SizedBox(height: 20),
                             Text(
                               '$_totalPages pages · ${book.readingTime}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                              style: TextStyle(fontSize: 12, color: AppColors.textGrey),
                             ),
                           ],
                         ),
@@ -492,7 +492,7 @@ class _DropCapParagraph extends StatelessWidget {
           margin: const EdgeInsets.only(right: 8, top: 2),
           child: Text(
             firstChar,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 52,
               fontWeight: FontWeight.w800,
               color: AppColors.textDark,
@@ -504,7 +504,7 @@ class _DropCapParagraph extends StatelessWidget {
         Expanded(
           child: Text(
             rest,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               color: AppColors.textDark,
               height: 1.75,

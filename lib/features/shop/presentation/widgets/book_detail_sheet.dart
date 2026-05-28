@@ -84,7 +84,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                   ),
                   Text(
                     '\$${widget.book.effectivePrice.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -98,7 +98,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.textGrey),
             ),
@@ -157,7 +157,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
       minChildSize: 0.5,
       expand: false,
       builder: (context, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -206,7 +206,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                             cacheWidth: 320,
                             errorBuilder: (ctx, err, stack) => Container(
                               color: AppColors.primaryLight,
-                              child: const Center(
+                              child: Center(
                                 child: Icon(
                                   Icons.book,
                                   color: AppColors.primary,
@@ -225,7 +225,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                       child: Text(
                         book.title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
@@ -237,7 +237,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                     Center(
                       child: Text(
                         'by ${book.author}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textGrey,
                           fontWeight: FontWeight.w500,
@@ -269,7 +269,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                           const SizedBox(width: 6),
                           Text(
                             '${book.rating}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textDark,
@@ -278,7 +278,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                           const SizedBox(width: 6),
                           Text(
                             '(${_formatCount(book.reviewCount)} reviews)',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textGrey,
                             ),
@@ -296,7 +296,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                           if (book.isOnSale) ...[
                             Text(
                               '\$${book.price.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textGrey,
                                 decoration: TextDecoration.lineThrough,
@@ -329,7 +329,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                               ),
                               child: Text(
                                 '${((1 - book.discountPrice! / book.price) * 100).round()}% OFF',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.accent,
@@ -355,7 +355,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                         ),
                         child: Text(
                           book.genre,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
@@ -413,7 +413,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                     const SizedBox(height: 20),
 
                     // ── Description ───────────────────────────
-                    const Text(
+                    Text(
                       'About this Book',
                       style: TextStyle(
                         fontSize: 16,
@@ -438,7 +438,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                       ),
                       child: Text(
                         book.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textDark,
                           height: 1.6,
@@ -454,7 +454,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: _readNow,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.menu_book_rounded,
                             color: Colors.white,
                             size: 20,
@@ -491,7 +491,7 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                           ),
                           label: Text(
                             inCart ? 'In Cart' : 'Add to Cart',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
@@ -514,21 +514,21 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                         height: 50,
                         child: OutlinedButton.icon(
                           onPressed: _buyNow,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.flash_on_rounded,
                             color: AppColors.primary,
                             size: 20,
                           ),
                           label: Text(
                             'Buy Now — \$${book.effectivePrice.toStringAsFixed(2)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
+                            side: BorderSide(
                               color: AppColors.primary,
                               width: 1.5,
                             ),
@@ -543,12 +543,12 @@ class _BookDetailSheetState extends State<_BookDetailSheet> {
                       Center(
                         child: TextButton.icon(
                           onPressed: _readSample,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.visibility_outlined,
                             size: 18,
                             color: AppColors.textGrey,
                           ),
-                          label: const Text(
+                          label: Text(
                             'Read Sample',
                             style: TextStyle(
                               fontSize: 13,
@@ -596,7 +596,7 @@ class _StatCol extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
@@ -605,7 +605,7 @@ class _StatCol extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
+          style: TextStyle(fontSize: 11, color: AppColors.textGrey),
         ),
       ],
     );

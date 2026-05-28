@@ -57,7 +57,7 @@ class _NotificationsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -76,8 +76,8 @@ class _NotificationsView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 48), // Balance for trailing button
-                const Text(
+                SizedBox(width: 48), // Balance for trailing button
+                Text(
                   'Notifications',
                   style: TextStyle(color: AppColors.textDark, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
@@ -116,7 +116,7 @@ class _NotificationsView extends StatelessWidget {
             child: BlocBuilder<NotificationsBloc, NotificationsState>(
               builder: (context, state) {
                 if (state is NotificationsLoading || state is NotificationsInitial) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                  return Center(child: CircularProgressIndicator(color: AppColors.primary));
                 } else if (state is NotificationsEmpty) {
                   return _buildEmptyState();
                 } else if (state is NotificationsError) {
@@ -135,7 +135,7 @@ class _NotificationsView extends StatelessWidget {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       itemCount: state.notifications.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.divider),
+                      separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.divider),
                       itemBuilder: (context, index) {
                         final notification = state.notifications[index];
                         return _NotificationTile(
@@ -183,15 +183,15 @@ class _NotificationsView extends StatelessWidget {
               color: AppColors.surface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_off_outlined, size: 48, color: AppColors.textGrey),
+            child: Icon(Icons.notifications_off_outlined, size: 48, color: AppColors.textGrey),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'You\'re all caught up!',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'No new notifications right now.',
             style: TextStyle(fontSize: 14, color: AppColors.textGrey),
           ),
@@ -207,9 +207,9 @@ class _NotificationsView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-            const SizedBox(height: 16),
-            const Text(
+            Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+            SizedBox(height: 16),
+            Text(
               'Oops! Something went wrong.',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
@@ -217,7 +217,7 @@ class _NotificationsView extends StatelessWidget {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

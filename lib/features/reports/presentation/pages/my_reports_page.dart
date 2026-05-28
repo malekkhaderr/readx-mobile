@@ -26,24 +26,24 @@ class _MyReportsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: const Text(
-          'My Reports',
+        title: Text(
+          'Support Tickets',
           style: TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.textDark),
+        iconTheme: IconThemeData(color: AppColors.textDark),
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
           if (state is ReportsLoading || state is ReportsInitial) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           } else if (state is ReportsError) {
@@ -86,12 +86,8 @@ class _MyReportsView extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                report.reason == 'Other' &&
-                                        report.customReason != null &&
-                                        report.customReason!.isNotEmpty
-                                    ? report.customReason!
-                                    : report.reason,
-                                style: const TextStyle(
+                                _resolveTitle(report.reason, report.customReason),
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textDark,
@@ -99,7 +95,7 @@ class _MyReportsView extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _buildStatusPill(report.status),
+                            _buildStatusBadge(report.status),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -107,20 +103,22 @@ class _MyReportsView extends StatelessWidget {
                             report.description!.isNotEmpty)
                           Text(
                             report.description!,
-                            style: const TextStyle(
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textGrey,
                             ),
                           ),
                         const SizedBox(height: 12),
-                        const Divider(height: 1, color: AppColors.divider),
+                        Divider(height: 1, color: AppColors.divider),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Submitted: ${DateFormat('MMM dd, yyyy').format(report.submittedAt)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textGrey,
                               ),
@@ -128,7 +126,7 @@ class _MyReportsView extends StatelessWidget {
                             if (report.updatedAt != null)
                               Text(
                                 'Updated: ${DateFormat('MMM dd, yyyy').format(report.updatedAt!)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textGrey,
                                 ),
@@ -141,8 +139,8 @@ class _MyReportsView extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryLight.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.primaryLight.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: AppColors.primary.withOpacity(0.2),
                               ),
@@ -150,16 +148,16 @@ class _MyReportsView extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.feedback_outlined,
-                                    size: 16, color: AppColors.primary),
-                                const SizedBox(width: 8),
+                                Icon(Icons.support_agent_rounded,
+                                    size: 18, color: AppColors.primary),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Admin Feedback',
+                                      Text(
+                                        'Support Response',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -169,9 +167,10 @@ class _MyReportsView extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       Text(
                                         report.adminFeedback!,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           color: AppColors.textDark,
+                                          height: 1.4,
                                         ),
                                       ),
                                     ],
@@ -197,35 +196,54 @@ class _MyReportsView extends StatelessWidget {
         },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New Report', style: TextStyle(color: Colors.white)),
+        label:
+            const Text('New Ticket', style: TextStyle(color: Colors.white)),
       ),
     );
   }
 
-  Widget _buildStatusPill(String status) {
+  String _resolveTitle(String reason, String? customReason) {
+    if (reason == 'Other' && customReason != null && customReason.isNotEmpty) {
+      return customReason;
+    }
+    return reason;
+  }
+
+  Widget _buildStatusBadge(String status) {
     Color bgColor;
     Color textColor;
+    String displayLabel;
 
     switch (status.toLowerCase()) {
       case 'done':
       case 'resolved':
-      case 'approved':
         bgColor = AppColors.successGreen.withOpacity(0.15);
         textColor = AppColors.successGreen;
+        displayLabel = 'Done';
+        break;
+      case 'inreview':
+      case 'in review':
+        bgColor = const Color(0xFF2196F3).withOpacity(0.15);
+        textColor = const Color(0xFF2196F3);
+        displayLabel = 'In Review';
         break;
       case 'waiting':
       case 'pending':
         bgColor = AppColors.warningOrange.withOpacity(0.15);
         textColor = AppColors.warningOrange;
+        displayLabel = 'Waiting';
         break;
-      case 'rejected':
+      case 'canceled':
       case 'cancelled':
-        bgColor = AppColors.error.withOpacity(0.15);
+      case 'rejected':
+        bgColor = AppColors.error.withOpacity(0.12);
         textColor = AppColors.error;
+        displayLabel = 'Canceled';
         break;
       default:
         bgColor = AppColors.textGrey.withOpacity(0.15);
         textColor = AppColors.textGrey;
+        displayLabel = status;
     }
 
     return Container(
@@ -235,7 +253,7 @@ class _MyReportsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        displayLabel,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
@@ -247,33 +265,52 @@ class _MyReportsView extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withOpacity(0.4),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.support_agent_rounded,
+                  size: 56, color: AppColors.primary),
             ),
-            child: const Icon(Icons.report_gmailerrorred_rounded,
-                size: 64, color: AppColors.textGrey),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No Reports Yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+            const SizedBox(height: 20),
+            Text(
+              'No Support Tickets',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "You haven't submitted any reports.",
-            style: TextStyle(fontSize: 14, color: AppColors.textGrey),
-          ),
-        ],
+            SizedBox(height: 8),
+            Text(
+              "You haven't submitted any support tickets yet.\nNeed help? We're here for you!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _showSubmitReportSheet(context),
+              icon: Icon(Icons.add, size: 20),
+              label: const Text('Submit a Ticket'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -283,13 +320,13 @@ class _MyReportsView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded,
+          Icon(Icons.error_outline_rounded,
               size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+            style: TextStyle(fontSize: 14, color: AppColors.textGrey),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -309,7 +346,7 @@ class _MyReportsView extends StatelessWidget {
 
   void _showSubmitReportSheet(BuildContext context) {
     final myReportsBloc = context.read<ReportsBloc>();
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

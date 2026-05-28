@@ -22,6 +22,9 @@ import '../../features/shop/presentation/pages/shop_reader_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/reports/presentation/pages/my_reports_page.dart';
 import '../constants/app_theme.dart';
+import '../../features/ai_chat/presentation/pages/ai_chat_page.dart';
+import '../../features/levels/presentation/pages/levels_roadmap_page.dart';
+import '../../features/reader_profile/presentation/pages/reader_profile_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
@@ -400,7 +403,7 @@ class AppRouter {
         pageBuilder: (context, state) => _slideFadePage(
           key: state.pageKey,
           child: Scaffold(
-            backgroundColor: AppColors.background,
+      
             body: const SafeArea(child: NotificationsPage()),
           ),
         ),
@@ -411,6 +414,42 @@ class AppRouter {
         path: '/reports',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const MyReportsPage(),
+      ),
+
+      // ── AI Chat (full-screen) ─────────────────────────
+      GoRoute(
+        path: '/ai-chat',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => _slideFadePage(
+          key: state.pageKey,
+          child: const AiChatPage(),
+        ),
+      ),
+
+      // ── Reader Levels Roadmap ─────────────────────────
+      GoRoute(
+        path: '/levels',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return _slideFadePage(
+            key: state.pageKey,
+            child: LevelsRoadmapPage(
+              currentLevelId: extra['levelId'] as int?,
+              totalTokens: extra['tokens'] as int? ?? 0,
+            ),
+          );
+        },
+      ),
+
+      // ── Reader Profile (public view) ──────────────────
+      GoRoute(
+        path: '/reader-profile/:userId',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final userId = int.tryParse(state.pathParameters['userId'] ?? '') ?? 0;
+          return _slideFadePage(key: state.pageKey, child: ReaderProfilePage(userId: userId));
+        },
       ),
     ],
   );

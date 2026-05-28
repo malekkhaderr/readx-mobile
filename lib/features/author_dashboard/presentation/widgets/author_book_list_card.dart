@@ -65,7 +65,7 @@ class AuthorBookListCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               book.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textDark,
@@ -92,7 +92,7 @@ class AuthorBookListCard extends StatelessWidget {
                           ),
                           child: Text(
                             book.categoryName!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
@@ -164,7 +164,7 @@ class AuthorBookListCard extends StatelessWidget {
   Widget _coverPlaceholder() {
     return Container(
       color: AppColors.primaryLight,
-      child: const Center(
+      child: Center(
         child: Icon(Icons.menu_book_rounded,
             color: AppColors.primary, size: 32),
       ),

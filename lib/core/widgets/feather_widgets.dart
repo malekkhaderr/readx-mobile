@@ -25,19 +25,21 @@ class FeatherAmount extends StatelessWidget {
   final num amount;
   final double fontSize;
   final double iconSize;
-  final Color color;
+  final Color? color;
   final FontWeight fontWeight;
   final bool showLabel;
 
-  const FeatherAmount({
+  FeatherAmount({
     super.key,
     required this.amount,
     this.fontSize = 13,
     this.iconSize = 14,
-    this.color = AppColors.primary,
+    this.color,
     this.fontWeight = FontWeight.w800,
     this.showLabel = false,
   });
+
+  Color get _resolvedColor => color ?? AppColors.primary;
 
   String get _formattedAmount {
     final n = amount.toInt();
@@ -59,7 +61,7 @@ class FeatherAmount extends StatelessWidget {
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: fontWeight,
-            color: color,
+            color: _resolvedColor,
           ),
         ),
         if (showLabel) ...[
@@ -69,7 +71,7 @@ class FeatherAmount extends StatelessWidget {
             style: TextStyle(
               fontSize: fontSize - 2,
               fontWeight: FontWeight.w500,
-              color: color.withOpacity(0.8),
+              color: _resolvedColor.withOpacity(0.8),
             ),
           ),
         ],

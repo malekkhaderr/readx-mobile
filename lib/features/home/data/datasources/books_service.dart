@@ -126,11 +126,11 @@ class BooksService {
     return RatingException(statusCode: code, message: message);
   }
 
-  Future<void> addComment(int bookId, String body) async {
+  Future<void> addComment(int bookId, String body, {bool isSpoiler = false}) async {
     try {
       await dioClient.dio.post(
         '${ApiConstants.books}/$bookId/comments',
-        data: {'body': body},
+        data: {'body': body, 'isSpoiler': isSpoiler},
       );
     } catch (e) {
       rethrow;

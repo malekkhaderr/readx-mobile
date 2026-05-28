@@ -44,7 +44,7 @@ class _LibraryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: Column(
         children: [
           _LibraryHeader(),
@@ -94,7 +94,7 @@ class _LibraryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -277,7 +277,7 @@ class _MiniStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -302,7 +302,7 @@ class _MiniStat extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: AppColors.textDark,
@@ -310,7 +310,7 @@ class _MiniStat extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               color: AppColors.textGrey,
               fontWeight: FontWeight.w500,
@@ -359,11 +359,11 @@ class _FilterChips extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
+                  color: isSelected ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: isSelected
                       ? null
-                      : Border.all(color: AppColors.divider.withOpacity(0.6)),
+                      : Border.all(color: AppColors.divider, width: 0.8),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
@@ -449,12 +449,12 @@ class _LibraryBookCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
+              color: AppColors.primary.withOpacity(0.06),
+              blurRadius: 14,
               offset: const Offset(0, 4),
             ),
           ],
@@ -488,7 +488,7 @@ class _LibraryBookCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Shimmer.fromColors(
                             baseColor: AppColors.primaryLight,
-                            highlightColor: Colors.white,
+                            highlightColor: AppColors.shimmer,
                             child: Container(color: AppColors.primaryLight),
                           ),
                           errorWidget: (_, __, ___) => _coverFallback(),
@@ -507,7 +507,7 @@ class _LibraryBookCard extends StatelessWidget {
                     book.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
@@ -519,7 +519,7 @@ class _LibraryBookCard extends StatelessWidget {
                     book.authorName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textGrey,
                       fontWeight: FontWeight.w500,
@@ -556,7 +556,7 @@ class _LibraryBookCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '${book.totalPages} pages',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           color: AppColors.textGrey,
                         ),
@@ -568,7 +568,7 @@ class _LibraryBookCard extends StatelessWidget {
             ),
             // Action menu
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded,
+              icon: Icon(Icons.more_vert_rounded,
                   color: AppColors.textGrey, size: 20),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -589,7 +589,7 @@ class _LibraryBookCard extends StatelessWidget {
                     ),
                   ),
                 if (book.status != ReadingStatus.read)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'read',
                     child: Row(
                       children: [
@@ -602,7 +602,7 @@ class _LibraryBookCard extends StatelessWidget {
                     ),
                   ),
                 if (book.status != ReadingStatus.wantToRead)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'want',
                     child: Row(
                       children: [
@@ -614,7 +614,7 @@ class _LibraryBookCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'remove',
                   child: Row(
                     children: [
@@ -666,7 +666,7 @@ class _LibraryBookCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
+            child: Text('Cancel',
                 style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
@@ -676,7 +676,7 @@ class _LibraryBookCard extends StatelessWidget {
                   .read<LibraryBloc>()
                   .add(RemoveFromLibraryEvent(bookId: book.bookId));
             },
-            child: const Text('Remove',
+            child: Text('Remove',
                 style: TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
@@ -687,7 +687,7 @@ class _LibraryBookCard extends StatelessWidget {
 
   Widget _coverFallback() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -737,7 +737,7 @@ class _EmptyLibrary extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               isFiltered ? 'No books in this category' : 'Your library is empty',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textDark,
@@ -749,7 +749,7 @@ class _EmptyLibrary extends StatelessWidget {
                   ? 'Try a different filter'
                   : 'Add books from the home page\nto start your collection',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textGrey,
                 height: 1.5,
@@ -775,7 +775,7 @@ class _LibrarySkeleton extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Shimmer.fromColors(
         baseColor: AppColors.shimmer,
-        highlightColor: Colors.white,
+        highlightColor: AppColors.shimmer,
         child: Column(
           children: [
             // Stats placeholder
@@ -787,7 +787,7 @@ class _LibrarySkeleton extends StatelessWidget {
                           height: 80,
                           margin: const EdgeInsets.symmetric(horizontal: 5),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
@@ -801,7 +801,7 @@ class _LibrarySkeleton extends StatelessWidget {
                 height: 100,
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
@@ -836,11 +836,11 @@ class _ErrorView extends StatelessWidget {
                 color: AppColors.error.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.cloud_off_rounded,
+              child: Icon(Icons.cloud_off_rounded,
                   color: AppColors.error, size: 36),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Failed to load library',
               style: TextStyle(
                 fontSize: 16,
@@ -851,7 +851,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded,
+              icon: Icon(Icons.refresh_rounded,
                   color: Colors.white, size: 18),
               label: const Text('Try Again',
                   style: TextStyle(

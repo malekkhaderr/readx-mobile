@@ -7,6 +7,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/animations.dart';
 import '../../../../core/widgets/feather_widgets.dart';
+import '../../../../core/widgets/expressive_owl.dart';
 import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
 import '../../../library/presentation/bloc/library_state.dart';
@@ -49,7 +50,7 @@ class _HomePageState extends State<HomePage> {
     return BlocProvider.value(
       value: sl<LibraryBloc>(),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+  
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         color: AppColors.primary,
@@ -61,6 +62,11 @@ class _HomePageState extends State<HomePage> {
             // ── Gradient Header ─────────────────
             SliverToBoxAdapter(
               child: _GradientHeader(profile: profile),
+            ),
+
+            // ── Expressive Owl (TEST MODE — tap to cycle moods) ────
+            SliverToBoxAdapter(
+              child: _OwlTestWidget(),
             ),
 
             // ── Search Bar ─────────────────────
@@ -284,7 +290,7 @@ class _GradientHeader extends StatelessWidget {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -345,7 +351,7 @@ class _GradientHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(_getGreetingEmoji(),
-                        style: const TextStyle(fontSize: 12)),
+                        style: TextStyle(fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -372,7 +378,7 @@ class _GradientHeader extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.workspace_premium_rounded,
+                        Icon(Icons.workspace_premium_rounded,
                             size: 11, color: AppColors.gold),
                         const SizedBox(width: 4),
                         Text(
@@ -443,8 +449,8 @@ class _GradientHeader extends StatelessWidget {
       child: Center(
         child: Text(
           initial,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+          style: TextStyle(
+              color: AppColors.surface, fontSize: 18, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -464,7 +470,7 @@ class _SearchBar extends StatelessWidget {
         height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider.withOpacity(0.6)),
           boxShadow: [
@@ -477,10 +483,10 @@ class _SearchBar extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded,
+            Icon(Icons.search_rounded,
                 color: AppColors.textGrey, size: 22),
-            const SizedBox(width: 10),
-            const Expanded(
+            SizedBox(width: 10),
+            Expanded(
               child: Text(
                 'Search books, authors, genres...',
                 style: TextStyle(
@@ -496,7 +502,7 @@ class _SearchBar extends StatelessWidget {
                 color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.tune_rounded,
+              child: Icon(Icons.tune_rounded,
                   color: AppColors.primary, size: 16),
             ),
           ],
@@ -570,14 +576,11 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: color.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
         ],
         border: Border.all(color: AppColors.divider.withOpacity(0.5)),
       ),
@@ -602,7 +605,7 @@ class _StatCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: AppColors.textDark,
@@ -611,7 +614,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               color: AppColors.textGrey,
               fontWeight: FontWeight.w500,
@@ -666,9 +669,9 @@ class _FeaturedHeroCard extends StatelessWidget {
               children: [
                 // Background gradient
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF2D1B4E), Color(0xFF5B42D0)],
+                      colors: [const Color(0xFF2D1B4E), AppColors.primaryDark],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -779,7 +782,7 @@ class _FeaturedHeroCard extends StatelessWidget {
                               book.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -804,7 +807,7 @@ class _FeaturedHeroCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -820,7 +823,7 @@ class _FeaturedHeroCard extends StatelessWidget {
                                   const SizedBox(width: 6),
                                   Text(
                                     isOwned ? 'Read Now' : 'View Details',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w800,
@@ -845,7 +848,7 @@ class _FeaturedHeroCard extends StatelessWidget {
 
   Widget _heroCoverFallback() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -894,7 +897,7 @@ class _SectionHeader extends StatelessWidget {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textDark,
@@ -1035,7 +1038,7 @@ class _BookListCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Shimmer.fromColors(
                             baseColor: AppColors.primaryLight,
-                            highlightColor: Colors.white,
+                            highlightColor: AppColors.shimmer,
                             child: Container(
                               width: 130,
                               height: 184,
@@ -1077,7 +1080,7 @@ class _BookListCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
@@ -1090,14 +1093,14 @@ class _BookListCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star_rounded,
+                        Icon(Icons.star_rounded,
                             color: AppColors.gold, size: 11),
                         const SizedBox(width: 2),
                         Text(
                           book.averageRating > 0
                               ? book.averageRating.toStringAsFixed(1)
                               : '—',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textDark,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -1174,12 +1177,12 @@ class _BookListCard extends StatelessWidget {
                     left: 8,
                     child: Row(
                       children: [
-                        const Icon(Icons.visibility_rounded,
+                        Icon(Icons.visibility_rounded,
                             color: Colors.white, size: 10),
                         const SizedBox(width: 3),
                         Text(
                           _formatCount(book.viewCount),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -1202,7 +1205,7 @@ class _BookListCard extends StatelessWidget {
               book.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textDark,
@@ -1217,7 +1220,7 @@ class _BookListCard extends StatelessWidget {
               book.authorName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
                 color: AppColors.textGrey,
                 fontWeight: FontWeight.w500,
@@ -1233,7 +1236,7 @@ class _BookListCard extends StatelessWidget {
 
   Widget _coverFallback() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -1325,10 +1328,10 @@ class _DailyTipBanner extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.lightbulb_rounded,
+                      Icon(Icons.lightbulb_rounded,
                           size: 12, color: AppColors.primary),
                       const SizedBox(width: 4),
-                      const Text(
+                      Text(
                         "HOOTIE'S DAILY TIP",
                         style: TextStyle(
                           fontSize: 10,
@@ -1372,7 +1375,7 @@ class _HomeSkeleton extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Shimmer.fromColors(
         baseColor: AppColors.shimmer,
-        highlightColor: Colors.white,
+        highlightColor: AppColors.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1380,7 +1383,7 @@ class _HomeSkeleton extends StatelessWidget {
             Container(
               height: 180,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -1390,7 +1393,7 @@ class _HomeSkeleton extends StatelessWidget {
               width: 160,
               height: 18,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
@@ -1412,7 +1415,7 @@ class _HomeSkeleton extends StatelessWidget {
                         width: 130,
                         height: 184,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
@@ -1421,7 +1424,7 @@ class _HomeSkeleton extends StatelessWidget {
                         width: 110,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -1430,7 +1433,7 @@ class _HomeSkeleton extends StatelessWidget {
                         width: 70,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -1468,11 +1471,11 @@ class _ErrorView extends StatelessWidget {
               color: AppColors.error.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.cloud_off_rounded,
+            child: Icon(Icons.cloud_off_rounded,
                 color: AppColors.error, size: 36),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Something went wrong',
             style: TextStyle(
               fontSize: 16,
@@ -1484,12 +1487,12 @@ class _ErrorView extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
+            style: TextStyle(color: AppColors.textGrey, fontSize: 13),
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: () => onRetry(),
-            icon: const Icon(Icons.refresh_rounded,
+            icon: Icon(Icons.refresh_rounded,
                 color: Colors.white, size: 18),
             label: const Text(
               'Try Again',
@@ -1508,6 +1511,43 @@ class _ErrorView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── TEST WIDGET — remove after testing ──────────────────────
+class _OwlTestWidget extends StatefulWidget {
+  @override
+  State<_OwlTestWidget> createState() => _OwlTestWidgetState();
+}
+
+class _OwlTestWidgetState extends State<_OwlTestWidget> {
+  int _moodIndex = 0;
+  final _moods = OwlMood.values;
+  final _labels = ['Waving', 'Happy', 'Sad', 'Celebrating', 'Reading', 'Sleeping'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Column(children: [
+        ExpressiveOwl(mood: _moods[_moodIndex], size: 120),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () => setState(() => _moodIndex = (_moodIndex + 1) % _moods.length),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Tap → ${_labels[_moodIndex]}  (${_moodIndex + 1}/${_moods.length})',
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }

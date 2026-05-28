@@ -10,10 +10,10 @@ class CubeBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -193,7 +193,7 @@ class DealCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-              child: Text(item.emoji, style: const TextStyle(fontSize: 24)),
+              child: Text(item.emoji, style: TextStyle(fontSize: 24)),
             ),
           ),
           const SizedBox(height: 8),
@@ -202,7 +202,7 @@ class DealCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.textDark,
@@ -281,7 +281,7 @@ class FeaturedRewardCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-              child: Text(item.emoji, style: const TextStyle(fontSize: 26)),
+              child: Text(item.emoji, style: TextStyle(fontSize: 26)),
             ),
           ),
           const SizedBox(width: 12),
@@ -294,7 +294,7 @@ class FeaturedRewardCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
@@ -317,7 +317,7 @@ class FeaturedRewardCard extends StatelessWidget {
                         ),
                         child: Text(
                           item.badge!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -348,7 +348,7 @@ class FeaturedRewardCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${item.price}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primary,

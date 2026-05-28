@@ -16,12 +16,12 @@ class LoadMyReportsEvent extends ReportsEvent {
 }
 
 class SubmitReportEvent extends ReportsEvent {
-  final int reasonId;
+  final int? reasonId;
   final String? customReason;
   final String? description;
 
   const SubmitReportEvent({
-    required this.reasonId,
+    this.reasonId,
     this.customReason,
     this.description,
   });

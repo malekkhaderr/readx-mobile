@@ -189,7 +189,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
     final ratingLabel = _ratingLabel(_rating);
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -217,7 +217,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
             const SizedBox(height: 18),
             Text(
               isEditing ? 'Update your review' : 'Rate this book',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textDark,
@@ -228,7 +228,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
               widget.bookTitle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textGrey,
                 fontWeight: FontWeight.w500,
@@ -243,7 +243,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
                 ratingLabel,
                 key: ValueKey(ratingLabel),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
@@ -302,7 +302,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Write a review',
               style: TextStyle(
                 fontSize: 13,
@@ -321,7 +321,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
             const Spacer(),
             Text(
               '${_textController.text.length}/$_maxTextLength',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textGrey,
                 fontWeight: FontWeight.w600,
@@ -340,7 +340,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
             hintText:
                 'Share what stood out — characters, pacing, ideas you took away…',
             hintStyle:
-                const TextStyle(fontSize: 13, color: AppColors.textGrey),
+                TextStyle(fontSize: 13, color: AppColors.textGrey),
             counterText: '',
             filled: true,
             fillColor: Colors.white,
@@ -355,12 +355,12 @@ class _RateBookSheetState extends State<_RateBookSheet> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide:
-                  const BorderSide(color: AppColors.primary, width: 1.6),
+                  BorderSide(color: AppColors.primary, width: 1.6),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             color: AppColors.textDark,
             height: 1.45,
@@ -371,9 +371,9 @@ class _RateBookSheetState extends State<_RateBookSheet> {
   }
 
   Widget _buildErrorBanner() {
-    const color = AppColors.error;
+    final color = AppColors.error;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -381,12 +381,12 @@ class _RateBookSheetState extends State<_RateBookSheet> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, size: 18, color: color),
-          const SizedBox(width: 10),
+          Icon(Icons.error_outline_rounded, size: 18, color: color),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               _errorMessage ?? '',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -435,7 +435,7 @@ class _RateBookSheetState extends State<_RateBookSheet> {
         padding: const EdgeInsets.symmetric(vertical: 12),
       ),
       child: _deleting
-          ? const SizedBox(
+          ? SizedBox(
               height: 16,
               width: 16,
               child: CircularProgressIndicator(

@@ -17,6 +17,7 @@ class SubmitReportSheet extends StatefulWidget {
 
 class _SubmitReportSheetState extends State<SubmitReportSheet> {
   ReportReasonEntity? _selectedReason;
+  bool _isOtherSelected = false;
   final TextEditingController _customReasonController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -29,26 +30,23 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
   }
 
   void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedReason == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a reason')),
-        );
-        return;
-      }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      context.read<ReportsBloc>().add(
-            SubmitReportEvent(
-              reasonId: _selectedReason!.id,
-              customReason: _selectedReason!.label == 'Other'
-                  ? _customReasonController.text
-                  : null,
-              description: _descriptionController.text.isNotEmpty
-                  ? _descriptionController.text
-                  : null,
-            ),
-          );
+    if (!_isOtherSelected && _selectedReason == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a reason')),
+      );
+      return;
     }
+
+    context.read<ReportsBloc>().add(
+          SubmitReportEvent(
+            reasonId: _isOtherSelected ? null : _selectedReason!.id,
+            customReason:
+                _isOtherSelected ? _customReasonController.text.trim() : null,
+            description: _descriptionController.text.trim(),
+          ),
+        );
   }
 
   @override
@@ -57,7 +55,10 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
       listener: (context, state) {
         if (state is ReportSubmittedSuccessfully) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Report submitted successfully!')),
+            SnackBar(
+              content: Text('Ticket submitted successfully!'),
+              backgroundColor: AppColors.successGreen,
+            ),
           );
           Navigator.of(context).pop();
           widget.onSuccess();
@@ -69,13 +70,12 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
       },
       child: Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
@@ -93,8 +93,8 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Submit Report',
+                  Text(
+                    'Submit Support Ticket',
                     style: TextStyle(
                       color: AppColors.textDark,
                       fontSize: 18,
@@ -102,13 +102,12 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
-            // Body
             Expanded(
               child: BlocBuilder<ReportsBloc, ReportsState>(
                 buildWhen: (previous, current) =>
@@ -117,8 +116,9 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                     current is ReportsError,
                 builder: (context, state) {
                   if (state is ReportsLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                    return Center(
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
                     );
                   } else if (state is ReportReasonsLoaded) {
                     return _buildForm(state.reasons);
@@ -127,7 +127,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline,
+                          Icon(Icons.error_outline,
                               color: AppColors.error, size: 48),
                           const SizedBox(height: 16),
                           Text(state.message),
@@ -162,16 +162,23 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'What would you like to report?',
+            Text(
+              'How can we help you?',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
               ),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<ReportReasonEntity>(
+            SizedBox(height: 4),
+            Text(
+              'Select a reason and describe your issue in detail.',
+              style: TextStyle(fontSize: 13, color: AppColors.textGrey),
+            ),
+            const SizedBox(height: 20),
+
+            // Reason Dropdown
+            DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Reason',
                 filled: true,
@@ -185,30 +192,46 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                   borderSide: BorderSide(color: AppColors.divider),
                 ),
               ),
-              value: _selectedReason,
-              items: reasons.map((reason) {
-                return DropdownMenuItem(
-                  value: reason,
-                  child: Text(reason.label),
-                );
-              }).toList(),
+              value: _isOtherSelected
+                  ? '__other__'
+                  : _selectedReason?.id.toString(),
+              items: [
+                ...reasons.map((reason) {
+                  return DropdownMenuItem<String>(
+                    value: reason.id.toString(),
+                    child: Text(reason.label),
+                  );
+                }),
+                const DropdownMenuItem<String>(
+                  value: '__other__',
+                  child: Text('Other (Specify Reason)'),
+                ),
+              ],
               onChanged: (value) {
                 setState(() {
-                  _selectedReason = value;
-                  if (value?.label != 'Other') {
+                  if (value == '__other__') {
+                    _isOtherSelected = true;
+                    _selectedReason = null;
+                  } else {
+                    _isOtherSelected = false;
                     _customReasonController.clear();
+                    _selectedReason = reasons.firstWhere(
+                      (r) => r.id.toString() == value,
+                    );
                   }
                 });
               },
               validator: (value) =>
                   value == null ? 'Please select a reason' : null,
             ),
-            if (_selectedReason?.label == 'Other') ...[
+
+            // Custom Reason field (shown only when "Other" selected)
+            if (_isOtherSelected) ...[
               const SizedBox(height: 16),
               TextFormField(
                 controller: _customReasonController,
                 decoration: InputDecoration(
-                  labelText: 'Custom Reason',
+                  labelText: 'Specify Custom Reason',
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(
@@ -221,20 +244,24 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                   ),
                 ),
                 validator: (value) {
-                  if (_selectedReason?.label == 'Other' &&
-                      (value == null || value.isEmpty)) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please enter a custom reason';
                   }
                   return null;
                 },
               ),
             ],
+
             const SizedBox(height: 16),
+
+            // Description field (required)
             TextFormField(
               controller: _descriptionController,
-              maxLines: 5,
+              maxLines: 6,
+              maxLength: 2000,
               decoration: InputDecoration(
-                labelText: 'Description (Optional)',
+                labelText: 'Description',
+                hintText: 'Describe your issue in detail...',
                 alignLabelWithHint: true,
                 filled: true,
                 fillColor: AppColors.surface,
@@ -247,28 +274,59 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                   borderSide: BorderSide(color: AppColors.divider),
                 ),
               ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Description is required';
+                }
+                if (value.trim().length < 10) {
+                  return 'Description must be at least 10 characters';
+                }
+                return null;
+              },
             ),
+
             const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+
+            // Submit button with loading state
+            BlocBuilder<ReportsBloc, ReportsState>(
+              buildWhen: (prev, curr) =>
+                  curr is ReportSubmitting ||
+                  curr is ReportSubmittedSuccessfully ||
+                  curr is ReportsError,
+              builder: (context, state) {
+                final isSubmitting = state is ReportSubmitting;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'Submit Ticket',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                ),
-                child: const Text(
-                  'Submit Report',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),
