@@ -53,6 +53,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   String? _commentsError;
   final TextEditingController _commentController = TextEditingController();
   bool _submittingComment = false;
+  bool _isSpoiler = false;
+  final Set<int> _revealedSpoilers = {};
 
   // Ratings State
   RatingReviewsResponse? _ratingsResponse;
@@ -310,8 +312,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     if (text.isEmpty || _book == null) return;
     setState(() => _submittingComment = true);
     try {
-      await sl<BooksService>().addComment(_book!.id, text);
+      await sl<BooksService>().addComment(_book!.id, text, isSpoiler: _isSpoiler);
       _commentController.clear();
+      _isSpoiler = false;
       await _loadComments();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2229,9 +2232,27 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            child: SizedBox(
+          Row(children: [
+            // Spoiler toggle
+            GestureDetector(
+              onTap: () => setState(() => _isSpoiler = !_isSpoiler),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isSpoiler ? AppColors.warningOrange.withOpacity(0.12) : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _isSpoiler ? AppColors.warningOrange : AppColors.divider, width: _isSpoiler ? 1.5 : 0.8),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(_isSpoiler ? Icons.visibility_off_rounded : Icons.visibility_off_outlined, size: 14, color: _isSpoiler ? AppColors.warningOrange : AppColors.textGrey),
+                  const SizedBox(width: 5),
+                  Text('Spoiler', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _isSpoiler ? AppColors.warningOrange : AppColors.textGrey)),
+                ]),
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
               height: 38,
               child: ElevatedButton(
                 onPressed: _submittingComment ? null : _submitComment,
@@ -2266,7 +2287,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       ),
               ),
             ),
-          ),
+          ]),
         ],
       ),
     );
@@ -2495,14 +2516,43 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ],
             )
           else ...[
-            Text(
-              comment.body,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF4A4A58),
-                height: 1.5,
+            if (comment.isSpoiler && !isOwner && !_revealedSpoilers.contains(comment.id))
+              GestureDetector(
+                onTap: () => setState(() => _revealedSpoilers.add(comment.id)),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningOrange.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.warningOrange.withOpacity(0.2)),
+                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(Icons.visibility_off_rounded, size: 16, color: AppColors.warningOrange),
+                    const SizedBox(width: 8),
+                    Text('Spoiler — Tap to reveal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.warningOrange)),
+                  ]),
+                ),
+              )
+            else ...[
+              if (comment.isSpoiler && !isOwner)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(children: [
+                    Icon(Icons.warning_amber_rounded, size: 12, color: AppColors.warningOrange),
+                    const SizedBox(width: 4),
+                    Text('Spoiler', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.warningOrange)),
+                  ]),
+                ),
+              Text(
+                comment.body,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textDark,
+                  height: 1.5,
+                ),
               ),
-            ),
+            ],
             if (comment.updatedAt != null) ...[
               SizedBox(height: 4),
               Text(

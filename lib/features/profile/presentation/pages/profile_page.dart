@@ -1261,6 +1261,9 @@ class _EditProfilePageState extends State<_EditProfilePage> {
   late bool _isPrivate;
   late int _dailyGoal;
   bool _saving = false;
+  int? _selectedAvatarId;
+  List<Map<String, dynamic>> _avatars = [];
+  bool _loadingAvatars = true;
 
   @override
   void initState() {
@@ -1269,6 +1272,17 @@ class _EditProfilePageState extends State<_EditProfilePage> {
     _lastNameCtrl = TextEditingController(text: widget.profile.lastName);
     _isPrivate = widget.profile.isPrivateProfile;
     _dailyGoal = widget.profile.readerDashboard?.dailyGoal ?? 30;
+    _loadAvatars();
+  }
+
+  Future<void> _loadAvatars() async {
+    try {
+      final response = await sl<DioClient>().dio.get('/avatars');
+      if (response.statusCode == 200 && response.data is List) {
+        _avatars = (response.data as List).map((e) => e as Map<String, dynamic>).toList();
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingAvatars = false);
   }
 
   @override
@@ -1287,7 +1301,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
         'gender': _gender,
         'birthDate': '2000-01-01T00:00:00Z',
         'isPrivateProfile': _isPrivate,
-        'avatarId': null,
+        'avatarId': _selectedAvatarId,
         'dailyGoal': _dailyGoal,
       });
       if (mounted) Navigator.of(context).pop(true);
@@ -1314,6 +1328,61 @@ class _EditProfilePageState extends State<_EditProfilePage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Avatar Picker
+          Text('Choose Avatar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
+          const SizedBox(height: 12),
+          if (_loadingAvatars)
+            SizedBox(height: 80, child: Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)))
+          else if (_avatars.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(14)),
+              child: Row(children: [
+                Icon(Icons.face_rounded, color: AppColors.textGrey, size: 20),
+                const SizedBox(width: 10),
+                Text('No avatars available', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              ]),
+            )
+          else
+            SizedBox(
+              height: 90,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _avatars.length,
+                itemBuilder: (context, i) {
+                  final avatar = _avatars[i];
+                  final id = avatar['id'] as int;
+                  final imageUrl = avatar['imageUrl'] as String? ?? '';
+                  final name = avatar['name'] as String? ?? '';
+                  final isSelected = _selectedAvatarId == id;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedAvatarId = isSelected ? null : id),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 72,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: isSelected ? AppColors.primary : AppColors.divider, width: isSelected ? 2.5 : 1),
+                        boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10)] : null,
+                      ),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: imageUrl.startsWith('http')
+                              ? Image.network(imageUrl, width: 44, height: 44, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.face_rounded, size: 36, color: AppColors.primary))
+                              : Icon(Icons.face_rounded, size: 36, color: AppColors.primary),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: isSelected ? AppColors.primary : AppColors.textGrey, fontWeight: FontWeight.w600)),
+                      ]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 20),
           Text('First Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
           const SizedBox(height: 8),
           TextFormField(controller: _firstNameCtrl, style: TextStyle(color: AppColors.textDark), decoration: InputDecoration(prefixIcon: Icon(Icons.person_outline, color: AppColors.textGrey))),

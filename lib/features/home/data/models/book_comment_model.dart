@@ -5,6 +5,7 @@ class CommentItem {
   final int userId;
   final String readerName;
   final String body;
+  final bool isSpoiler;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int upvoteCount;
@@ -18,6 +19,7 @@ class CommentItem {
     this.userId = 0,
     required this.readerName,
     required this.body,
+    this.isSpoiler = false,
     required this.createdAt,
     this.updatedAt,
     required this.upvoteCount,
@@ -33,6 +35,7 @@ class CommentItem {
       userId: json['userId'] as int? ?? 0,
       readerName: json['readerName'] as String? ?? 'Anonymous',
       body: json['body'] as String? ?? '',
+      isSpoiler: json['isSpoiler'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
@@ -52,6 +55,7 @@ class CommentItem {
     int? userId,
     String? readerName,
     String? body,
+    bool? isSpoiler,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? upvoteCount,
@@ -64,6 +68,7 @@ class CommentItem {
       readerProfileId: readerProfileId ?? this.readerProfileId,
       userId: userId ?? this.userId,
       readerName: readerName ?? this.readerName,
+      isSpoiler: isSpoiler ?? this.isSpoiler,
       body: body ?? this.body,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
