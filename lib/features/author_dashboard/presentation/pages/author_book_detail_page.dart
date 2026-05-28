@@ -8,6 +8,8 @@ import '../../data/models/author_quote_model.dart';
 import '../../data/datasources/author_dashboard_remote_datasource.dart';
 import '../../../home/data/datasources/books_service.dart';
 import '../../../home/data/models/book_comment_model.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/constants/api_constants.dart';
 
 class AuthorBookDetailPage extends StatefulWidget {
   final AuthorBook book;
@@ -28,6 +30,10 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
   int _totalPurchases = 0;
   int _totalReadingTimeMinutes = 0;
   bool _statsHadError = false;
+
+  // Book Details
+  AuthorBook? _detailedBook;
+  bool _bookDetailsLoading = true;
 
   // Comments
   bool _commentsLoading = true;
@@ -51,11 +57,30 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadDetailedBook();
     _loadStatistics();
     _loadComments();
     _loadQuotes();
     _commentsScrollController.addListener(_onCommentsScroll);
     _quotesScrollController.addListener(_onQuotesScroll);
+  }
+
+  Future<void> _loadDetailedBook() async {
+    try {
+      final response = await sl<DioClient>().dio.get('${ApiConstants.books}/${widget.book.id}');
+      if (mounted && response.data != null) {
+        setState(() {
+          _detailedBook = AuthorBook.fromJson(response.data);
+          _bookDetailsLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _bookDetailsLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -379,7 +404,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildOverviewTab(book),
+            _buildOverviewTab(),
             _buildCommentsTab(),
             _buildQuotesTab(),
           ],
@@ -388,7 +413,9 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
     );
   }
 
-  Widget _buildOverviewTab(AuthorBook book) {
+  Widget _buildOverviewTab() {
+    final book = _detailedBook ?? widget.book;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -396,7 +423,7 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
         children: [
           // Performance Metrics
           _SectionHeader(title: 'Performance Metrics', icon: Icons.analytics_rounded),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildPerformanceGrid(book),
           const SizedBox(height: 24),
 
@@ -435,12 +462,13 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
             ),
             const SizedBox(height: 24),
           ],
-
-          // Book details
           _SectionHeader(title: 'Book Details', icon: Icons.info_outline_rounded),
-          const SizedBox(height: 12),
-          _buildDetailsCard(book),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          if (_bookDetailsLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            _buildDetailsCard(book),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -568,11 +596,17 @@ class _AuthorBookDetailPageState extends State<AuthorBookDetailPage>
       ),
       child: Column(
         children: [
-          _DetailRow('Pages', book.totalPages > 0 ? '${book.totalPages} pages' : 'N/A'),
+          _DetailRow('Pages', book.totalPages > 0 ? '${book.totalPages}' : 'N/A'),
           _DetailRow('Category', book.categoryName ?? 'N/A'),
+          _DetailRow('Language', book.languageName ?? 'N/A'),
+          if (book.isbn != null && book.isbn != 'string' && book.isbn!.isNotEmpty)
+            _DetailRow('ISBN', book.isbn!),
           _DetailRow('Status', book.isPublished ? 'Published' : 'Draft'),
+          if (book.publishedYear != null)
+            _DetailRow('Year', book.publishedYear.toString()),
           if (book.createdAt != null)
-            _DetailRow('Published', DateFormat.yMMMd().format(book.createdAt!)),
+            _DetailRow('Added', DateFormat.yMMMd().format(book.createdAt!)),
+          _DetailRow('Tokens', book.priceTokens != null ? '${book.priceTokens!.toInt()} 🪙' : 'N/A'),
           _DetailRow('Book ID', '#${book.id}'),
         ],
       ),

@@ -32,7 +32,7 @@ import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/author_dashboard/presentation/pages/author_dashboard_page.dart';
 import '../../features/author_dashboard/presentation/pages/author_books_page.dart';
 import '../../features/author_dashboard/presentation/pages/author_main_shell.dart';
-import '../../features/author_dashboard/presentation/pages/author_statistics_page.dart';
+
 import '../../features/author_dashboard/presentation/pages/author_book_detail_page.dart';
 import '../../features/author_dashboard/data/models/author_book_model.dart';
 // Global key for navigator (needed for push from within shell)
@@ -297,12 +297,6 @@ class AppRouter {
       ),
 
       // ── Author Statistics / Book Detail (modals) ───────
-      GoRoute(
-        path: '/author/statistics',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AuthorStatisticsPage(),
-      ),
-
       GoRoute(
         path: '/author/book_detail',
         parentNavigatorKey: _rootNavigatorKey,

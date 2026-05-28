@@ -482,16 +482,53 @@ class _AuthorProfileBody extends StatelessWidget {
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              '✍️  Author',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  '✍️  Author',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
+                                      size: 14,
+                                      color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      profile.isEmailVerified ? 'Verified' : 'Not Verified',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            profile.email,
+                            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -501,14 +538,15 @@ class _AuthorProfileBody extends StatelessWidget {
               ),
 
               // ── Profile Info Fields ────────────────────────
-              Container(
-                margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
-                ),
-                child: Column(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 1.0,
                   children: [
                     _InfoTile(icon: Icons.badge_outlined, label: 'Author ID', value: '#${profile.id}'),
                     _divider(),
@@ -550,8 +588,12 @@ class _AuthorProfileBody extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _divider(),
-                    InkWell(
+                    _ModernGridTile(
+                      icon: Icons.report_gmailerrorred_rounded,
+                      label: 'My Reports',
+                      value: 'View & Submit',
+                      iconColor: AppColors.error,
+                      iconBgColor: AppColors.error.withOpacity(0.1),
                       onTap: () => context.push('/reports'),
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                       child: Padding(
@@ -652,9 +694,7 @@ class _AuthorProfileBody extends StatelessWidget {
                           final book = books[index];
                           return _AuthorBookGridCard(
                             book: book,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => AuthorBookDetailPage(book: book)),
-                            ),
+                            onTap: () => context.push('/author/book_detail', extra: {'book': book}),
                           );
                         },
                       ),
@@ -725,16 +765,26 @@ class _AuthorProfileBody extends StatelessWidget {
     );
   }
 
-  Widget _divider() => const Divider(height: 1, indent: 52);
 }
 
-// ── Info Tile (author profile detail row) ─────────────────────
-class _InfoTile extends StatelessWidget {
+class _ModernGridTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color iconColor;
+  final Color iconBgColor;
   final Color? valueColor;
-  const _InfoTile({required this.icon, required this.label, required this.value, this.valueColor});
+  final VoidCallback? onTap;
+
+  const _ModernGridTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.iconColor,
+    required this.iconBgColor,
+    this.valueColor,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -758,8 +808,37 @@ class _InfoTile extends StatelessWidget {
                 Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textDark)),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, size: 28, color: iconColor),
+            ),
+            const Spacer(),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: valueColor ?? AppColors.textDark),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

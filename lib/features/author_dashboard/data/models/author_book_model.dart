@@ -11,6 +11,10 @@ class AuthorBook {
   final String? description;
   final DateTime? createdAt;
   final int totalPages;
+  final String? languageName;
+  final int? publishedYear;
+  final String? isbn;
+  final double? priceTokens;
 
   const AuthorBook({
     required this.id,
@@ -25,6 +29,10 @@ class AuthorBook {
     this.description,
     this.createdAt,
     required this.totalPages,
+    this.languageName,
+    this.publishedYear,
+    this.isbn,
+    this.priceTokens,
   });
 
   factory AuthorBook.fromJson(Map<String, dynamic> json) {
@@ -49,13 +57,17 @@ class AuthorBook {
       viewCount: parseInt(json['viewCount'] ?? json['views']),
       readCount: parseInt(json['readCount'] ?? json['reads']),
       averageRating: parseDouble(json['averageRating'] ?? json['rating']),
-      price: parseDouble(json['price']),
+      price: parseDouble(json['priceUSD'] ?? json['price']),
       categoryName: json['categoryName'] ?? json['category'],
       description: json['description'],
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
       totalPages: parseInt(json['totalPages'] ?? json['pages']),
+      languageName: json['languageName']?.toString(),
+      publishedYear: json['publishedYear'] != null ? parseInt(json['publishedYear']) : null,
+      isbn: json['isbn']?.toString(),
+      priceTokens: json['priceTokens'] != null ? parseDouble(json['priceTokens']) : null,
     );
   }
 }
