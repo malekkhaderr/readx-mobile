@@ -2,6 +2,7 @@ class CommentItem {
   final int id;
   final int bookId;
   final int readerProfileId;
+  final int userId;
   final String readerName;
   final String body;
   final DateTime createdAt;
@@ -14,6 +15,7 @@ class CommentItem {
     required this.id,
     required this.bookId,
     required this.readerProfileId,
+    this.userId = 0,
     required this.readerName,
     required this.body,
     required this.createdAt,
@@ -28,6 +30,7 @@ class CommentItem {
       id: json['id'] as int? ?? 0,
       bookId: json['bookId'] as int? ?? 0,
       readerProfileId: json['readerProfileId'] as int? ?? 0,
+      userId: json['userId'] as int? ?? 0,
       readerName: json['readerName'] as String? ?? 'Anonymous',
       body: json['body'] as String? ?? '',
       createdAt: json['createdAt'] != null
@@ -46,6 +49,7 @@ class CommentItem {
     int? id,
     int? bookId,
     int? readerProfileId,
+    int? userId,
     String? readerName,
     String? body,
     DateTime? createdAt,
@@ -58,6 +62,7 @@ class CommentItem {
       id: id ?? this.id,
       bookId: bookId ?? this.bookId,
       readerProfileId: readerProfileId ?? this.readerProfileId,
+      userId: userId ?? this.userId,
       readerName: readerName ?? this.readerName,
       body: body ?? this.body,
       createdAt: createdAt ?? this.createdAt,

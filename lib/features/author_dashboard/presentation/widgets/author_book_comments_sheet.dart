@@ -67,7 +67,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -96,7 +96,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Reader Comments',
                         style: TextStyle(
                           fontSize: 22,
@@ -106,7 +106,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
                       ),
                       Text(
                         widget.bookTitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textGrey,
                         ),
@@ -117,7 +117,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                   color: AppColors.textGrey,
                 ),
@@ -138,7 +138,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     if (_error != null) {
@@ -146,9 +146,9 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_error!, style: TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadComments,
@@ -166,13 +166,13 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textLight),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'No comments yet',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'This book hasn\'t received any comments.',
               style: TextStyle(color: AppColors.textGrey),
             ),
@@ -190,7 +190,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -211,14 +211,14 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
                     backgroundColor: AppColors.primaryLight.withOpacity(0.3),
                     child: Text(
                       comment.readerName.isNotEmpty ? comment.readerName[0].toUpperCase() : '?',
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       comment.readerName.isNotEmpty ? comment.readerName : 'Anonymous',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: AppColors.textDark,
@@ -227,21 +227,21 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.thumb_up_alt_outlined, color: AppColors.textGrey, size: 14),
+                      Icon(Icons.thumb_up_alt_outlined, color: AppColors.textGrey, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         comment.upvoteCount.toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textGrey,
                           fontSize: 12,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.thumb_down_alt_outlined, color: AppColors.textGrey, size: 14),
+                      Icon(Icons.thumb_down_alt_outlined, color: AppColors.textGrey, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         comment.downvoteCount.toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textGrey,
                           fontSize: 12,
                         ),
@@ -253,7 +253,7 @@ class _AuthorBookCommentsSheetState extends State<AuthorBookCommentsSheet> {
               const SizedBox(height: 12),
               Text(
                 comment.body,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textGrey,
                   height: 1.5,

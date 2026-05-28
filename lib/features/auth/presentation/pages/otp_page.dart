@@ -141,7 +141,7 @@ class _OtpViewState extends State<_OtpView> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Email verified! Please log in.'),
         backgroundColor: AppColors.successGreen,
       ),
@@ -152,7 +152,7 @@ class _OtpViewState extends State<_OtpView> {
   void _handleResendSuccess() {
     _startResendTimer();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('A new code has been sent to your email.'),
         backgroundColor: AppColors.successGreen,
       ),
@@ -183,7 +183,7 @@ class _OtpViewState extends State<_OtpView> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: AppColors.background,
+    
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
@@ -197,7 +197,7 @@ class _OtpViewState extends State<_OtpView> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_ios,
                                 color: AppColors.primary,
                               ),
@@ -220,7 +220,7 @@ class _OtpViewState extends State<_OtpView> {
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height * 0.60,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(32),
@@ -236,7 +236,7 @@ class _OtpViewState extends State<_OtpView> {
                           widget.isPasswordReset
                               ? 'Enter Reset Code'
                               : 'Verify Your Email',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark,
@@ -245,7 +245,7 @@ class _OtpViewState extends State<_OtpView> {
                         const SizedBox(height: 10),
                         RichText(
                           text: TextSpan(
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textGrey,
                             ),
@@ -257,7 +257,7 @@ class _OtpViewState extends State<_OtpView> {
                               ),
                               TextSpan(
                                 text: widget.email,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -285,7 +285,7 @@ class _OtpViewState extends State<_OtpView> {
                                 ],
                                 onChanged: (value) =>
                                     _onChanged(value, index),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textDark,
@@ -312,7 +312,7 @@ class _OtpViewState extends State<_OtpView> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
+                                    borderSide: BorderSide(
                                       color: AppColors.primary,
                                       width: 2,
                                     ),
@@ -354,7 +354,7 @@ class _OtpViewState extends State<_OtpView> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Didn't receive the code? ",
                               style: TextStyle(color: AppColors.textGrey),
                             ),
@@ -362,7 +362,7 @@ class _OtpViewState extends State<_OtpView> {
                               TextButton(
                                 onPressed:
                                     isLoading ? null : _onResend,
-                                child: const Text(
+                                child: Text(
                                   'Resend',
                                   style: TextStyle(
                                     color: AppColors.primary,
@@ -373,7 +373,7 @@ class _OtpViewState extends State<_OtpView> {
                             else
                               Text(
                                 'Resend in ${_resendSeconds}s',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textGrey,
                                 ),
                               ),

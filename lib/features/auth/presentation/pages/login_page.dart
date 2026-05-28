@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
     return BlocProvider(
       create: (_) => sl<AuthBloc>(),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+  
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthError) {
@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                         Container(
                           width: 80,
                           height: 80,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.primaryLight,
                             shape: BoxShape.circle,
                           ),
@@ -126,14 +126,14 @@ class _LoginPageState extends State<LoginPage> {
                             isCoveringEyes: _isCoveringEyes,
                           ),
                           // child: const AppOwl(size: 80), // login & register
-                          // child: const Icon(
+                          // child: Icon(
                           //   Icons.book,
                           //   color: AppColors.primary,
                           //   size: 40,
                           // ),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
+                        SizedBox(height: 12),
+                        Text(
                           'Readora',
                           style: TextStyle(
                             color: AppColors.primary,
@@ -151,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height * 0.65,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(32),
@@ -165,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // ── Title ──────────────────────────
-                          const Text(
+                          Text(
                             'Welcome Back',
                             style: TextStyle(
                               fontSize: 28,
@@ -173,8 +173,8 @@ class _LoginPageState extends State<LoginPage> {
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'Your next literary adventure awaits.',
                             style: TextStyle(
                               fontSize: 14,
@@ -184,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 32),
 
                           // ── Email ──────────────────────────
-                          const Text(
+                          Text(
                             'Email Address',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -201,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: _validateEmail,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Enter your email',
                               prefixIcon: Icon(
                                 Icons.email,
@@ -215,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Password',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -237,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                             validator: _validatePassword,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock,
                                 color: AppColors.textGrey,
                               ),
@@ -263,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () {
                                 context.go('/forgot-password');
                               },
-                              child: const Text(
+                              child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(
                                   color: AppColors.primary,
@@ -299,13 +299,13 @@ class _LoginPageState extends State<LoginPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 'New to Readora? ',
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(
                                 onPressed: () => context.go('/register'),
-                                child: const Text(
+                                child: Text(
                                   'Create an account',
                                   style: TextStyle(
                                     color: AppColors.primary,

@@ -27,8 +27,20 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     RefreshProfileEvent event,
     Emitter<ProfileState> emit,
   ) async {
-    // Always re-fetch (pull-to-refresh)
-    await _fetchProfile(emit);
+    // Do NOT emit ProfileLoading here — it causes a widget tree teardown that
+    // races with Theme InheritedWidget deactivation when the bottom sheet
+    // keyboard dismisses, triggering '_dependents.isEmpty' assertion.
+    // Instead, directly emit the new ProfileLoaded so BlocBuilder does an
+    // in-place update (same widget type) rather than a type-swap deactivation.
+    try {
+      final result = await getMeUseCase();
+      result.fold(
+        (failure) {
+          // Keep old profile data on failure — never crash the UI
+        },
+        (profile) => emit(ProfileLoaded(profile)),
+      );
+    } catch (_) {}
   }
 
   Future<void> _fetchProfile(Emitter<ProfileState> emit) async {

@@ -54,7 +54,7 @@ class WelcomePage extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: const AppOwl(size: 120),
-                        // child: const Icon(
+                        // child: Icon(
                         //   Icons.auto_stories,
                         //   color: Colors.white,
                         //   size: 72,
@@ -86,11 +86,11 @@ class WelcomePage extends StatelessWidget {
               flex: 3,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 28,
                   vertical: 32,
                 ),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(32),
@@ -116,7 +116,7 @@ class WelcomePage extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: () => context.go('/login'),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
+                              side: BorderSide(
                                 color: AppColors.primary,
                                 width: 1.5,
                               ),
@@ -124,7 +124,7 @@ class WelcomePage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               'I Already Have an Account',
                               style: TextStyle(
                                 color: AppColors.primary,

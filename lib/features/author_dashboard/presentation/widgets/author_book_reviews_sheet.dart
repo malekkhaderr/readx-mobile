@@ -67,7 +67,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -96,7 +96,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'User Reviews',
                         style: TextStyle(
                           fontSize: 22,
@@ -106,7 +106,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                       ),
                       Text(
                         widget.bookTitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textGrey,
                         ),
@@ -117,7 +117,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                   color: AppColors.textGrey,
                 ),
@@ -138,7 +138,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     if (_error != null) {
@@ -146,9 +146,9 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_error!, style: TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadReviews,
@@ -166,13 +166,13 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.rate_review_outlined, size: 64, color: AppColors.textLight),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'No reviews yet',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'This book hasn\'t received any ratings or reviews.',
               style: TextStyle(color: AppColors.textGrey),
             ),
@@ -190,7 +190,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -211,14 +211,14 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                     backgroundColor: AppColors.primaryLight.withOpacity(0.3),
                     child: Text(
                       review.readerName?.isNotEmpty == true ? review.readerName![0].toUpperCase() : '?',
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       review.readerName ?? 'Anonymous',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: AppColors.textDark,
@@ -227,11 +227,11 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
+                      Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
                       const SizedBox(width: 4),
                       Text(
                         review.rating.toStringAsFixed(1),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
                         ),
@@ -244,7 +244,7 @@ class _AuthorBookReviewsSheetState extends State<AuthorBookReviewsSheet> {
                 const SizedBox(height: 12),
                 Text(
                   review.reviewText!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textGrey,
                     height: 1.5,

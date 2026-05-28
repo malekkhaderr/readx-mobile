@@ -70,9 +70,11 @@ class TrophyEntity extends Equatable {
 class ReaderDashboardEntity extends Equatable {
   /// Combined label from backend, e.g. "Bookworm Lvl 1"
   final String levelLabel;
+  final int? levelId;
   final int booksRead;
   final int streakDays;
   final int cubes;
+  final int totalTokensEarned;
   final int dailyGoal;
   /// Pre-formatted by backend e.g. "11h 45m" or "0m"
   final String totalReadingTime;
@@ -84,9 +86,11 @@ class ReaderDashboardEntity extends Equatable {
 
   const ReaderDashboardEntity({
     required this.levelLabel,
+    this.levelId,
     required this.booksRead,
     required this.streakDays,
     required this.cubes,
+    this.totalTokensEarned = 0,
     required this.dailyGoal,
     required this.totalReadingTime,
     required this.avgSessionTime,
@@ -104,9 +108,11 @@ class ReaderDashboardEntity extends Equatable {
   @override
   List<Object?> get props => [
         levelLabel,
+        levelId,
         booksRead,
         streakDays,
         cubes,
+        totalTokensEarned,
         dailyGoal,
         totalReadingTime,
         avgSessionTime,

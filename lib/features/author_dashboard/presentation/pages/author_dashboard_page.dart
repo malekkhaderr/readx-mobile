@@ -33,7 +33,7 @@ class AuthorDashboardPage extends StatelessWidget {
         profileState is ProfileLoaded ? profileState.profile : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -77,7 +77,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Center(
                                       child: Text(profile.avatarInitial,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 18,
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.bold))),
@@ -100,7 +100,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                     profile != null
                                         ? 'Good ${_getGreeting()}, ${profile.firstName} ✍️'
                                         : 'Good ${_getGreeting()}! ✍️',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.textDark),
@@ -109,8 +109,8 @@ class AuthorDashboardPage extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            const Text(
+                            SizedBox(height: 2),
+                            Text(
                               'Author Dashboard',
                               style: TextStyle(
                                   fontSize: 12,
@@ -183,7 +183,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                           )
                                         ],
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.notifications_outlined,
                                         color: AppColors.textDark,
                                         size: 20,
@@ -194,9 +194,9 @@ class AuthorDashboardPage extends StatelessWidget {
                                         top: -4,
                                         right: -4,
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(
+                                          padding: EdgeInsets.symmetric(
                                               horizontal: 4, vertical: 2),
-                                          decoration: const BoxDecoration(
+                                          decoration: BoxDecoration(
                                             color: AppColors.error,
                                             shape: BoxShape.circle,
                                           ),
@@ -241,7 +241,7 @@ class AuthorDashboardPage extends StatelessWidget {
                     if ((state is AuthorDashboardLoading ||
                             state is AuthorDashboardInitial) &&
                         dashboard == null) {
-                      return const Padding(
+                      return Padding(
                         padding: EdgeInsets.symmetric(vertical: 80),
                         child: Center(
                           child: CircularProgressIndicator(
@@ -257,10 +257,10 @@ class AuthorDashboardPage extends StatelessWidget {
                         child: Center(
                           child: Column(
                             children: [
-                              const Icon(Icons.wifi_off_rounded,
+                              Icon(Icons.wifi_off_rounded,
                                   size: 52, color: AppColors.textGrey),
                               const SizedBox(height: 16),
-                              const Text(
+                              Text(
                                 'Couldn\'t load your dashboard',
                                 style: TextStyle(
                                     fontSize: 16,
@@ -271,7 +271,7 @@ class AuthorDashboardPage extends StatelessWidget {
                               Text(
                                 state.message,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: AppColors.textGrey, fontSize: 13),
                               ),
                               const SizedBox(height: 20),
@@ -310,9 +310,9 @@ class AuthorDashboardPage extends StatelessWidget {
                           Container(
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 8),
-                            padding: const EdgeInsets.all(20),
+                            padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
                                   AppColors.gradientStart,
                                   AppColors.gradientEnd
@@ -353,7 +353,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                       ),
                                       child: Text(
                                         'Goal: $nextMilestone reads',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700),
@@ -403,7 +403,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                         Icons.local_fire_department,
                                         color: Colors.orangeAccent,
                                         size: 15),
@@ -523,7 +523,7 @@ class AuthorDashboardPage extends StatelessWidget {
                               mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'My Books',
                                   style: TextStyle(
                                     fontSize: 18,
@@ -540,7 +540,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                   ),
                                   child: Text(
                                     '${books?.length ?? 0} books',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.primary,
@@ -573,23 +573,23 @@ class AuthorDashboardPage extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: const BoxDecoration(
+                                      padding: EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
                                           color: AppColors.primaryLight,
                                           shape: BoxShape.circle),
-                                      child: const Icon(
+                                      child: Icon(
                                           Icons.library_books_rounded,
                                           size: 40,
                                           color: AppColors.primary),
                                     ),
-                                    const SizedBox(height: 16),
-                                    const Text('No books yet',
+                                    SizedBox(height: 16),
+                                    Text('No books yet',
                                         style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.textDark)),
-                                    const SizedBox(height: 8),
-                                    const Text(
+                                    SizedBox(height: 8),
+                                    Text(
                                         'Your published books will appear here.',
                                         style: TextStyle(
                                             fontSize: 13,
@@ -701,7 +701,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textGrey,
@@ -713,7 +713,7 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,

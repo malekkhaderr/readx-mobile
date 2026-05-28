@@ -17,6 +17,7 @@ class QuoteDetails extends Equatable {
   final int? categoryId;
   final String? categoryName;
   final int readerProfileId;
+  final int userId;
   final String readerName;
   final String content;
   final int pageNumber;
@@ -33,6 +34,7 @@ class QuoteDetails extends Equatable {
     this.categoryId,
     this.categoryName,
     required this.readerProfileId,
+    this.userId = 0,
     required this.readerName,
     required this.content,
     required this.pageNumber,
@@ -60,6 +62,7 @@ class QuoteDetails extends Equatable {
       categoryId: categoryId,
       categoryName: categoryName,
       readerProfileId: readerProfileId,
+      userId: userId,
       readerName: readerName,
       content: content,
       pageNumber: pageNumber,
@@ -79,6 +82,7 @@ class QuoteDetails extends Equatable {
       categoryId: json['categoryId'] as int?,
       categoryName: json['categoryName'] as String?,
       readerProfileId: json['readerProfileId'] as int? ?? 0,
+      userId: json['userId'] as int? ?? 0,
       readerName: json['readerName'] as String? ?? 'Anonymous',
       content: json['content'] as String? ?? '',
       pageNumber: json['pageNumber'] as int? ?? 0,

@@ -48,7 +48,7 @@ class ReaderTopBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new,
                     size: 16,
                     color: AppColors.textDark,
@@ -61,7 +61,7 @@ class ReaderTopBar extends StatelessWidget {
                   chapterTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textDark,
@@ -82,7 +82,7 @@ class ReaderTopBar extends StatelessWidget {
               value: progress,
               minHeight: 3,
               backgroundColor: AppColors.divider.withOpacity(0.5),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ),
         ],
@@ -114,7 +114,7 @@ class StreakBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '$days DAY STREAK',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
               color: AppColors.primary,
@@ -160,7 +160,7 @@ class DropCapParagraph extends StatelessWidget {
           Expanded(
             child: Text(
               rest,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 color: AppColors.textDark,
                 height: 1.75,
@@ -220,7 +220,7 @@ class ReaderParagraph extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           color: AppColors.textDark,
           height: 1.75,
@@ -268,7 +268,7 @@ class ReaderBottomBar extends StatelessWidget {
               children: [
                 Text(
                   '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,

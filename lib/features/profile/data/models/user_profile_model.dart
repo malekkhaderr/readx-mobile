@@ -62,9 +62,11 @@ class TrophyModel extends TrophyEntity {
 class ReaderDashboardModel extends ReaderDashboardEntity {
   const ReaderDashboardModel({
     required super.levelLabel,
+    super.levelId,
     required super.booksRead,
     required super.streakDays,
     required super.cubes,
+    super.totalTokensEarned,
     required super.dailyGoal,
     required super.totalReadingTime,
     required super.avgSessionTime,
@@ -106,9 +108,11 @@ class ReaderDashboardModel extends ReaderDashboardEntity {
 
     return ReaderDashboardModel(
       levelLabel: user['level']?.toString() ?? 'Reader',
+      levelId: (user['levelId'] as num?)?.toInt(),
       booksRead: (user['booksRead'] as num?)?.toInt() ?? 0,
       streakDays: (user['streakDays'] as num?)?.toInt() ?? 0,
       cubes: (user['tokens'] as num?)?.toInt() ?? (user['cubes'] as num?)?.toInt() ?? 0,
+      totalTokensEarned: (user['totalTokensEarned'] as num?)?.toInt() ?? (user['tokens'] as num?)?.toInt() ?? 0,
       dailyGoal: (user['dailyGoal'] as num?)?.toInt() ?? 30,
       totalReadingTime: stats['totalReadingTime']?.toString() ?? '0m',
       avgSessionTime: stats['avgSessionTime']?.toString() ?? '0m',

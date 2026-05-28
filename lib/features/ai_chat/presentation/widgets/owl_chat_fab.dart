@@ -74,7 +74,7 @@ class _OwlChatFabState extends State<OwlChatFab>
                 ),
                 borderRadius: BorderRadius.circular(17),
                 border: Border.all(
-                  color: ChatColors.accent.withOpacity(0.3),
+                  color: ChatColors.accent.withOpacity(0.25),
                   width: 1,
                 ),
                 boxShadow: [

@@ -39,7 +39,7 @@ class GreetingHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Hoot! Morning, Alex',
                       style: TextStyle(
                         fontSize: 17,
@@ -78,7 +78,7 @@ class GreetingHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_outlined,
               color: AppColors.textDark,
               size: 20,
@@ -98,10 +98,10 @@ class DailyGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -180,7 +180,7 @@ class DailyGoalCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress.dailyProgressPercent,
               minHeight: 7,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: AppColors.surface.withOpacity(0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
@@ -270,7 +270,7 @@ class _StatCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
+            Text(emoji, style: TextStyle(fontSize: 24)),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,7 +282,7 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
@@ -326,7 +326,7 @@ class CurrentReadCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Your Current Read',
                 style: TextStyle(
                   fontSize: 15,
@@ -368,12 +368,12 @@ class CurrentReadCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Shimmer.fromColors(
                       baseColor: AppColors.primaryLight,
-                      highlightColor: Colors.white,
+                      highlightColor: AppColors.shimmer,
                       child: Container(color: AppColors.primaryLight),
                     ),
                     errorWidget: (ctx, err, stack) => Container(
                       color: AppColors.primaryLight,
-                      child: const Center(child: Icon(Icons.book, color: AppColors.primary, size: 24)),
+                      child: Center(child: Icon(Icons.book, color: AppColors.primary, size: 24)),
                     ),
                   ),
                 ),
@@ -385,7 +385,7 @@ class CurrentReadCard extends StatelessWidget {
                   children: [
                     Text(
                       book.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
@@ -419,7 +419,7 @@ class CurrentReadCard extends StatelessWidget {
                               value: book.progress,
                               minHeight: 5,
                               backgroundColor: AppColors.primaryLight,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
+                              valueColor: AlwaysStoppedAnimation<Color>(
                                 AppColors.primary,
                               ),
                             ),
@@ -488,7 +488,7 @@ class PickedForYouSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'Picked for You',
@@ -523,7 +523,7 @@ class _BookPickCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = [
-      [const Color(0xFF7B61FF), const Color(0xFF9D8AFF)],
+      [AppColors.primary, const Color(0xFF9D8AFF)],
       [const Color(0xFFFF6B6B), const Color(0xFFFF8E8E)],
       [const Color(0xFF4ECDC4), const Color(0xFF6EE7DF)],
       [const Color(0xFFFFB347), const Color(0xFFFFCC70)],
@@ -558,12 +558,12 @@ class _BookPickCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Shimmer.fromColors(
                   baseColor: AppColors.primaryLight,
-                  highlightColor: Colors.white,
+                  highlightColor: AppColors.shimmer,
                   child: Container(color: AppColors.primaryLight),
                 ),
                 errorWidget: (ctx, err, stack) => Container(
                   color: AppColors.primaryLight,
-                  child: const Center(child: Icon(Icons.book, color: AppColors.primary, size: 30)),
+                  child: Center(child: Icon(Icons.book, color: AppColors.primary, size: 30)),
                 ),
               ),
             ),
@@ -573,7 +573,7 @@ class _BookPickCard extends StatelessWidget {
             book.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textDark,
@@ -632,7 +632,7 @@ class DailyTipBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Hootie's Daily Tip",
                   style: TextStyle(
                     fontSize: 12,

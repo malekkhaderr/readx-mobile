@@ -82,7 +82,7 @@ class _AddBookRequestFormState extends State<AddBookRequestForm> {
       child: ListView(
         shrinkWrap: true,
         children: [
-          const Text('Submit Add Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          Text('Submit Add Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 16),
           _buildTextField('Book Title', _titleController, isRequired: true),
           _buildTextField('ePub File URL', _epubController, isRequired: true),
@@ -215,7 +215,7 @@ class _ModifyBookRequestFormState extends State<ModifyBookRequestForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Submit Modify Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          Text('Submit Modify Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
             isExpanded: true,
@@ -314,7 +314,7 @@ class _RemoveBookRequestFormState extends State<RemoveBookRequestForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Submit Remove Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          Text('Submit Remove Book Request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
             isExpanded: true,

@@ -24,16 +24,16 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Statistics',
           style: TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AppColors.background,
+  
         elevation: 0,
         centerTitle: false,
         leading: BackButton(onPressed: () => context.pop()),
@@ -52,7 +52,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                 final stats = bloc.cachedStatistics;
 
                 if ((state is AuthorStatisticsLoading || state is AuthorDashboardInitial) && stats == null) {
-                  return const Center(
+                  return Center(
                     child: Padding(
                       padding: EdgeInsets.all(40),
                       child: CircularProgressIndicator(color: AppColors.primary),
@@ -61,7 +61,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                 }
 
                 if (state is AuthorStatisticsError && stats == null) {
-                  return Center(child: Text(state.message, style: const TextStyle(color: AppColors.error)));
+                  return Center(child: Text(state.message, style: TextStyle(color: AppColors.error)));
                 }
 
                 if (stats != null) {
@@ -72,7 +72,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                       _buildOverviewCard(stats, state is AuthorStatisticsLoaded ? state.quotesStats : null),
                       const SizedBox(height: 32),
                       
-                      const Text(
+                      Text(
                         'Per Book Performance',
                         style: TextStyle(
                           fontSize: 20,
@@ -83,7 +83,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
                       const SizedBox(height: 16),
                       
                       if (stats.bookStatistics.isEmpty)
-                        const Center(child: Text('No book statistics available', style: TextStyle(color: AppColors.textGrey)))
+                        Center(child: Text('No book statistics available', style: TextStyle(color: AppColors.textGrey)))
                       else
                         ListView.builder(
                           shrinkWrap: true,
@@ -230,7 +230,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
             children: [
               Text(
                 bookStat.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
@@ -269,7 +269,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
@@ -277,7 +277,7 @@ class _AuthorStatisticsPageState extends State<AuthorStatisticsPage> {
             ),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 color: AppColors.textGrey,
               ),

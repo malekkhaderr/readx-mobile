@@ -73,8 +73,8 @@ class _BookShopPageState extends State<BookShopPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 'Sort By',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
               ),
@@ -121,7 +121,7 @@ class _BookShopPageState extends State<BookShopPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -132,7 +132,7 @@ class _BookShopPageState extends State<BookShopPage> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -166,11 +166,11 @@ class _BookShopPageState extends State<BookShopPage> {
                     onChanged: (v) => setState(() => _searchQuery = v),
                     decoration: InputDecoration(
                       hintText: 'Search books, authors, genres...',
-                      hintStyle: const TextStyle(color: AppColors.textGrey, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search, color: AppColors.textGrey, size: 20),
+                      hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey, size: 20),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.close, size: 18, color: AppColors.textGrey),
+                              icon: Icon(Icons.close, size: 18, color: AppColors.textGrey),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -243,7 +243,7 @@ class _BookShopPageState extends State<BookShopPage> {
                           : _selectedCategory == BookCategory.all
                               ? '${MockBookShopData.allBooks.length} books'
                               : '${_filteredBooks.length} books',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textGrey),
+                      style: TextStyle(fontSize: 13, color: AppColors.textGrey),
                     ),
                     const Spacer(),
                     GestureDetector(
@@ -258,9 +258,9 @@ class _BookShopPageState extends State<BookShopPage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.sort, size: 14, color: AppColors.textGrey),
+                            Icon(Icons.sort, size: 14, color: AppColors.textGrey),
                             const SizedBox(width: 4),
-                            Text(_selectedSort.label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
+                            Text(_selectedSort.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
                           ],
                         ),
                       ),
@@ -291,7 +291,7 @@ class _BookShopPageState extends State<BookShopPage> {
               _buildShelf('📚 Classics You May Love', MockBookShopData.getClassics().take(6).toList()),
 
               // All Books header
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
                   child: Text('All Books', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textDark)),
@@ -315,7 +315,7 @@ class _BookShopPageState extends State<BookShopPage> {
                                 _searchQuery.isNotEmpty
                                     ? 'No books match "$_searchQuery"'
                                     : 'No books in this category',
-                                style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+                                style: TextStyle(fontSize: 14, color: AppColors.textGrey),
                               ),
                             ],
                           ),
@@ -337,7 +337,7 @@ class _BookShopPageState extends State<BookShopPage> {
                           onAddToCart: () {
                             _shopState.addToCart(_filteredBooks[index]);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text('✅ Added to cart!'),
                                 backgroundColor: AppColors.successGreen,
                                 duration: Duration(seconds: 1),
@@ -365,7 +365,7 @@ class _BookShopPageState extends State<BookShopPage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+            child: Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
           ),
           SizedBox(
             height: 245,
@@ -388,7 +388,7 @@ class _BookShopPageState extends State<BookShopPage> {
                     onAddToCart: () {
                       _shopState.addToCart(book);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text('✅ Added to cart!'),
                           backgroundColor: AppColors.successGreen,
                           duration: Duration(seconds: 1),
@@ -422,11 +422,11 @@ class _CartIconBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: Offset(0, 2))],
         ),
         child: Stack(
           children: [
-            const Center(
+            Center(
               child: Icon(Icons.shopping_cart_outlined, color: AppColors.textDark, size: 22),
             ),
             if (count > 0)
@@ -436,7 +436,7 @@ class _CartIconBadge extends StatelessWidget {
                 child: Container(
                   width: 18,
                   height: 18,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
@@ -468,13 +468,13 @@ class _FeaturedBookBanner extends StatelessWidget {
       child: Container(
         height: 170,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             colors: [AppColors.gradientStart, AppColors.gradientEnd],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: Offset(0, 6))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -546,7 +546,7 @@ class _FeaturedBookBanner extends StatelessWidget {
                             book.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -556,14 +556,14 @@ class _FeaturedBookBanner extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 14),
+                              Icon(Icons.star, color: Colors.amber, size: 14),
                               const SizedBox(width: 4),
                               Text('${book.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
                               const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                                child: const Text(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(10)),
+                                child: Text(
                                   'View Details',
                                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
                                 ),
@@ -717,9 +717,9 @@ class _ShopBookCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 11),
+                          Icon(Icons.star, color: Colors.amber, size: 11),
                           const SizedBox(width: 2),
-                          Text('${book.rating}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                          Text('${book.rating}', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
@@ -731,8 +731,8 @@ class _ShopBookCard extends StatelessWidget {
                       right: 8,
                       child: Container(
                         padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(color: AppColors.successGreen, shape: BoxShape.circle),
-                        child: const Icon(Icons.check, color: Colors.white, size: 12),
+                        decoration: BoxDecoration(color: AppColors.successGreen, shape: BoxShape.circle),
+                        child: Icon(Icons.check, color: AppColors.surface, size: 12),
                       ),
                     ),
                 ],
@@ -745,9 +745,9 @@ class _ShopBookCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, height: 1.2)),
+                    Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark, height: 1.2)),
                     const SizedBox(height: 2),
-                    Text(book.author, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
+                    Text(book.author, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, color: AppColors.textGrey)),
                     const Spacer(),
                     Row(
                       children: [
@@ -758,7 +758,7 @@ class _ShopBookCard extends StatelessWidget {
                               if (book.isOnSale)
                                 Text(
                                   '\$${book.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(fontSize: 9, color: AppColors.textGrey, decoration: TextDecoration.lineThrough),
+                                  style: TextStyle(fontSize: 9, color: AppColors.textGrey, decoration: TextDecoration.lineThrough),
                                 ),
                               Text(
                                 isPurchased ? 'Owned' : '\$${book.effectivePrice.toStringAsFixed(2)}',

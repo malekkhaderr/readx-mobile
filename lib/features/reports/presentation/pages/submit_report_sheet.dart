@@ -55,7 +55,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
       listener: (context, state) {
         if (state is ReportSubmittedSuccessfully) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Ticket submitted successfully!'),
               backgroundColor: AppColors.successGreen,
             ),
@@ -70,7 +70,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
       },
       child: Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -93,7 +93,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Submit Support Ticket',
                     style: TextStyle(
                       color: AppColors.textDark,
@@ -102,7 +102,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -116,7 +116,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                     current is ReportsError,
                 builder: (context, state) {
                   if (state is ReportsLoading) {
-                    return const Center(
+                    return Center(
                       child:
                           CircularProgressIndicator(color: AppColors.primary),
                     );
@@ -127,7 +127,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline,
+                          Icon(Icons.error_outline,
                               color: AppColors.error, size: 48),
                           const SizedBox(height: 16),
                           Text(state.message),
@@ -162,7 +162,7 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'How can we help you?',
               style: TextStyle(
                 fontSize: 16,
@@ -170,8 +170,8 @@ class _SubmitReportSheetState extends State<SubmitReportSheet> {
                 color: AppColors.textDark,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               'Select a reason and describe your issue in detail.',
               style: TextStyle(fontSize: 13, color: AppColors.textGrey),
             ),

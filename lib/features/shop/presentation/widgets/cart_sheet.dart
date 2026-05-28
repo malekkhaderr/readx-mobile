@@ -78,7 +78,7 @@ class _CartSheetState extends State<_CartSheet> {
                   const Text('Total', style: TextStyle(fontWeight: FontWeight.w600)),
                   Text(
                     '\$${total.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                 ],
               ),
@@ -88,7 +88,7 @@ class _CartSheetState extends State<_CartSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -124,15 +124,15 @@ class _CartSheetState extends State<_CartSheet> {
                 color: AppColors.successGreen.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: AppColors.successGreen, size: 48),
+              child: Icon(Icons.check_circle, color: AppColors.successGreen, size: 48),
             ),
             const SizedBox(height: 16),
-            const Text('Purchase Complete!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+            Text('Purchase Complete!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
             const SizedBox(height: 8),
             Text(
               '$count book${count > 1 ? 's' : ''} added to your collection.\nYou can read them anytime!',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4),
+              style: TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.4),
             ),
           ],
         ),
@@ -163,7 +163,7 @@ class _CartSheetState extends State<_CartSheet> {
       minChildSize: 0.4,
       expand: false,
       builder: (context, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -178,13 +178,13 @@ class _CartSheetState extends State<_CartSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Text('Your Cart', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  Text('Your Cart', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                   const SizedBox(width: 8),
                   if (items.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-                      child: Text('${items.length}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                      child: Text('${items.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
                     ),
                 ],
               ),
@@ -200,9 +200,9 @@ class _CartSheetState extends State<_CartSheet> {
                         children: [
                           const Text('🛒', style: TextStyle(fontSize: 56)),
                           const SizedBox(height: 12),
-                          const Text('Your cart is empty', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                          Text('Your cart is empty', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textDark)),
                           const SizedBox(height: 4),
-                          const Text('Browse the shop and add some books!', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                          Text('Browse the shop and add some books!', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
                         ],
                       ),
                     )
@@ -233,16 +233,16 @@ class _CartSheetState extends State<_CartSheet> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Subtotal', style: TextStyle(fontSize: 14, color: AppColors.textGrey)),
-                          Text('\$${_state.cartSubtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, color: AppColors.textDark)),
+                          Text('Subtotal', style: TextStyle(fontSize: 14, color: AppColors.textGrey)),
+                          Text('\$${_state.cartSubtotal.toStringAsFixed(2)}', style: TextStyle(fontSize: 14, color: AppColors.textDark)),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                          Text('\$${_state.cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                          Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                          Text('\$${_state.cartTotal.toStringAsFixed(2)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -303,7 +303,7 @@ class _CartItem extends StatelessWidget {
                 cacheWidth: 100,
                 errorBuilder: (ctx, err, stack) => Container(
                   color: AppColors.primaryLight,
-                  child: const Center(child: Icon(Icons.book, color: AppColors.primary, size: 18)),
+                  child: Center(child: Icon(Icons.book, color: AppColors.primary, size: 18)),
                 ),
               ),
             ),
@@ -314,15 +314,15 @@ class _CartItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                 const SizedBox(height: 2),
-                Text(book.author, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                Text(book.author, style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     if (book.isOnSale)
-                      Text('\$${book.price.toStringAsFixed(2)} ', style: const TextStyle(fontSize: 11, color: AppColors.textGrey, decoration: TextDecoration.lineThrough)),
-                    Text('\$${book.effectivePrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                      Text('\$${book.price.toStringAsFixed(2)} ', style: TextStyle(fontSize: 11, color: AppColors.textGrey, decoration: TextDecoration.lineThrough)),
+                    Text('\$${book.effectivePrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ],
                 ),
               ],
@@ -338,7 +338,7 @@ class _CartItem extends StatelessWidget {
                 color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.close, color: AppColors.accent, size: 18),
+              child: Icon(Icons.close, color: AppColors.accent, size: 18),
             ),
           ),
         ],

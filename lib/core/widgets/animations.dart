@@ -213,7 +213,7 @@ class AnimatedStars extends StatefulWidget {
     required this.rating,
     this.size = 18,
     this.filledColor = const Color(0xFFFFD700),
-    this.emptyColor = const Color(0xFFBDBDBD),
+    this.emptyColor = const Color(0xFFE0E0E0),
     this.duration = const Duration(milliseconds: 800),
   });
 
@@ -409,7 +409,7 @@ class ConfettiBurst extends StatefulWidget {
     this.particleCount = 40,
     this.duration = const Duration(milliseconds: 1800),
     this.colors = const [
-      Color(0xFF7B61FF),
+      Color(0xFF6C5CE7),
       Color(0xFFFFD700),
       Color(0xFFFF6B35),
       Color(0xFF4CAF50),

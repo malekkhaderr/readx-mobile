@@ -227,7 +227,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     if (result.deleted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Your rating was removed.'),
           backgroundColor: AppColors.textGrey,
           behavior: SnackBarBehavior.floating,
@@ -315,7 +315,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       await _loadComments();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Comment posted!'),
             backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
@@ -325,7 +325,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to post comment. Please try again.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -344,7 +344,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       await _loadComments();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Comment deleted.'),
             backgroundColor: AppColors.textGrey,
             behavior: SnackBarBehavior.floating,
@@ -354,7 +354,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to delete comment.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -376,7 +376,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       await _loadComments();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Comment updated!'),
             backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
@@ -386,7 +386,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to update comment.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -435,7 +435,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           _sortComments();
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to register vote.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -482,7 +482,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     if (!isRealUrl) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
               Icon(Icons.error_outline_rounded,
@@ -596,7 +596,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (!mounted) return;
       setState(() => _isPurchasing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Purchase failed. Please try again.'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
@@ -646,7 +646,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       if (mounted) {
         setState(() => _isPurchasing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to add book to library.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -681,8 +681,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       isScrollControlled: true,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
@@ -698,20 +698,20 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            const Text('Choose Payment Method',
+            SizedBox(height: 18),
+            Text('Choose Payment Method',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textDark)),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               book.title,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500),
@@ -830,12 +830,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.background,
         body: SafeArea(
           child: Column(
             children: [
               _buildTopBar(transparent: false),
-              const Expanded(
+              Expanded(
                 child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
               ),
             ],
@@ -846,7 +845,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
     if (_error != null || _book == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+
         body: SafeArea(
           child: Column(
             children: [
@@ -856,10 +855,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                      Icon(Icons.error_outline, size: 48, color: AppColors.error),
                       const SizedBox(height: 12),
                       Text(_error ?? 'Book not found',
-                          style: const TextStyle(fontSize: 16, color: AppColors.textGrey)),
+                          style: TextStyle(fontSize: 16, color: AppColors.textGrey)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadBook,
@@ -887,7 +886,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: Stack(
         children: [
           // ── Layer 1: Blurred backdrop (cover image) ──
@@ -1001,7 +1000,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                child: Container(color: Colors.white.withOpacity(0.55)),
+                child: Container(color: AppColors.background.withOpacity(0.7)),
               ),
             ),
           ],
@@ -1055,7 +1054,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   Widget _coverFallback(BookDetail book) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,
@@ -1094,7 +1093,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w800,
               color: AppColors.textDark,
@@ -1102,11 +1101,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('by ',
+              Text('by ',
                   style: TextStyle(
                       fontSize: 14, color: AppColors.textGrey, fontWeight: FontWeight.w400)),
               Flexible(
@@ -1114,7 +1113,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   book.authorName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700),
@@ -1134,11 +1133,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.local_offer_rounded, size: 11, color: AppColors.primary),
-                const SizedBox(width: 5),
+                Icon(Icons.local_offer_rounded, size: 11, color: AppColors.primary),
+                SizedBox(width: 5),
                 Text(
                   book.categoryName.isNotEmpty ? book.categoryName : 'Uncategorized',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
@@ -1173,22 +1172,22 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             size: 18,
             filledColor: AppColors.gold,
             emptyColor: AppColors.textLight,
-            duration: const Duration(milliseconds: 900),
+            duration: Duration(milliseconds: 900),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             hasRating ? rating.toStringAsFixed(1) : 'No ratings',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.textDark,
             ),
           ),
           if (ratingsCount > 0) ...[
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               '($ratingsCount ${ratingsCount == 1 ? 'rating' : 'ratings'})',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textGrey,
               ),
@@ -1212,7 +1211,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         decoration: BoxDecoration(
           color: hasMyRating
               ? AppColors.primaryLight
-              : Colors.white.withOpacity(0.85),
+              : AppColors.surface.withOpacity(0.9),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: hasMyRating
@@ -1229,9 +1228,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               size: 16,
               color: AppColors.primary,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             if (loading)
-              const SizedBox(
+              SizedBox(
                 width: 12,
                 height: 12,
                 child: CircularProgressIndicator(
@@ -1244,7 +1243,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 hasMyRating
                     ? 'Your rating: ${mine.rating.toStringAsFixed(1)} · Tap to update'
                     : 'Rate this book',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -1283,9 +1282,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
+          color: AppColors.surface.withOpacity(0.9),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white, width: 1),
+          border: Border.all(color: AppColors.divider, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withOpacity(0.06),
@@ -1317,21 +1316,21 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(pill.icon, size: 16, color: AppColors.primary),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text(
           pill.value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
             color: AppColors.textDark,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: 2),
         Text(
           pill.label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
             color: AppColors.textGrey,
             fontWeight: FontWeight.w500,
@@ -1373,8 +1372,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Text(
+              SizedBox(width: 10),
+              Text(
                 'About this book',
                 style: TextStyle(
                   fontSize: 16,
@@ -1415,12 +1414,12 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               onTap: () =>
                   setState(() => _descriptionExpanded = !_descriptionExpanded),
               child: Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
                     Text(
                       _descriptionExpanded ? 'Show less' : 'Read more',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
@@ -1481,10 +1480,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.auto_stories_rounded,
+                    Icon(Icons.auto_stories_rounded,
                         size: 16, color: AppColors.primary),
-                    const SizedBox(width: 6),
-                    const Text(
+                    SizedBox(width: 6),
+                    Text(
                       'Continue Reading',
                       style: TextStyle(
                         fontSize: 13,
@@ -1496,7 +1495,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 ),
                 Text(
                   percentString,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primary,
@@ -1512,15 +1511,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 minHeight: 8,
                 backgroundColor: AppColors.primaryLight,
                 valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Align(
               alignment: Alignment.centerRight,
               child: Text(
                 'Page $readPages of $totalPages',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500,
@@ -1546,7 +1545,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             onTap: () => Navigator.pop(context),
           ),
           if (!transparent)
-            const Text(
+            Text(
               'Book Details',
               style: TextStyle(
                 fontSize: 17,
@@ -1580,7 +1579,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.8),
+            color: AppColors.surface.withOpacity(0.9),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -1607,7 +1606,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             16, 14, 16, MediaQuery.of(context).padding.bottom + 14,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.92),
+            color: AppColors.surface.withOpacity(0.95),
             border: Border(
               top: BorderSide(color: AppColors.divider.withOpacity(0.5)),
             ),
@@ -1621,7 +1620,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'PRICE',
                       style: TextStyle(
                         fontSize: 10,
@@ -1684,7 +1683,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 6,
+                      elevation: 0,
                       shadowColor: AppColors.primary.withOpacity(0.4),
                     ),
                   ),
@@ -1699,7 +1698,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   Widget _buildPriceWidget(BookDetail book) {
     if (_isOwned) {
-      return const Row(
+      return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.check_circle_rounded,
@@ -1718,7 +1717,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     }
 
     if (book.isFree) {
-      return const Text(
+      return Text(
         'Free',
         style: TextStyle(
           fontSize: 20,
@@ -1735,11 +1734,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         // USD price
         Row(
           children: [
-            const Icon(Icons.attach_money_rounded,
+            Icon(Icons.attach_money_rounded,
                 size: 14, color: AppColors.textDark),
             Text(
               book.priceUSD.toStringAsFixed(2),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textDark,
@@ -1751,11 +1750,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         // Feathers price
         Row(
           children: [
-            const FeatherIcon(size: 13),
-            const SizedBox(width: 4),
+            FeatherIcon(size: 13),
+            SizedBox(width: 4),
             Text(
               '${book.priceTokens.toInt()} feathers',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
@@ -1818,7 +1817,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: AppColors.surface.withOpacity(0.9),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.divider),
       ),
@@ -1917,9 +1916,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           alignment: Alignment.centerLeft,
           child: _buildRateButton(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         if (_loadingRatings)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: CircularProgressIndicator(color: AppColors.primary),
@@ -1939,7 +1938,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.5),
+        color: AppColors.surface.withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider),
       ),
@@ -1948,18 +1947,18 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.star_outline_rounded,
               color: AppColors.primary,
               size: 26,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             'No ratings yet',
             style: TextStyle(
               fontSize: 14,
@@ -1967,8 +1966,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: 4),
+          Text(
             'Be the first reader to leave a rating.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: AppColors.textGrey),
@@ -1988,9 +1987,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildAddCommentInput(),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         if (_loadingComments)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: CircularProgressIndicator(color: AppColors.primary),
@@ -2002,7 +2001,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               children: [
                 Text(
                   _commentsError!,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppColors.error),
                 ),
                 TextButton(
                   onPressed: _loadComments,
@@ -2029,7 +2028,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.5),
+        color: AppColors.surface.withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider),
       ),
@@ -2038,18 +2037,18 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.forum_rounded,
               color: AppColors.primary,
               size: 26,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             'Start the discussion',
             style: TextStyle(
               fontSize: 14,
@@ -2057,8 +2056,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: 4),
+          Text(
             'Ask a question or share your thoughts on this book.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: AppColors.textGrey),
@@ -2079,7 +2078,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -2105,7 +2104,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 backgroundColor: AppColors.primaryLight,
                 child: Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2123,7 +2122,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                             review.readerName ?? 'Anonymous',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
                               color: AppColors.textDark,
@@ -2156,19 +2155,19 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     Row(
                       children: [
                         _StaticStars(rating: review.rating),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           review.rating.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                             color: AppColors.textDark,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '· ${DateFormat.yMMMd().format(review.createdAt)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textGrey,
                           ),
@@ -2181,10 +2180,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             ],
           ),
           if (body.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               body,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textDark,
                 height: 1.5,
@@ -2199,7 +2198,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Widget _buildAddCommentInput() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.divider.withOpacity(0.7)),
         boxShadow: [
@@ -2217,8 +2216,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           TextField(
             controller: _commentController,
             maxLines: 3,
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
-            decoration: const InputDecoration(
+            style: TextStyle(fontSize: 14, color: AppColors.textDark),
+            decoration: InputDecoration(
               hintText: 'Ask a question or share a thought about this book…',
               hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14),
               fillColor: Colors.transparent,
@@ -2300,7 +2299,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -2317,12 +2316,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
+              GestureDetector(
+                onTap: () => context.push('/reader-profile/${comment.userId}'),
+                child: Container(
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.gradientEnd],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -2348,6 +2349,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   ),
                 ),
               ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -2356,16 +2358,29 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(
-                            comment.readerName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textDark,
+                          child: GestureDetector(
+                            onTap: () => context.push('/reader-profile/${comment.userId}'),
+                            child: Text(
+                              comment.readerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
+
+
+
+
+
+
+
+
+
+
                         ),
                         if (isOwner) ...[
                           const SizedBox(width: 6),
@@ -2376,7 +2391,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                               color: AppColors.primaryLight,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
+                            child: Text(
                               'YOU',
                               style: TextStyle(
                                 fontSize: 9,
@@ -2389,10 +2404,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       formattedDate,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.textGrey),
                     ),
                   ],
@@ -2400,7 +2415,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
               if (isOwner && !isEditingThis) ...[
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined,
+                  icon: Icon(Icons.edit_outlined,
                       size: 18, color: AppColors.textGrey),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -2411,9 +2426,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     });
                   },
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded,
+                  icon: Icon(Icons.delete_outline_rounded,
                       size: 18, color: AppColors.error),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -2430,7 +2445,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 TextField(
                   controller: _editCommentController,
                   maxLines: 3,
-                  style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                  style: TextStyle(fontSize: 14, color: AppColors.textDark),
                   decoration: InputDecoration(
                     fillColor: AppColors.background,
                     filled: true,
@@ -2438,7 +2453,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          const BorderSide(color: AppColors.primary),
+                          BorderSide(color: AppColors.primary),
                     ),
                   ),
                 ),
@@ -2453,7 +2468,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                           _editCommentController.clear();
                         });
                       },
-                      child: const Text('Cancel',
+                      child: Text('Cancel',
                           style: TextStyle(
                               color: AppColors.textGrey, fontSize: 13)),
                     ),
@@ -2489,8 +2504,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
             ),
             if (comment.updatedAt != null) ...[
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 '(edited)',
                 style: TextStyle(
                   fontSize: 10,
@@ -2578,14 +2593,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Review',
+        title: Text('Delete Review',
             style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text(
+        content: Text(
             'Are you sure you want to delete this review? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
+            child: Text('Cancel',
                 style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
@@ -2593,7 +2608,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               Navigator.pop(ctx);
               _deleteComment(commentId);
             },
-            child: const Text('Delete',
+            child: Text('Delete',
                 style: TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.w700)),
           ),

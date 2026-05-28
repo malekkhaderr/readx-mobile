@@ -150,7 +150,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedBook == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Pick a book first'),
           backgroundColor: AppColors.warningOrange,
           behavior: SnackBarBehavior.floating,
@@ -205,7 +205,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
 
     if (succeeded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(children: [
             Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             SizedBox(width: 8),
@@ -218,7 +218,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
       context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Could not save the quote. Please try again.'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
@@ -230,7 +230,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: Column(
         children: [
           _Header(onBack: () => context.pop()),
@@ -283,7 +283,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
         Icon(icon, size: 13, color: AppColors.primary),
         const SizedBox(width: 6),
         Text(text,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 13,
               color: AppColors.textDark,
@@ -298,11 +298,11 @@ class _AddQuotePageState extends State<AddQuotePage> {
       return Container(
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.divider.withOpacity(0.7)),
         ),
-        child: const Center(
+        child: Center(
           child: SizedBox(
             width: 18,
             height: 18,
@@ -316,23 +316,23 @@ class _AddQuotePageState extends State<AddQuotePage> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.error.withOpacity(0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline_rounded,
+            Icon(Icons.error_outline_rounded,
                 color: AppColors.error, size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(_booksError!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textDark)),
             ),
             TextButton(
                 onPressed: _loadBooks,
-                child: const Text('Retry',
+                child: Text('Retry',
                     style: TextStyle(color: AppColors.primary))),
           ],
         ),
@@ -341,14 +341,14 @@ class _AddQuotePageState extends State<AddQuotePage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.divider.withOpacity(0.7)),
       ),
       child: DropdownButtonFormField<int>(
         value: _selectedBook?.id,
         isExpanded: true,
-        icon: const Padding(
+        icon: Padding(
           padding: EdgeInsets.only(right: 10),
           child: Icon(Icons.keyboard_arrow_down_rounded,
               color: AppColors.textGrey),
@@ -360,7 +360,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           hintText: 'Select a book',
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
               fontSize: 14, color: AppColors.textGrey),
         ),
         items: _books.map((b) {
@@ -390,7 +390,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
                     b.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textDark,
@@ -425,19 +425,19 @@ class _AddQuotePageState extends State<AddQuotePage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.local_offer_rounded,
+          Icon(Icons.local_offer_rounded,
               size: 11, color: AppColors.primary),
           const SizedBox(width: 5),
           Text(
             category,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 6),
-          const Text(
+          SizedBox(width: 6),
+          Text(
             'auto-filled',
             style: TextStyle(
               fontSize: 9.5,
@@ -455,7 +455,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
       controller: _contentController,
       maxLines: 5,
       validator: _validateContent,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         color: AppColors.textDark,
         fontStyle: FontStyle.italic,
@@ -470,7 +470,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
           fontStyle: FontStyle.normal,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
@@ -479,15 +479,15 @@ class _AddQuotePageState extends State<AddQuotePage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+          borderSide: BorderSide(color: AppColors.error, width: 1.5),
         ),
       ),
     );
@@ -498,11 +498,11 @@ class _AddQuotePageState extends State<AddQuotePage> {
       controller: _pageController,
       keyboardType: TextInputType.number,
       validator: _validatePage,
-      style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+      style: TextStyle(fontSize: 14, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: 'e.g. 42',
-        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textGrey),
-        prefixIcon: const Padding(
+        hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey),
+        prefixIcon: Padding(
           padding: EdgeInsets.only(left: 14, right: 10),
           child: Icon(Icons.numbers_rounded,
               size: 18, color: AppColors.textGrey),
@@ -510,7 +510,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
         prefixIconConstraints:
             const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
@@ -519,15 +519,15 @@ class _AddQuotePageState extends State<AddQuotePage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+          borderSide: BorderSide(color: AppColors.error, width: 1.5),
         ),
       ),
     );
@@ -545,7 +545,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
               decoration: BoxDecoration(
                 color: _isPublic
                     ? AppColors.successGreen.withOpacity(0.12)
-                    : Colors.white,
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: _isPublic
@@ -589,7 +589,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
               decoration: BoxDecoration(
                 color: !_isPublic
                     ? AppColors.warningOrange.withOpacity(0.12)
-                    : Colors.white,
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: !_isPublic
@@ -678,7 +678,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,

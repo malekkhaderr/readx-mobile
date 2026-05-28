@@ -297,7 +297,7 @@ class _ReadingPageState extends State<ReadingPage> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    const Text('Aa', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                    Text('Aa', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
                     Expanded(
                       child: Slider(
                         value: _fontSize,
@@ -312,11 +312,11 @@ class _ReadingPageState extends State<ReadingPage> {
                         },
                       ),
                     ),
-                    const Text('Aa', style: TextStyle(fontSize: 20, color: AppColors.textDark, fontWeight: FontWeight.bold)),
+                    Text('Aa', style: TextStyle(fontSize: 20, color: AppColors.textDark, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Font size: ${_fontSize.toInt()}pt', style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                Text('Font size: ${_fontSize.toInt()}pt', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
                 const SizedBox(height: 16),
               ],
             ),
@@ -371,13 +371,13 @@ class _ReadingPageState extends State<ReadingPage> {
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            const Text('Save a Quote', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+            Text('Save a Quote', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
             const SizedBox(height: 4),
-            Text('From ${_book!.title} — ${currentChData.title}', style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            Text('From ${_book!.title} — ${currentChData.title}', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
             const SizedBox(height: 18),
 
             if (quoteBlocks.isNotEmpty) ...[
-              const Text('Quotes in this chapter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+              Text('Quotes in this chapter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
               const SizedBox(height: 8),
               ...quoteBlocks.map((q) => GestureDetector(
                 onTap: () {
@@ -395,9 +395,9 @@ class _ReadingPageState extends State<ReadingPage> {
                   ),
                   child: Row(
                     children: [
-                      Expanded(child: Text(q.text, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textDark, height: 1.4))),
+                      Expanded(child: Text(q.text, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textDark, height: 1.4))),
                       const SizedBox(width: 8),
-                      const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
+                      Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
                     ],
                   ),
                 ),
@@ -405,19 +405,19 @@ class _ReadingPageState extends State<ReadingPage> {
               const SizedBox(height: 12),
             ],
 
-            const Text('Or write your own', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+            Text('Or write your own', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark)),
             const SizedBox(height: 8),
             TextField(
               controller: textController,
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Type or paste a quote...',
-                hintStyle: const TextStyle(fontSize: 13, color: AppColors.textGrey),
+                hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey),
                 filled: true,
                 fillColor: AppColors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.divider)),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.divider)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary)),
               ),
             ),
             const SizedBox(height: 14),
@@ -429,7 +429,7 @@ class _ReadingPageState extends State<ReadingPage> {
                   Navigator.pop(ctx);
                   _saveQuoteFromBlock(textController.text.trim());
                 },
-                icon: const Icon(Icons.format_quote_rounded, size: 18, color: Colors.white),
+                icon: Icon(Icons.format_quote_rounded, size: 18, color: Colors.white),
                 label: const Text('Save Quote', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -463,7 +463,7 @@ class _ReadingPageState extends State<ReadingPage> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('📭', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            const Text('Book not found', style: TextStyle(fontSize: 16, color: AppColors.textGrey)),
+            Text('Book not found', style: TextStyle(fontSize: 16, color: AppColors.textGrey)),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Go Back')),
           ]),
@@ -472,7 +472,7 @@ class _ReadingPageState extends State<ReadingPage> {
     }
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.ivory,
         body: Center(
           child: CircularProgressIndicator(
@@ -526,7 +526,7 @@ class _ReadingPageState extends State<ReadingPage> {
               // ── Content ────────────────────────────────────
               Expanded(
                 child: _chapters.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Content loading...',
                           style: TextStyle(color: AppColors.textGrey),
@@ -571,7 +571,7 @@ class _ReadingPageState extends State<ReadingPage> {
                                         const SizedBox(width: 4),
                                         Text(
                                           '$streak DAY${streak == 1 ? '' : ' '}STREAK',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w800,
                                             color: AppColors.primary,
@@ -587,7 +587,7 @@ class _ReadingPageState extends State<ReadingPage> {
                             const SizedBox(height: 24),
                             Text(
                               _book!.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textDark,
@@ -598,7 +598,7 @@ class _ReadingPageState extends State<ReadingPage> {
                             const SizedBox(height: 6),
                             Text(
                               'by ${_book!.author}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.textGrey,
                                 fontStyle: FontStyle.italic,
@@ -710,16 +710,16 @@ class _ReaderTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: AppColors.ivory, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2))]),
+      decoration: BoxDecoration(color: AppColors.ivory, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: Offset(0, 2))]),
       child: Column(children: [
         Row(children: [
-          GestureDetector(onTap: onBack, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 1))]), child: const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textDark))),
+          GestureDetector(onTap: onBack, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: Offset(0, 1))]), child: Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textDark))),
           const SizedBox(width: 12),
-          Expanded(child: Text(chapterTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark))),
+          Expanded(child: Text(chapterTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark))),
           GestureDetector(onTap: onBookmark, child: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, size: 22, color: isBookmarked ? AppColors.primary : AppColors.textGrey)),
         ]),
         const SizedBox(height: 8),
-        ClipRRect(borderRadius: BorderRadius.circular(3), child: LinearProgressIndicator(value: progress, minHeight: 3, backgroundColor: AppColors.divider.withOpacity(0.5), valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary))),
+        ClipRRect(borderRadius: BorderRadius.circular(3), child: LinearProgressIndicator(value: progress, minHeight: 3, backgroundColor: AppColors.divider.withOpacity(0.5), valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary))),
       ]),
     );
   }
@@ -738,7 +738,7 @@ class _DropCapParagraph extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(margin: const EdgeInsets.only(right: 8, top: 2), child: Text(firstChar, style: TextStyle(fontSize: fontSize * 3.5, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 0.85, fontFamily: 'Georgia'))),
+        Container(margin: EdgeInsets.only(right: 8, top: 2), child: Text(firstChar, style: TextStyle(fontSize: fontSize * 3.5, fontWeight: FontWeight.w800, color: AppColors.textDark, height: 0.85, fontFamily: 'Georgia'))),
         Expanded(child: Text(rest, style: TextStyle(fontSize: fontSize, color: AppColors.textDark, height: 1.75, fontFamily: 'Georgia', letterSpacing: 0.2))),
       ]),
     );
@@ -753,7 +753,7 @@ class _BodyParagraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(text, style: TextStyle(fontSize: fontSize, color: AppColors.textDark, height: 1.75, fontFamily: 'Georgia', letterSpacing: 0.2)));
+    return Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text(text, style: TextStyle(fontSize: fontSize, color: AppColors.textDark, height: 1.75, fontFamily: 'Georgia', letterSpacing: 0.2)));
   }
 }
 
@@ -772,7 +772,7 @@ class _BlockQuote extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
-        border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
+        border: Border(left: BorderSide(color: AppColors.primary, width: 3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -785,7 +785,7 @@ class _BlockQuote extends StatelessWidget {
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Icon(Icons.format_quote_rounded, color: AppColors.primary, size: 16),
+                child: Icon(Icons.format_quote_rounded, color: AppColors.primary, size: 16),
               ),
             ),
         ],
@@ -815,7 +815,7 @@ class _ReaderBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: AppColors.ivory, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2))]),
+      decoration: BoxDecoration(color: AppColors.ivory, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, -2))]),
       child: SafeArea(
         top: false,
         child: Row(
@@ -826,7 +826,7 @@ class _ReaderBottomBar extends StatelessWidget {
               children: [
                 Text(
                   '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
@@ -834,7 +834,7 @@ class _ReaderBottomBar extends StatelessWidget {
                 ),
                 Text(
                   'Page $currentPage/$totalPages',
-                  style: const TextStyle(fontSize: 10, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 10, color: AppColors.textGrey),
                 ),
               ],
             ),
@@ -862,7 +862,7 @@ class _BottomBtn extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 20, color: isActive ? AppColors.primary : AppColors.textGrey),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(fontSize: 9, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
       ]),
     );
   }

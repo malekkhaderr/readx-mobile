@@ -36,7 +36,7 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Create Request',
                   style: TextStyle(
                     fontSize: 20,
@@ -174,16 +174,16 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Publisher Requests',
           style: TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AppColors.background,
+  
         elevation: 0,
         centerTitle: false,
       ),
@@ -207,7 +207,7 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
           List<PublisherRequestModel> requests = bloc.cachedRequests ?? [];
 
           if (state is PublisherRequestsLoading && requests.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return Center(child: CircularProgressIndicator(color: AppColors.primary));
           }
           
           if (state is PublisherRequestsLoaded) {
@@ -220,13 +220,13 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.inbox_rounded, size: 64, color: AppColors.textLight),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'No requests found',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Submit a new request to get started.',
                     style: TextStyle(color: AppColors.textGrey),
                   ),
@@ -270,7 +270,7 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                               const SizedBox(width: 8),
                               Text(
                                 req.type,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   color: AppColors.textDark,
@@ -287,7 +287,7 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
                             'Message: "${req.requestMessage}"',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textGrey,
                               fontStyle: FontStyle.italic,
                               fontSize: 13,
@@ -307,12 +307,12 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.admin_panel_settings, size: 14, color: Colors.orange),
+                                Icon(Icons.admin_panel_settings, size: 14, color: Colors.orange),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     'Admin: ${req.adminNotes}',
-                                    style: const TextStyle(color: Colors.orange, fontSize: 12),
+                                    style: TextStyle(color: Colors.orange, fontSize: 12),
                                   ),
                                 ),
                               ],
@@ -325,11 +325,11 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                         children: [
                           Text(
                             'ID: #${req.id}',
-                            style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                            style: TextStyle(color: AppColors.textLight, fontSize: 12),
                           ),
                           Text(
                             _formatDate(req.createdAt),
-                            style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                            style: TextStyle(color: AppColors.textLight, fontSize: 12),
                           ),
                         ],
                       ),

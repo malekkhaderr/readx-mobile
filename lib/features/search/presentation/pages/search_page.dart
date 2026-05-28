@@ -67,7 +67,7 @@ class _SearchViewState extends State<_SearchView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: BlocBuilder<SearchBloc, SearchState>(
           builder: (context, state) {
@@ -105,7 +105,7 @@ class _SearchViewState extends State<_SearchView> {
 
   // ─────────────────────── HEADER ───────────────────────
   SliverToBoxAdapter _buildHeaderSection() {
-    return const SliverToBoxAdapter(
+    return SliverToBoxAdapter(
       child: Padding(
         padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
         child: Column(
@@ -155,15 +155,15 @@ class _SearchViewState extends State<_SearchView> {
             decoration: InputDecoration(
               hintText: 'Search books, authors, genres…',
               hintStyle:
-                  const TextStyle(color: AppColors.textGrey, fontSize: 14),
-              prefixIcon: const Icon(
+                  TextStyle(color: AppColors.textGrey, fontSize: 14),
+              prefixIcon: Icon(
                 Icons.search,
                 color: AppColors.textGrey,
                 size: 20,
               ),
               suffixIcon: hasText
                   ? IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
                         size: 18,
                         color: AppColors.textGrey,
@@ -244,7 +244,7 @@ class _SearchViewState extends State<_SearchView> {
                   ? 'Searching…'
                   : '${state.totalCount} '
                       '${state.totalCount == 1 ? 'result' : 'results'}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textGrey,
                 fontWeight: FontWeight.w500,
@@ -263,7 +263,7 @@ class _SearchViewState extends State<_SearchView> {
                 ),
                 child: Text(
                   state.selectedCategoryLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
@@ -291,7 +291,7 @@ class _SearchViewState extends State<_SearchView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.cloud_off_rounded,
                   size: 48,
                   color: AppColors.textGrey,
@@ -299,7 +299,7 @@ class _SearchViewState extends State<_SearchView> {
                 const SizedBox(height: 12),
                 Text(
                   state.errorMessage!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textGrey,
                     fontSize: 14,
                   ),
@@ -361,7 +361,7 @@ class _SearchViewState extends State<_SearchView> {
                 color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.info_outline_rounded,
@@ -406,7 +406,7 @@ class _SearchViewState extends State<_SearchView> {
         ),
       ),
       if (state.isLoadingMore)
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
@@ -415,7 +415,7 @@ class _SearchViewState extends State<_SearchView> {
           ),
         ),
       if (!state.hasMore && state.results.isNotEmpty)
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
@@ -441,12 +441,12 @@ class _SearchViewState extends State<_SearchView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(icon, style: const TextStyle(fontSize: 44)),
+              Text(icon, style: TextStyle(fontSize: 44)),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textGrey,
                 ),
@@ -475,7 +475,7 @@ class _SearchViewState extends State<_SearchView> {
         highlightColor: Colors.grey[100]!,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -550,8 +550,8 @@ class _SearchBookCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: AppColors.primary.withOpacity(0.07),
+              blurRadius: 14,
               offset: const Offset(0, 4),
             ),
           ],
@@ -591,7 +591,7 @@ class _SearchBookCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -604,7 +604,7 @@ class _SearchBookCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             color: AppColors.gold,
                             size: 11,
@@ -614,7 +614,7 @@ class _SearchBookCard extends StatelessWidget {
                             book.averageRating > 0
                                 ? book.averageRating.toStringAsFixed(1)
                                 : '—',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textDark,
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
@@ -702,7 +702,7 @@ class _SearchBookCard extends StatelessWidget {
                     book.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
@@ -713,7 +713,7 @@ class _SearchBookCard extends StatelessWidget {
                     book.authorName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textGrey,
                       fontWeight: FontWeight.w500,
@@ -737,7 +737,7 @@ class _SearchBookCard extends StatelessWidget {
 
   Widget _coverFallback() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.gradientStart, AppColors.gradientEnd],
           begin: Alignment.topLeft,

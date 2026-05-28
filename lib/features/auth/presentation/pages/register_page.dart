@@ -89,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -124,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return BlocProvider(
       create: (_) => sl<AuthBloc>(),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+  
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthError) {
@@ -152,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_ios,
                                 color: AppColors.primary,
                               ),
@@ -161,18 +161,18 @@ class _RegisterPageState extends State<RegisterPage> {
                             const Spacer(),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Container(
                           width: 80,
                           height: 80,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.primaryLight,
                             shape: BoxShape.circle,
                           ),
                           child: const AppOwl(size: 80),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
+                        SizedBox(height: 12),
+                        Text(
                           'Readora',
                           style: TextStyle(
                             color: AppColors.primary,
@@ -187,7 +187,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   // ── Form Card ────────────────────────────
                   Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(32),
@@ -201,7 +201,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // ── Title ──────────────────────────
-                          const Text(
+                          Text(
                             'Start Your Journey',
                             style: TextStyle(
                               fontSize: 28,
@@ -209,8 +209,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'Join Readora and start your reading adventure.',
                             style: TextStyle(
                               fontSize: 14,
@@ -220,7 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 32),
 
                           // ── First Name ─────────────────────
-                          const Text(
+                          Text(
                             'First Name',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -237,7 +237,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             },
                             validator: (v) =>
                                 _validateRequired(v, 'First name'),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Enter your first name',
                               prefixIcon: Icon(
                                 Icons.person,
@@ -248,7 +248,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Last Name ──────────────────────
-                          const Text(
+                          Text(
                             'Last Name',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -264,7 +264,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: (v) => _validateRequired(v, 'Last name'),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Enter your last name',
                               prefixIcon: Icon(
                                 Icons.person_outline,
@@ -275,7 +275,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Email ──────────────────────────
-                          const Text(
+                          Text(
                             'Email Address',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -292,7 +292,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (_submitted) _formKey.currentState!.validate();
                             },
                             validator: _validateEmail,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Enter your email',
                               prefixIcon: Icon(
                                 Icons.email,
@@ -303,7 +303,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Password ───────────────────────
-                          const Text(
+                          Text(
                             'Password',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -322,7 +322,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             validator: _validatePassword,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock,
                                 color: AppColors.textGrey,
                               ),
@@ -344,7 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Confirm Password ───────────────
-                          const Text(
+                          Text(
                             'Confirm Password',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -363,7 +363,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             validator: _validateConfirmPassword,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock_outline,
                                 color: AppColors.textGrey,
                               ),
@@ -386,7 +386,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Gender ─────────────────────────
-                          const Text(
+                          Text(
                             'Gender',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -455,7 +455,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             }).toList(),
                           ),
                           if (_submitted && _selectedGender == null)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 8, left: 4),
                               child: Text(
                                 'Please select your gender',
@@ -468,7 +468,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 20),
 
                           // ── Birth Date ─────────────────────
-                          const Text(
+                          Text(
                             'Birth Date',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -496,7 +496,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.calendar_today,
                                     color: AppColors.textGrey,
                                     size: 20,
@@ -518,7 +518,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           if (_submitted && _selectedBirthDate == null)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 8, left: 4),
                               child: Text(
                                 'Please select your birth date',
@@ -556,13 +556,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 'Already have an account? ',
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(
                                 onPressed: () => context.go('/login'),
-                                child: const Text(
+                                child: Text(
                                   'Log in here',
                                   style: TextStyle(
                                     color: AppColors.primary,

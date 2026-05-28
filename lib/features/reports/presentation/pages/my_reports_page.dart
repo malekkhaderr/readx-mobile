@@ -26,11 +26,11 @@ class _MyReportsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Support Tickets',
           style: TextStyle(
             color: AppColors.textDark,
@@ -38,12 +38,12 @@ class _MyReportsView extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.textDark),
+        iconTheme: IconThemeData(color: AppColors.textDark),
       ),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
           if (state is ReportsLoading || state is ReportsInitial) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           } else if (state is ReportsError) {
@@ -87,7 +87,7 @@ class _MyReportsView extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 _resolveTitle(report.reason, report.customReason),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textDark,
@@ -105,20 +105,20 @@ class _MyReportsView extends StatelessWidget {
                             report.description!,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textGrey,
                             ),
                           ),
                         const SizedBox(height: 12),
-                        const Divider(height: 1, color: AppColors.divider),
+                        Divider(height: 1, color: AppColors.divider),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Submitted: ${DateFormat('MMM dd, yyyy').format(report.submittedAt)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textGrey,
                               ),
@@ -126,7 +126,7 @@ class _MyReportsView extends StatelessWidget {
                             if (report.updatedAt != null)
                               Text(
                                 'Updated: ${DateFormat('MMM dd, yyyy').format(report.updatedAt!)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textGrey,
                                 ),
@@ -148,7 +148,7 @@ class _MyReportsView extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.support_agent_rounded,
+                                Icon(Icons.support_agent_rounded,
                                     size: 18, color: AppColors.primary),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -156,7 +156,7 @@ class _MyReportsView extends StatelessWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Support Response',
                                         style: TextStyle(
                                           fontSize: 12,
@@ -167,7 +167,7 @@ class _MyReportsView extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       Text(
                                         report.adminFeedback!,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           color: AppColors.textDark,
                                           height: 1.4,
@@ -276,11 +276,11 @@ class _MyReportsView extends StatelessWidget {
                 color: AppColors.primaryLight.withOpacity(0.4),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.support_agent_rounded,
+              child: Icon(Icons.support_agent_rounded,
                   size: 56, color: AppColors.primary),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'No Support Tickets',
               style: TextStyle(
                 fontSize: 18,
@@ -288,8 +288,8 @@ class _MyReportsView extends StatelessWidget {
                 color: AppColors.textDark,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               "You haven't submitted any support tickets yet.\nNeed help? We're here for you!",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: AppColors.textGrey),
@@ -297,7 +297,7 @@ class _MyReportsView extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _showSubmitReportSheet(context),
-              icon: const Icon(Icons.add, size: 20),
+              icon: Icon(Icons.add, size: 20),
               label: const Text('Submit a Ticket'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -320,13 +320,13 @@ class _MyReportsView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded,
+          Icon(Icons.error_outline_rounded,
               size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+            style: TextStyle(fontSize: 14, color: AppColors.textGrey),
           ),
           const SizedBox(height: 16),
           ElevatedButton(

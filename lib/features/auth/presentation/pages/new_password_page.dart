@@ -108,7 +108,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
         }
         if (state is PasswordResetSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Password reset successfully!'),
               backgroundColor: AppColors.successGreen,
             ),
@@ -119,7 +119,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: AppColors.background,
+    
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
@@ -133,7 +133,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_ios,
                                 color: AppColors.primary,
                               ),
@@ -157,7 +157,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height * 0.60,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(32),
@@ -171,7 +171,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // ── Title ────────────────────────
-                          const Text(
+                          Text(
                             'New Password',
                             style: TextStyle(
                               fontSize: 28,
@@ -179,8 +179,8 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'Create a strong password for your account.',
                             style: TextStyle(
                               fontSize: 14,
@@ -190,7 +190,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                           const SizedBox(height: 32),
 
                           // ── Password ─────────────────────
-                          const Text(
+                          Text(
                             'New Password',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -212,7 +212,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                             validator: _validatePassword,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock,
                                 color: AppColors.textGrey,
                               ),
@@ -234,7 +234,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                           const SizedBox(height: 20),
 
                           // ── Confirm Password ─────────────
-                          const Text(
+                          Text(
                             'Confirm Password',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -255,7 +255,7 @@ class _NewPasswordViewState extends State<_NewPasswordView> {
                             validator: _validateConfirm,
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock,
                                 color: AppColors.textGrey,
                               ),
