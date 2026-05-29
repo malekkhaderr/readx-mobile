@@ -608,12 +608,10 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   }
 
   // Highlight Action Handlers
-  // _handleQuote removed — the SAVE QUOTE selection button has been taken
-  // out of the reader toolbar. Quotes are added via the Quotes tab now.
+  void _saveSelectedQuote() => _handleQuote();
 
   /// Send the user to the Add Quote page with the highlighted text, current
-  /// book, and current page already filled in. The Add Quote page also
-  /// auto-fills the category from the chosen book. Content stays editable.
+  /// book, and current page already filled in.
   void _handleQuote() {
     if (_selectedText.isEmpty) return;
     final cleaned = _selectedText.trim();
@@ -879,12 +877,25 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
           // Streak card removed — progress is communicated via the
           // page-number bar at the bottom of the screen instead.
           // Main scrollable EpubView in SelectionArea
+          // ScrollConfiguration increases drag distance so long-press
+          // for text selection wins over scroll in the gesture arena
           Expanded(
-            child: SelectionArea(
+            child: ScrollConfiguration(
+              behavior: const _SelectionFriendlyScrollBehavior(),
+              child: SelectionArea(
+              selectionControls: MaterialTextSelectionControls(),
               contextMenuBuilder: (context, selectableRegionState) {
                 final List<ContextMenuButtonItem> buttonItems =
                     List.from(selectableRegionState.contextMenuButtonItems);
-                // Exclude Copy and Share context menu items to protect copyright
+                // Add "Save Quote" button to the context menu
+                buttonItems.insert(0, ContextMenuButtonItem(
+                  label: 'Save as Quote',
+                  onPressed: () {
+                    selectableRegionState.hideToolbar();
+                    _saveSelectedQuote();
+                  },
+                ));
+                // Remove copy/share to protect copyright
                 buttonItems.removeWhere((item) =>
                     item.type == ContextMenuButtonType.copy ||
                     item.type == ContextMenuButtonType.share);
@@ -987,8 +998,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                 ),
               ),
             ),
+            ),
           ),
-          
+
           // 3. Dynamic Slide-Open Interaction controls on text selection
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
@@ -1062,16 +1074,31 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       }
     }
 
+    // Extract plain text for SelectionArea compatibility
+    final plainText = _htmlToPlainText(htmlData);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (chapterIndex >= 0 && paragraphIndex == 0)
           builders.chapterDividerBuilder(chapters[chapterIndex]),
-        Html(
+        // Use Text.rich so SelectionArea can detect and select it
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Text(
+            plainText,
+            style: TextStyle(
+              fontFamily: _fontFamily,
+              fontSize: _fontSize,
+              height: 1.75,
+              color: _textColor,
+            ),
+          ),
+        ),
+        // Keep Html hidden for link handling only (invisible)
+        if (htmlData.contains('<a '))
+          SizedBox(height: 0, child: Opacity(opacity: 0, child: Html(
           data: htmlData,
-          // href can be null for in-document anchors (<a name="x">) or
-          // malformed links — guard so the reader doesn't crash if the
-          // user taps one of them.
           onLinkTap: (href, _, __) {
             if (href != null && href.isNotEmpty) {
               onExternalLinkPressed(href);
@@ -1200,11 +1227,16 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
               },
             ),
           ],
-        ),
+        ))),
       ],
     );
   }
 
+
+  String _htmlToPlainText(String html) {
+    final document = parse(html);
+    return document.body?.text ?? '';
+  }
 
   Widget _buildInteractionRow() {
     // Only QUOTE is exposed when the user highlights text. NOTE and DEFINE
@@ -1695,4 +1727,34 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       ),
     );
   }
+}
+
+/// Custom scroll behavior that increases the drag distance required to
+/// start scrolling. This gives the long-press gesture (for text selection)
+/// more time to win the gesture arena before scroll steals the touch.
+class _SelectionFriendlyScrollBehavior extends ScrollBehavior {
+  const _SelectionFriendlyScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(
+      parent: _HighTouchSlopScrollPhysics(),
+    );
+  }
+}
+
+class _HighTouchSlopScrollPhysics extends ScrollPhysics {
+  const _HighTouchSlopScrollPhysics({super.parent});
+
+  @override
+  _HighTouchSlopScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _HighTouchSlopScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  // Increase the minimum distance needed before a scroll gesture starts.
+  // Default is ~18px on most devices. We raise it to 36px so that a
+  // stationary long-press (for selection) isn't accidentally interpreted
+  // as a scroll.
+  @override
+  double get dragStartDistanceMotionThreshold => 36.0;
 }

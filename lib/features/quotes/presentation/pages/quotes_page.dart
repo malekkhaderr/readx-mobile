@@ -14,6 +14,7 @@ import '../bloc/quotes_bloc.dart';
 import '../bloc/quotes_event.dart';
 import '../bloc/quotes_state.dart';
 import 'add_quote_page.dart';
+import '../../../../core/data/splash_bookmarks.dart';
 
 /// Lightweight value classes used by the filter sheet's dropdowns.
 class _FilterBook {
@@ -1076,10 +1077,26 @@ class _PublicQuoteCard extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quote copied'), backgroundColor: AppColors.successGreen, behavior: SnackBarBehavior.floating, duration: Duration(seconds: 1)));
   }
 
+  // Parse content — split into passage + thoughts if format is "passage\n\n— thoughts"
+  String get _passage {
+    final content = quote.content;
+    final dividerIdx = content.indexOf('\n\n— ');
+    if (dividerIdx > 0) return content.substring(0, dividerIdx);
+    return content;
+  }
+
+  String? get _thoughts {
+    final content = quote.content;
+    final dividerIdx = content.indexOf('\n\n— ');
+    if (dividerIdx > 0 && dividerIdx + 4 < content.length) return content.substring(dividerIdx + 4);
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    var text = quote.content;
-    if (text.startsWith('"') && text.endsWith('"')) text = text.substring(1, text.length - 1);
+    var passage = _passage;
+    if (passage.startsWith('"') && passage.endsWith('"')) passage = passage.substring(1, passage.length - 1);
+    final thoughts = _thoughts;
 
     return Container(
       decoration: BoxDecoration(
@@ -1087,60 +1104,56 @@ class _PublicQuoteCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.divider.withOpacity(0.6), width: 0.8),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, 6)),
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 14, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── QUOTE BODY ──
         Padding(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Decorative left-border accent line with quote mark
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 3,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            // ── READER'S THOUGHTS (on top) ──
+            if (thoughts != null && thoughts.isNotEmpty) ...[
+              Text(
+                thoughts,
+                style: TextStyle(fontSize: 14, color: AppColors.textDark, height: 1.5, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(width: 14),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Icon(Icons.format_quote_rounded, size: 22, color: AppColors.primary.withOpacity(0.35)),
-                const SizedBox(height: 8),
-                Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontStyle: FontStyle.italic,
-                    color: AppColors.textDark,
-                    height: 1.65,
-                    fontFamily: 'Georgia',
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.1,
-                  ),
-                ),
-              ])),
-            ]),
-            const SizedBox(height: 14),
-            // Source info: book + page
+              const SizedBox(height: 12),
+            ],
+            // ── PASSAGE (highlighted box below) ──
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(width: 3, height: 40, decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
+                const SizedBox(width: 12),
+                Expanded(child: Text(
+                  passage,
+                  style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: AppColors.textDark.withOpacity(0.85), height: 1.6, fontFamily: 'Georgia'),
+                )),
+              ]),
+            ),
+            const SizedBox(height: 12),
+            // ── SOURCE — book + page + actions ──
             Row(children: [
-              _BookCoverThumb(bookId: quote.bookId, fallbackCategory: quote.categoryName ?? '', accent: [AppColors.primary, AppColors.primary]),
+              _BookCoverThumb(bookId: quote.bookId, fallbackCategory: quote.categoryName ?? '', accent: [AppColors.primary, AppColors.primary], width: 32, height: 44),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(quote.bookTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                const SizedBox(height: 2),
-                Text('Page ${quote.pageNumber}', style: TextStyle(fontSize: 10.5, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+                Text(quote.bookTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                Text('Page ${quote.pageNumber}', style: TextStyle(fontSize: 10, color: AppColors.textGrey)),
               ])),
-              // Copy
+              _SplashBookmarkBtn(text: quote.content, bookTitle: quote.bookTitle, readerName: quote.readerName),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: () => _copy(context),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(color: AppColors.cardBackground, shape: BoxShape.circle, border: Border.all(color: AppColors.divider, width: 0.5)),
-                  child: Icon(Icons.copy_rounded, size: 13, color: AppColors.textGrey),
+                  child: Icon(Icons.copy_rounded, size: 12, color: AppColors.textGrey),
                 ),
               ),
             ]),
@@ -1509,6 +1522,8 @@ class _MyQuoteCard extends StatelessWidget {
                       // Top-right action stack
                       Column(
                         children: [
+                          _SplashBookmarkBtn(text: quote.content, bookTitle: quote.bookTitle),
+                          const SizedBox(height: 4),
                           InkWell(
                             onTap: () => _copy(context),
                             borderRadius: BorderRadius.circular(8),
@@ -1848,6 +1863,60 @@ class _ErrorView extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Splash Bookmark Button ──────────────────────────────────
+class _SplashBookmarkBtn extends StatefulWidget {
+  final String text;
+  final String bookTitle;
+  final String readerName;
+  const _SplashBookmarkBtn({required this.text, required this.bookTitle, this.readerName = ''});
+
+  @override
+  State<_SplashBookmarkBtn> createState() => _SplashBookmarkBtnState();
+}
+
+class _SplashBookmarkBtnState extends State<_SplashBookmarkBtn> {
+  bool _isBookmarked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SplashBookmarks.isBookmarked(widget.text).then((v) {
+      if (mounted) setState(() => _isBookmarked = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await SplashBookmarks.toggle(widget.text, widget.bookTitle, readerName: widget.readerName);
+        if (mounted) setState(() => _isBookmarked = !_isBookmarked);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(_isBookmarked ? 'Added to daily quotes' : 'Removed from daily quotes'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+          ));
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: _isBookmarked ? AppColors.gold.withOpacity(0.12) : AppColors.cardBackground,
+          shape: BoxShape.circle,
+          border: Border.all(color: _isBookmarked ? AppColors.gold.withOpacity(0.4) : AppColors.divider, width: 0.5),
+        ),
+        child: Icon(
+          _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+          size: 14,
+          color: _isBookmarked ? AppColors.gold : AppColors.textGrey,
         ),
       ),
     );

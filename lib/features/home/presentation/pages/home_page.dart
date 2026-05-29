@@ -10,6 +10,7 @@ import '../../../../core/widgets/feather_widgets.dart';
 import '../../../../core/widgets/expressive_owl.dart';
 import '../../../../core/widgets/streak_fire.dart';
 import '../../../focus_timer/data/focus_timer_service.dart';
+import '../../../../core/widgets/daily_quote_splash.dart';
 import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
 import '../../../library/presentation/bloc/library_state.dart';
@@ -33,9 +34,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Make sure the LibraryBloc has loaded the user's books so we can
-    // mark "Owned" badges on the home page cards.
     sl<LibraryBloc>().add(const LoadLibraryEvent());
+    // Show daily quote splash on every app open
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) DailyQuoteSplash.show(context);
+    });
   }
 
   Future<void> _onRefresh() async {
@@ -1587,7 +1590,7 @@ class _FocusTimerCardState extends State<_FocusTimerCard> with SingleTickerProvi
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Focus Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark)),
           const SizedBox(height: 3),
-          Text('Start a session, read freely, earn tokens', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+          Text('Start a session, read freely, earn feathers', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
         ])),
         Container(
           padding: const EdgeInsets.all(8),
@@ -1654,6 +1657,7 @@ class _OwlTestWidget extends StatefulWidget {
 
 class _OwlTestWidgetState extends State<_OwlTestWidget> {
   int _i = 0;
+  int _quoteIndex = 0;
   final _moods = OwlMood.values;
   final _labels = ['Wave', 'Happy', 'Sad', 'Celebrate', 'Read', 'Sleep'];
 
@@ -1664,14 +1668,28 @@ class _OwlTestWidgetState extends State<_OwlTestWidget> {
       child: Column(children: [
         ExpressiveOwl(mood: _moods[_i], size: 100),
         const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () => setState(() => _i = (_i + 1) % _moods.length),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
-            child: Text('Tap → ${_labels[_i]}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          GestureDetector(
+            onTap: () => setState(() => _i = (_i + 1) % _moods.length),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+              child: Text('Owl: ${_labels[_i]}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              DailyQuoteSplash.showByIndex(context, _quoteIndex);
+              setState(() => _quoteIndex = (_quoteIndex + 1) % 50);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(color: AppColors.successGreen, borderRadius: BorderRadius.circular(16)),
+              child: Text('Quote #${_quoteIndex + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ]),
       ]),
     );
   }
