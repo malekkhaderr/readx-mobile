@@ -53,12 +53,18 @@ import '../../features/reports/domain/usecases/submit_report_usecase.dart';
 import '../../features/reports/presentation/bloc/reports_bloc.dart';
 import '../network/dio_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/sound_service.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
+
+  // ─── Sound Service ──────────────────────────────────────
+  final soundService = SoundService();
+  await soundService.init(sharedPreferences);
+  sl.registerSingleton<SoundService>(soundService);
 
   // ─── Core ───────────────────────────────────────────
   sl.registerLazySingleton<DioClient>(() => DioClient(prefs: sl()));

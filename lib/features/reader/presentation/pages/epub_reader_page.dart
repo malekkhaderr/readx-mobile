@@ -23,6 +23,7 @@ import 'package:readx/features/quotes/presentation/pages/add_quote_page.dart';
 import 'package:readx/core/data/book_repository.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
+import 'package:readx/core/services/sound_service.dart';
 class EpubReaderPage extends StatefulWidget {
   final int bookId;
   final String epubUrl;
@@ -76,6 +77,9 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
   double _fontSize = 18.0;
   String _fontFamily = 'serif';
   String _theme = 'ivory'; // ivory, ebony, sepia
+
+  // Page turn sound: track last paragraph index to detect real page changes
+  int _lastPageTurnParagraph = -1;
 
   bool _isTextSelected = false;
   String _selectedText = '';
@@ -214,6 +218,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     _saveProgress();
     _progressTimer?.cancel();
     _disableSecureWindow();
+    _epubController?.currentValueListenable.removeListener(_onEpubPageChanged);
     _epubController?.dispose();
     _progressNotifier.dispose();
     super.dispose();
@@ -432,11 +437,23 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
         );
         _isLoading = false;
       });
+      // Listen for page/chapter changes and play page-turn sound
+      _epubController!.currentValueListenable.addListener(_onEpubPageChanged);
       debugPrint('DEBUG READER: EpubController successfully initialized!');
     } catch (e) {
       debugPrint('DEBUG READER: ERROR parsing/opening EPUB file: $e');
       _showError('Opening Error', 'Failed to open local EPUB file: $e');
     }
+  }
+
+  void _onEpubPageChanged() {
+    final value = _epubController?.currentValueListenable.value;
+    if (value == null) return;
+    final paragraphIndex = value.position.index;
+    if (_lastPageTurnParagraph != -1 && paragraphIndex != _lastPageTurnParagraph) {
+      sl<SoundService>().pageTurn();
+    }
+    _lastPageTurnParagraph = paragraphIndex;
   }
 
   Future<void> _saveProgress() async {

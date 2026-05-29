@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../constants/app_theme.dart';
 import '../di/injection_container.dart';
+import '../services/sound_service.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_event.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
@@ -62,11 +63,11 @@ class MainShell extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _NavItem(icon: Icons.home_rounded, label: 'Home', isSelected: navigationShell.currentIndex == 0, onTap: () => navigationShell.goBranch(0)),
-                  _NavItem(icon: Icons.auto_stories_rounded, label: 'Library', isSelected: navigationShell.currentIndex == 1, onTap: () => navigationShell.goBranch(1)),
-                  _NavItem(icon: Icons.search_rounded, label: 'Search', isSelected: navigationShell.currentIndex == 2, onTap: () => navigationShell.goBranch(2)),
-                  _NavItem(icon: Icons.format_quote_rounded, label: 'Quotes', isSelected: navigationShell.currentIndex == 3, onTap: () => navigationShell.goBranch(3)),
-                  _NavItem(icon: Icons.person_rounded, label: 'Profile', isSelected: navigationShell.currentIndex == 4, onTap: () => navigationShell.goBranch(4)),
+                  _NavItem(icon: Icons.home_rounded, label: 'Home', isSelected: navigationShell.currentIndex == 0, onTap: () { sl<SoundService>().tabClick(); navigationShell.goBranch(0); }),
+                  _NavItem(icon: Icons.auto_stories_rounded, label: 'Library', isSelected: navigationShell.currentIndex == 1, onTap: () { sl<SoundService>().tabClick(); navigationShell.goBranch(1); }),
+                  _NavItem(icon: Icons.search_rounded, label: 'Search', isSelected: navigationShell.currentIndex == 2, onTap: () { sl<SoundService>().tabClick(); navigationShell.goBranch(2); }),
+                  _NavItem(icon: Icons.format_quote_rounded, label: 'Quotes', isSelected: navigationShell.currentIndex == 3, onTap: () { sl<SoundService>().tabClick(); navigationShell.goBranch(3); }),
+                  _NavItem(icon: Icons.person_rounded, label: 'Profile', isSelected: navigationShell.currentIndex == 4, onTap: () { sl<SoundService>().tabClick(); navigationShell.goBranch(4); }),
                 ],
               ),
             ),

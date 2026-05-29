@@ -66,6 +66,9 @@ dependencies:
   shimmer: ^3.0.0
   path_provider: ^2.1.5
 
+  # Sound Effects
+  audioplayers: ^6.1.0
+
 dependency_overrides:
   image: ^3.3.0
 
@@ -88,3 +91,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/audio/

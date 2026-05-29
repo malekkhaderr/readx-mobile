@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/sound_service.dart';
 import '../../data/focus_timer_service.dart';
 
 final _focusTips = [
@@ -26,6 +28,7 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
   final _timer = FocusTimerService();
   late AnimationController _pulseCtrl;
   late String _tip;
+  bool _didPlayComplete = false;
 
   @override
   void initState() {
@@ -42,7 +45,22 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
     super.dispose();
   }
 
-  void _onTick() { if (mounted) setState(() {}); }
+  void _onTick() {
+    if (!mounted) return;
+    // Detect session just completed
+    final wasRunning = _timer.isRunning;
+    setState(() {});
+    // Play completion sounds once when session finishes
+    if (!wasRunning && _timer.lastSessionSeconds > 0 && !_didPlayComplete) {
+      _didPlayComplete = true;
+      sl<SoundService>().sessionComplete();
+      if (_timer.tokensEarned > 0) {
+        Future.delayed(const Duration(milliseconds: 900), () {
+          sl<SoundService>().featherEarned();
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +234,14 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
       child: ElevatedButton.icon(
         onPressed: () {
           HapticFeedback.mediumImpact();
-          if (isRunning) { _timer.stop(); } else { _timer.start(); _tip = _focusTips[Random().nextInt(_focusTips.length)]; }
+          if (isRunning) {
+            _timer.stop();
+          } else {
+            _timer.start();
+            _tip = _focusTips[Random().nextInt(_focusTips.length)];
+            _didPlayComplete = false;
+            sl<SoundService>().timerStart();
+          }
           setState(() {});
         },
         style: ElevatedButton.styleFrom(backgroundColor: isRunning ? AppColors.error : AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),

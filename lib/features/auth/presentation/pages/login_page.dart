@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:readx/core/widgets/animated_owl.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/sound_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -87,6 +88,7 @@ class _LoginPageState extends State<LoginPage> {
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthError) {
+              sl<SoundService>().error();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
@@ -95,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
             if (state is AuthAuthenticated) {
+              sl<SoundService>().authSuccess();
               // Role-based redirect: Author (role 1) → Author Dashboard
               final role = state.user.role.toLowerCase();
               if (role == '1' || role == 'author' || role == 'publisher') {

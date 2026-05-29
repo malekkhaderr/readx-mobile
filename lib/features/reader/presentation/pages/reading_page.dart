@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:readx/core/di/injection_container.dart';
+import 'package:readx/core/services/sound_service.dart';
 import 'package:readx/features/home/data/datasources/books_service.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_event.dart';
@@ -62,6 +63,9 @@ class _ReadingPageState extends State<ReadingPage> {
     super.initState();
     _currentChapter = widget.chapterNumber;
     _book = BookRepository.getBookById(widget.bookId);
+
+    // Play book-open sound when entering the reader
+    sl<SoundService>().bookOpen();
 
     final bookIdInt = int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 1;
     _loadBookDetailsAndSession(bookIdInt);

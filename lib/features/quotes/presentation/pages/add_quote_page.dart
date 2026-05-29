@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/sound_service.dart';
 import '../bloc/quotes_bloc.dart';
 import '../bloc/quotes_event.dart';
 import '../bloc/quotes_state.dart';
@@ -217,6 +218,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
     setState(() => _submitting = false);
 
     if (succeeded) {
+      sl<SoundService>().quoteSaved();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
@@ -230,6 +232,7 @@ class _AddQuotePageState extends State<AddQuotePage> {
       );
       context.pop();
     } else {
+      sl<SoundService>().error();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not save the quote. Please try again.'),

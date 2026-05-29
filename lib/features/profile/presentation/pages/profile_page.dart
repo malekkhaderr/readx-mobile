@@ -18,6 +18,7 @@ import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/sound_service.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/theme_provider.dart';
 
@@ -335,6 +336,23 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       value: sl<ThemeProvider>().isDark,
                       activeColor: AppColors.primary,
                       onChanged: (_) => sl<ThemeProvider>().toggle(),
+                    ),
+                  ),
+                  Divider(height: 1, color: AppColors.divider, indent: 52),
+                  StatefulBuilder(
+                    builder: (ctx, setSoundState) => _SettingsTile(
+                      icon: sl<SoundService>().isEnabled
+                          ? Icons.volume_up_rounded
+                          : Icons.volume_off_rounded,
+                      label: 'Sound Effects',
+                      trailing: Switch.adaptive(
+                        value: sl<SoundService>().isEnabled,
+                        activeColor: AppColors.primary,
+                        onChanged: (v) async {
+                          await sl<SoundService>().setEnabled(v, sl());
+                          setSoundState(() {});
+                        },
+                      ),
                     ),
                   ),
                   Divider(height: 1, color: AppColors.divider, indent: 52),

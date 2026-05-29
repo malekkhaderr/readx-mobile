@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/sound_service.dart';
 import 'chat_theme.dart';
 
 class OwlChatFab extends StatefulWidget {
@@ -57,6 +59,7 @@ class _OwlChatFabState extends State<OwlChatFab>
           onTapUp: (_) {
             setState(() => _isPressed = false);
             HapticFeedback.mediumImpact();
+            sl<SoundService>().owlHoot();
             widget.onTap();
           },
           onTapCancel: () => setState(() => _isPressed = false),

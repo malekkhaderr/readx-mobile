@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/sound_service.dart';
 import '../../data/datasources/levels_remote_datasource.dart';
 import '../../data/models/reader_level_model.dart';
 
@@ -125,6 +126,10 @@ class _LevelsRoadmapPageState extends State<LevelsRoadmapPage> with TickerProvid
                               totalTokens: widget.totalTokens,
                               onTap: () {
                                 HapticFeedback.selectionClick();
+                                // Play level_up chime when expanding the current level card
+                                if (_levels[index].id == _currentLevel?.id && _expandedIndex != index) {
+                                  sl<SoundService>().levelUp();
+                                }
                                 setState(() => _expandedIndex = _expandedIndex == index ? null : index);
                               },
                             );
