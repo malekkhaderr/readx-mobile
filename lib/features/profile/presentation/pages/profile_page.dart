@@ -25,6 +25,7 @@ import '../../../author_dashboard/presentation/bloc/author_dashboard_bloc.dart';
 import '../../../author_dashboard/presentation/pages/author_book_detail_page.dart';
 import '../../../author_dashboard/data/models/author_book_model.dart';
 import '../../../levels/presentation/widgets/level_badge_card.dart';
+import '../../../../core/widgets/streak_fire.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -238,15 +239,16 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    // Stats row — glass cards
+                    // Stats row — glass cards + streak ring
                     if (dashboard != null)
                       Row(children: [
                         _GlassStat(value: '${dashboard.booksRead}', label: 'Books', icon: Icons.menu_book_rounded, color: AppColors.primary),
                         const SizedBox(width: 10),
-                        _GlassStat(value: '${dashboard.streakDays}', label: 'Streak', icon: Icons.local_fire_department_rounded, color: AppColors.warningOrange),
-                        const SizedBox(width: 10),
                         _GlassStat(value: dashboard.totalReadingTime, label: 'Read', icon: Icons.schedule_rounded, color: AppColors.successGreen),
                       ]),
+                    // Streak fire test — tap to cycle levels
+                    const SizedBox(height: 14),
+                    _StreakFireTest(),
                   ],
                 ),
               ),
@@ -1508,5 +1510,35 @@ class _EditProfilePageState extends State<_EditProfilePage> {
         ]),
       ),
     );
+  }
+}
+
+// ── TEST — Streak Fire cycle (remove after testing) ──────────
+class _StreakFireTest extends StatefulWidget {
+  @override
+  State<_StreakFireTest> createState() => _StreakFireTestState();
+}
+
+class _StreakFireTestState extends State<_StreakFireTest> {
+  int _index = 0;
+  final _levels = [0, 1, 3, 7, 10, 14, 20, -1];
+  final _labels = ['None', 'Spark(1)', 'Small(3)', 'Med(7)', 'Med(10)', 'Full(14)', 'Max(20)', 'Broken'];
+
+  @override
+  Widget build(BuildContext context) {
+    final days = _levels[_index];
+    final isBroken = days == -1;
+    return Column(children: [
+      StreakFire(streakDays: isBroken ? 5 : days, maxStreak: 14, isBroken: isBroken, size: 70),
+      const SizedBox(height: 8),
+      GestureDetector(
+        onTap: () => setState(() => _index = (_index + 1) % _levels.length),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(color: AppColors.warningOrange, borderRadius: BorderRadius.circular(14)),
+          child: Text('Fire: ${_labels[_index]}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        ),
+      ),
+    ]);
   }
 }

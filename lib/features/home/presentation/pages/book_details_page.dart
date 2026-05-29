@@ -7,6 +7,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/animations.dart';
 import '../../../../core/widgets/feather_widgets.dart';
+import '../../../../core/widgets/book_open_animation.dart';
 import '../../../../core/data/book_repository.dart';
 import '../../../library/data/datasources/library_remote_datasource.dart';
 import '../../../library/data/models/library_book_model.dart';
@@ -508,10 +509,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       return;
     }
 
-    context.push(
-      '/epub-reader?id=${book.id}&url=${Uri.encodeComponent(freshUrl)}'
-      '&title=${Uri.encodeComponent(book.title)}',
-    );
+    final coverUrl = book.coverImageUrl;
+    final epubRoute = '/epub-reader?id=${book.id}&url=${Uri.encodeComponent(freshUrl)}&title=${Uri.encodeComponent(book.title)}';
+
+    await BookOpenAnimation.open(context: context, coverImageUrl: coverUrl);
+    if (mounted) context.push(epubRoute);
   }
 
   Future<void> _purchaseBook({required bool withTokens}) async {

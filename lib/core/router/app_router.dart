@@ -25,6 +25,7 @@ import '../constants/app_theme.dart';
 import '../../features/ai_chat/presentation/pages/ai_chat_page.dart';
 import '../../features/levels/presentation/pages/levels_roadmap_page.dart';
 import '../../features/reader_profile/presentation/pages/reader_profile_page.dart';
+import '../../features/focus_timer/presentation/pages/focus_timer_page.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
@@ -450,6 +451,13 @@ class AppRouter {
           final userId = int.tryParse(state.pathParameters['userId'] ?? '') ?? 0;
           return _slideFadePage(key: state.pageKey, child: ReaderProfilePage(userId: userId));
         },
+      ),
+
+      // ── Focus Reading Timer ───────────────────────────
+      GoRoute(
+        path: '/focus-timer',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => _slideFadePage(key: state.pageKey, child: const FocusTimerPage()),
       ),
     ],
   );
