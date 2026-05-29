@@ -147,8 +147,8 @@ class _AddQuotePageState extends State<AddQuotePage> {
 
   Future<void> _submit() async {
     if (_submitting) return;
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_selectedBook == null) {
+    if (!_isFromReader && !(_formKey.currentState?.validate() ?? false)) return;
+    if (!_isFromReader && _selectedBook == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Pick a book first'),
@@ -160,16 +160,29 @@ class _AddQuotePageState extends State<AddQuotePage> {
     }
     setState(() => _submitting = true);
 
-    // Dispatch the AddQuoteEvent and wait for the bloc to emit either
-    //   1. MyQuotesLoaded with the new content present (success), or
-    //   2. MyQuotesError (server rejected the add).
     final bloc = context.read<QuotesBloc>();
-    final newContent = _contentController.text.trim();
+
+    // Build the content: if from reader, use the selected text + optional thoughts
+    String newContent;
+    if (_isFromReader) {
+      final thoughts = _contentController.text.trim();
+      newContent = thoughts.isNotEmpty
+          ? '${widget.args.content}\n\n— ${thoughts}'
+          : widget.args.content!;
+    } else {
+      newContent = _contentController.text.trim();
+    }
+
+    final pageNumber = _isFromReader
+        ? (widget.args.pageNumber ?? 1)
+        : int.parse(_pageController.text.trim());
+
+    final bookId = _isFromReader ? widget.args.bookId! : _selectedBook!.id;
 
     bloc.add(AddQuoteEvent(
-      bookId: _selectedBook!.id,
+      bookId: bookId,
       content: newContent,
-      pageNumber: int.parse(_pageController.text.trim()),
+      pageNumber: pageNumber,
       isPublic: _isPublic,
     ));
 
@@ -227,6 +240,8 @@ class _AddQuotePageState extends State<AddQuotePage> {
     }
   }
 
+  bool get _isFromReader => widget.args.content != null && widget.args.content!.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,21 +258,41 @@ class _AddQuotePageState extends State<AddQuotePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Book — locked if from reader
                     _label('Book', Icons.menu_book_rounded),
                     const SizedBox(height: 8),
-                    _bookSelector(),
-                    if (_selectedBook != null) ...[
-                      const SizedBox(height: 10),
-                      _categoryChip(_selectedBook!.categoryName),
+                    if (_isFromReader)
+                      _lockedBookDisplay()
+                    else ...[
+                      _bookSelector(),
+                      if (_selectedBook != null) ...[
+                        const SizedBox(height: 10),
+                        _categoryChip(_selectedBook!.categoryName),
+                      ],
                     ],
                     const SizedBox(height: 18),
-                    _label('Quote', Icons.format_quote_rounded),
-                    const SizedBox(height: 8),
-                    _contentField(),
+                    // Selected text — shown as read-only when from reader
+                    if (_isFromReader) ...[
+                      _label('Selected Text', Icons.format_quote_rounded),
+                      const SizedBox(height: 8),
+                      _lockedQuoteDisplay(),
+                      const SizedBox(height: 18),
+                      _label('Your Thoughts (optional)', Icons.edit_note_rounded),
+                      const SizedBox(height: 8),
+                      _thoughtsField(),
+                    ] else ...[
+                      _label('Quote', Icons.format_quote_rounded),
+                      const SizedBox(height: 8),
+                      _contentField(),
+                    ],
                     const SizedBox(height: 18),
+                    // Page — locked if from reader
                     _label('Page Number', Icons.bookmark_outline_rounded),
                     const SizedBox(height: 8),
-                    _pageField(),
+                    if (_isFromReader)
+                      _lockedPageDisplay()
+                    else
+                      _pageField(),
                     const SizedBox(height: 18),
                     _label('Visibility',
                         _isPublic ? Icons.public_rounded : Icons.lock_rounded),
@@ -271,6 +306,79 @@ class _AddQuotePageState extends State<AddQuotePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _lockedBookDisplay() {
+    final title = widget.args.bookTitle ?? 'Unknown Book';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(children: [
+        Icon(Icons.menu_book_rounded, size: 18, color: AppColors.primary),
+        const SizedBox(width: 10),
+        Expanded(child: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark))),
+        Icon(Icons.lock_rounded, size: 14, color: AppColors.textLight),
+      ]),
+    );
+  }
+
+  Widget _lockedQuoteDisplay() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.format_quote_rounded, size: 18, color: AppColors.primary.withOpacity(0.4)),
+        const SizedBox(height: 6),
+        Text(
+          widget.args.content ?? '',
+          style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: AppColors.textDark, height: 1.5, fontFamily: 'Georgia'),
+        ),
+      ]),
+    );
+  }
+
+  Widget _lockedPageDisplay() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(children: [
+        Icon(Icons.bookmark_rounded, size: 16, color: AppColors.textGrey),
+        const SizedBox(width: 10),
+        Text('Page ${widget.args.pageNumber ?? "?"}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+        const Spacer(),
+        Icon(Icons.lock_rounded, size: 14, color: AppColors.textLight),
+      ]),
+    );
+  }
+
+  Widget _thoughtsField() {
+    return TextFormField(
+      controller: _contentController,
+      maxLines: 3,
+      style: TextStyle(fontSize: 14, color: AppColors.textDark, height: 1.5),
+      decoration: InputDecoration(
+        hintText: 'Add your thoughts about this passage...',
+        hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey.withOpacity(0.7)),
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.divider.withOpacity(0.7))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
       ),
     );
   }

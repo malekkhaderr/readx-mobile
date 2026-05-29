@@ -1294,6 +1294,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
   int _gender = 0;
   late bool _isPrivate;
   late int _dailyGoal;
+  DateTime _birthDate = DateTime(2000, 1, 1);
   bool _saving = false;
   int? _selectedAvatarId;
   List<Map<String, dynamic>> _avatars = [];
@@ -1333,7 +1334,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
         'firstName': _firstNameCtrl.text.trim(),
         'lastName': _lastNameCtrl.text.trim(),
         'gender': _gender,
-        'birthDate': '2000-01-01T00:00:00Z',
+        'birthDate': _birthDate.toIso8601String(),
         'isPrivateProfile': _isPrivate,
         'avatarId': _selectedAvatarId,
         'dailyGoal': _dailyGoal,
@@ -1432,6 +1433,37 @@ class _EditProfilePageState extends State<_EditProfilePage> {
             const SizedBox(width: 12),
             Expanded(child: GestureDetector(onTap: () => setState(() => _gender = 1), child: Container(padding: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(color: _gender == 1 ? AppColors.primary.withOpacity(0.1) : AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _gender == 1 ? AppColors.primary : AppColors.divider)), child: Center(child: Text('Female', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _gender == 1 ? AppColors.primary : AppColors.textDark)))))),
           ]),
+          const SizedBox(height: 20),
+          // Birthday
+          Text('Birthday', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _birthDate,
+                firstDate: DateTime(1950),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) setState(() => _birthDate = picked);
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Row(children: [
+                Icon(Icons.cake_outlined, size: 18, color: AppColors.textGrey),
+                const SizedBox(width: 12),
+                Text('${_birthDate.day}/${_birthDate.month}/${_birthDate.year}', style: TextStyle(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.w600)),
+                const Spacer(),
+                Icon(Icons.edit_calendar_rounded, size: 16, color: AppColors.primary),
+              ]),
+            ),
+          ),
           const SizedBox(height: 20),
           Row(children: [
             Text('Daily Reading Goal', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
