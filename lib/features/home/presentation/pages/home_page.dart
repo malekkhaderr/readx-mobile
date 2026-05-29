@@ -8,6 +8,8 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/animations.dart';
 import '../../../../core/widgets/feather_widgets.dart';
 import '../../../../core/widgets/expressive_owl.dart';
+import '../../../../core/widgets/streak_fire.dart';
+import '../../../focus_timer/data/focus_timer_service.dart';
 import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
 import '../../../library/presentation/bloc/library_state.dart';
@@ -64,7 +66,7 @@ class _HomePageState extends State<HomePage> {
               child: _GradientHeader(profile: profile),
             ),
 
-            // ── Expressive Owl (TEST MODE — tap to cycle moods) ────
+            // ── Expressive Owl (TEST — tap to cycle) ────
             SliverToBoxAdapter(
               child: _OwlTestWidget(),
             ),
@@ -85,6 +87,11 @@ class _HomePageState extends State<HomePage> {
                   child: _StatsStrip(profile: profile!),
                 ),
               ),
+
+            // Focus Timer — live card
+            SliverToBoxAdapter(
+              child: _FocusTimerCard(),
+            ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
@@ -1515,36 +1522,154 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// ── TEST WIDGET — remove after testing ──────────────────────
+// ── Focus Timer Card (shows on home page) ────────────────────
+class _FocusTimerCard extends StatefulWidget {
+  @override
+  State<_FocusTimerCard> createState() => _FocusTimerCardState();
+}
+
+class _FocusTimerCardState extends State<_FocusTimerCard> with SingleTickerProviderStateMixin {
+  final _timer = FocusTimerService();
+  late AnimationController _glowCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer.addListener(_onTick);
+    _glowCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _timer.removeListener(_onTick);
+    _glowCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onTick() { if (mounted) setState(() {}); }
+
+  @override
+  Widget build(BuildContext context) {
+    final isRunning = _timer.isRunning;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: GestureDetector(
+        onTap: () => context.push('/focus-timer'),
+        child: isRunning ? _buildRunningCard() : _buildIdleCard(),
+      ),
+    );
+  }
+
+  Widget _buildIdleCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.divider, width: 0.8),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Row(children: [
+        // Owl reading icon
+        Container(
+          width: 50, height: 50,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [AppColors.primary.withOpacity(0.12), AppColors.primary.withOpacity(0.05)]),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('assets/images/owl_reading.png', fit: BoxFit.contain),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Focus Mode', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+          const SizedBox(height: 3),
+          Text('Start a session, read freely, earn tokens', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+        ])),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(Icons.play_arrow_rounded, size: 18, color: AppColors.primary),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildRunningCard() {
+    return AnimatedBuilder(
+      animation: _glowCtrl,
+      builder: (_, child) => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withOpacity(0.2 + _glowCtrl.value * 0.1), blurRadius: 16 + _glowCtrl.value * 6, spreadRadius: _glowCtrl.value * 2, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: child,
+      ),
+      child: Row(children: [
+        // Live timer display
+        Container(
+          width: 52, height: 52,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
+          ),
+          child: Center(
+            child: Text(_timer.formattedTime, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white, fontFamily: 'monospace')),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Container(width: 7, height: 7, decoration: BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.greenAccent.withOpacity(0.5), blurRadius: 4)])),
+            const SizedBox(width: 6),
+            Text('Focus Active', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+          ]),
+          const SizedBox(height: 4),
+          Text('Reading session in progress • Tap to view', style: TextStyle(fontSize: 10.5, color: Colors.white.withOpacity(0.75), fontWeight: FontWeight.w500)),
+        ])),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+          child: Icon(Icons.open_in_new_rounded, size: 16, color: Colors.white.withOpacity(0.9)),
+        ),
+      ]),
+    );
+  }
+}
+
+
+// ── TEST — Owl mood cycle (remove after testing) ────────────
 class _OwlTestWidget extends StatefulWidget {
   @override
   State<_OwlTestWidget> createState() => _OwlTestWidgetState();
 }
 
 class _OwlTestWidgetState extends State<_OwlTestWidget> {
-  int _moodIndex = 0;
+  int _i = 0;
   final _moods = OwlMood.values;
-  final _labels = ['Waving', 'Happy', 'Sad', 'Celebrating', 'Reading', 'Sleeping'];
+  final _labels = ['Wave', 'Happy', 'Sad', 'Celebrate', 'Read', 'Sleep'];
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Column(children: [
-        ExpressiveOwl(mood: _moods[_moodIndex], size: 120),
-        const SizedBox(height: 10),
+        ExpressiveOwl(mood: _moods[_i], size: 100),
+        const SizedBox(height: 8),
         GestureDetector(
-          onTap: () => setState(() => _moodIndex = (_moodIndex + 1) % _moods.length),
+          onTap: () => setState(() => _i = (_i + 1) % _moods.length),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Tap → ${_labels[_moodIndex]}  (${_moodIndex + 1}/${_moods.length})',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+            child: Text('Tap → ${_labels[_i]}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
           ),
         ),
       ]),
