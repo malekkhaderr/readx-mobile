@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,9 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// All sound playback goes through this singleton so:
 ///   1. There is a single on/off toggle persisted in SharedPreferences.
-///   2. Sounds are played with individual [AudioPlayer] instances so
-///      overlapping clips (e.g. tab clicks) never block each other.
-///   3. Each player is disposed automatically on completion.
+///   2. Sounds are pre-loaded into memory at init for instant playback.
+///   3. Each play call creates a disposable AudioPlayer so overlapping
+///      clips (e.g. rapid tab clicks) never block each other.
 ///
 /// Usage:
 ///   sl<SoundService>().levelUp();
@@ -21,12 +22,46 @@ class SoundService {
   static const _kPrefKey = 'sound_effects_enabled';
 
   bool _enabled = true;
-
   bool get isEnabled => _enabled;
 
+  /// Pre-loaded audio bytes keyed by filename. Loading from rootBundle
+  /// at init time guarantees the bytes are available instantly when
+  /// play() is called, bypassing platform-specific AssetSource issues.
+  final Map<String, Uint8List> _cache = {};
+
+  /// All audio asset filenames the app uses.
+  static const _assets = [
+    'tab-click.mp3',
+    'level-up.mp3',
+    'session-complete.mp3',
+    'feather-earned.mp3',
+    'quote-saved.mp3',
+    'page-turn.mp3',
+    'book-open.mp3',
+    'timer-start.mp3',
+    'auth-success.mp3',
+    'error.mp3',
+    'notification.mp3',
+    'purchase.mp3',
+    'owl-hoot.mp3',
+  ];
+
   /// Call once during app startup (after [SharedPreferences] is ready).
+  /// Pre-loads all audio files from the asset bundle into memory.
   Future<void> init(SharedPreferences prefs) async {
     _enabled = prefs.getBool(_kPrefKey) ?? true;
+
+    // Pre-load all audio files into byte buffers. If any file is missing
+    // or corrupt we just skip it — the app still works, just silent.
+    for (final name in _assets) {
+      try {
+        final data = await rootBundle.load('assets/audio/$name');
+        _cache[name] = data.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('SoundService: could not pre-load $name — $e');
+      }
+    }
+    debugPrint('SoundService: pre-loaded ${_cache.length}/${_assets.length} audio files');
   }
 
   /// Toggle sound on/off and persist the preference.
@@ -37,27 +72,22 @@ class SoundService {
 
   // ─── Core player ────────────────────────────────────────────
 
-  /// Plays an asset from `assets/audio/<assetName>`.
+  /// Plays a pre-loaded audio clip by filename.
   /// Returns immediately; the player is disposed on completion.
   Future<void> play(String assetName, {double volume = 1.0}) async {
     if (!_enabled) return;
+
+    final bytes = _cache[assetName];
+    if (bytes == null) {
+      debugPrint('SoundService: $assetName not in cache, skipping');
+      return;
+    }
+
     try {
       final player = AudioPlayer();
-      // Set the audio context for short UI sounds — low latency, no
-      // focus/ducking, so it doesn't interfere with music apps.
-      await player.setAudioContext(AudioContext(
-        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
-        android: AudioContextAndroid(
-          isSpeakerphoneOn: false,
-          audioMode: AndroidAudioMode.normal,
-          usageType: AndroidUsageType.assistanceSonification,
-          contentType: AndroidContentType.sonification,
-          audioFocus: AndroidAudioFocus.none,
-        ),
-      ));
       await player.setVolume(volume);
       await player.setPlayerMode(PlayerMode.lowLatency);
-      await player.play(AssetSource('audio/$assetName'));
+      await player.play(BytesSource(bytes));
       player.onPlayerComplete.listen((_) => player.dispose());
     } catch (e) {
       debugPrint('SoundService: failed to play $assetName — $e');
@@ -66,42 +96,17 @@ class SoundService {
 
   // ─── Named convenience methods ───────────────────────────────
 
-  /// 🏆 Triumphant chime when the user reaches a new reader level.
   Future<void> levelUp() => play('level-up.mp3');
-
-  /// 🔔 Soft bell when a focus reading session completes.
   Future<void> sessionComplete() => play('session-complete.mp3');
-
-  /// ✨ Coin sparkle when feather tokens are awarded.
   Future<void> featherEarned() => play('feather-earned.mp3', volume: 0.85);
-
-  /// 📝 Satisfying plop when a quote is saved.
   Future<void> quoteSaved() => play('quote-saved.mp3');
-
-  /// 📖 Soft paper rustle on every page turn in the EPUB reader.
   Future<void> pageTurn() => play('page-turn.mp3', volume: 0.3);
-
-  /// 📚 Gentle creak when opening a book to read.
   Future<void> bookOpen() => play('book-open.mp3', volume: 0.6);
-
-  /// ▶ Soft click/inhale when a focus timer session starts.
   Future<void> timerStart() => play('timer-start.mp3', volume: 0.65);
-
-  /// 🦉 Gentle owl hoot when the AI chat FAB is tapped.
-  Future<void> owlHoot() => tabClick();
-
-  /// 🔲 Very subtle click on bottom nav tab switch.
+  Future<void> owlHoot() => play('owl-hoot.mp3', volume: 0.4);
   Future<void> tabClick() => play('tab-click.mp3', volume: 0.28);
-
-  /// 🔓 Happy chime on successful login or register.
   Future<void> authSuccess() => play('auth-success.mp3', volume: 0.7);
-
-  /// ❌ Error or invalid action buzz.
   Future<void> error() => play('error.mp3', volume: 0.5);
-
-  /// 💬 New incoming notification ping.
   Future<void> notification() => play('notification.mp3');
-
-  /// 🛒 Reward store purchase sound.
   Future<void> purchase() => play('purchase.mp3');
 }
