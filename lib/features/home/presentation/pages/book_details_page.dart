@@ -521,6 +521,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       return;
     }
 
+    // Update library status to "Currently Reading" so the library tab
+    // and home page reflect that the user has started this book.
+    try {
+      sl<LibraryBloc>().add(UpdateBookStatusEvent(
+        bookId: book.id,
+        newStatus: ReadingStatus.currentlyReading,
+      ));
+    } catch (_) {}
+
     final coverUrl = book.coverImageUrl;
     final epubRoute = '/epub-reader?id=${book.id}&url=${Uri.encodeComponent(freshUrl)}&title=${Uri.encodeComponent(book.title)}';
 
