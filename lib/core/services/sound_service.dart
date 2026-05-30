@@ -30,20 +30,21 @@ class SoundService {
   final Map<String, Uint8List> _cache = {};
 
   /// All audio asset filenames the app uses.
+  /// Most are WAV (PCM 16-bit); quote-saved is actual MP3.
   static const _assets = [
-    'tab-click.mp3',
-    'level-up.mp3',
-    'session-complete.mp3',
-    'feather-earned.mp3',
+    'tab-click.wav',
+    'level-up.wav',
+    'session-complete.wav',
+    'feather-earned.wav',
     'quote-saved.mp3',
-    'page-turn.mp3',
-    'book-open.mp3',
-    'timer-start.mp3',
-    'auth-success.mp3',
-    'error.mp3',
-    'notification.mp3',
-    'purchase.mp3',
-    'owl-hoot.mp3',
+    'page-turn.wav',
+    'book-open.wav',
+    'timer-start.wav',
+    'auth-success.wav',
+    'error.wav',
+    'notification.wav',
+    'purchase.wav',
+    'owl-hoot.wav',
   ];
 
   /// Call once during app startup (after [SharedPreferences] is ready).
@@ -95,17 +96,17 @@ class SoundService {
 
   // ─── Named convenience methods ───────────────────────────────
 
-  Future<void> levelUp() => play('level-up.mp3');
-  Future<void> sessionComplete() => play('session-complete.mp3');
-  Future<void> featherEarned() => play('feather-earned.mp3', volume: 0.85);
+  Future<void> levelUp() => play('level-up.wav');
+  Future<void> sessionComplete() => play('session-complete.wav');
+  Future<void> featherEarned() => play('feather-earned.wav', volume: 0.85);
   Future<void> quoteSaved() => play('quote-saved.mp3');
-  Future<void> pageTurn() => play('page-turn.mp3', volume: 0.3);
-  Future<void> bookOpen() => play('book-open.mp3', volume: 0.6);
-  Future<void> timerStart() => play('timer-start.mp3', volume: 0.65);
-  Future<void> owlHoot() => play('owl-hoot.mp3', volume: 0.4);
-  Future<void> tabClick() => play('tab-click.mp3', volume: 0.28);
-  Future<void> authSuccess() => play('auth-success.mp3', volume: 0.7);
-  Future<void> error() => play('error.mp3', volume: 0.5);
-  Future<void> notification() => play('notification.mp3');
-  Future<void> purchase() => play('purchase.mp3');
+  Future<void> pageTurn() => play('page-turn.wav', volume: 0.3);
+  Future<void> bookOpen() => play('book-open.wav', volume: 0.6);
+  Future<void> timerStart() => play('timer-start.wav', volume: 0.65);
+  Future<void> owlHoot() => play('owl-hoot.wav', volume: 0.4);
+  Future<void> tabClick() => play('tab-click.wav', volume: 0.28);
+  Future<void> authSuccess() => play('auth-success.wav', volume: 0.7);
+  Future<void> error() => play('error.wav', volume: 0.5);
+  Future<void> notification() => play('notification.wav');
+  Future<void> purchase() => play('purchase.wav');
 }
