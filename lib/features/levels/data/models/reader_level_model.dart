@@ -1,12 +1,19 @@
 class ReaderLevel {
-  static const _backendBaseUrl =
-      'https://graduation-project-backend-j3bw.onrender.com';
+  /// Maps level number to a local asset path so icons load instantly
+  /// without depending on the backend serving static files.
+  static const _localIcons = {
+    1: 'assets/images/owls-levels/TheNovice.png',
+    2: 'assets/images/owls-levels/TheVoyager.png',
+    3: 'assets/images/owls-levels/TheScholar.png',
+    4: 'assets/images/owls-levels/TheOverseer.png',
+    5: 'assets/images/owls-levels/TheOracle.png',
+  };
 
   final int id;
   final int levelNumber;
   final String name;
   final String? description;
-  final String? _rawIconUrl;
+  final String? iconUrl;
   final int minTokens;
   final int? maxTokens;
   final bool isDefault;
@@ -16,21 +23,14 @@ class ReaderLevel {
     required this.levelNumber,
     required this.name,
     this.description,
-    String? iconUrl,
+    this.iconUrl,
     required this.minTokens,
     this.maxTokens,
     required this.isDefault,
-  }) : _rawIconUrl = iconUrl;
+  });
 
-  /// Resolves the icon URL to a full network URL. The backend returns
-  /// relative paths like `/owls/level1-glaucus.png` — CachedNetworkImage
-  /// needs a complete `https://...` URL to fetch them.
-  String? get iconUrl {
-    final raw = _rawIconUrl;
-    if (raw == null || raw.isEmpty) return null;
-    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    return '$_backendBaseUrl$raw';
-  }
+  /// Returns the local asset path for this level's icon.
+  String? get localIconAsset => _localIcons[levelNumber];
 
   factory ReaderLevel.fromJson(Map<String, dynamic> json) {
     return ReaderLevel(

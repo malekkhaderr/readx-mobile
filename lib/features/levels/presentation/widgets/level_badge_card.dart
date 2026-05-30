@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../data/datasources/levels_remote_datasource.dart';
@@ -107,14 +106,13 @@ class _LevelBadgeCardState extends State<LevelBadgeCard> {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: Colors.white.withOpacity(0.25)),
               ),
-              child: _loaded && level?.iconUrl != null && level!.iconUrl!.isNotEmpty
+              child: _loaded && level?.localIconAsset != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: CachedNetworkImage(
-                        imageUrl: level.iconUrl!,
+                      child: Image.asset(
+                        level!.localIconAsset!,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => _iconFallback(),
-                        errorWidget: (_, __, ___) => _iconFallback(),
+                        errorBuilder: (_, __, ___) => _iconFallback(),
                       ),
                     )
                   : _iconFallback(),
