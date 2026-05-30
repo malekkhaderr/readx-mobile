@@ -88,8 +88,16 @@ class QuotesRemoteDataSource {
   }
 
   /// Delete a quote — `DELETE /api/quotes/{id}`.
+  /// Requires [Authorize(Roles = "Reader")] on the backend.
   Future<void> deleteQuote(int id) async {
-    await dioClient.dio.delete('/quotes/$id');
+    final response = await dioClient.dio.delete('/quotes/$id');
+    final code = response.statusCode ?? 0;
+    if (code != 204 && code != 200) {
+      final msg = response.data is Map
+          ? (response.data['message'] ?? 'Failed to delete quote').toString()
+          : 'Failed to delete quote';
+      throw Exception(msg);
+    }
   }
 
   /// Toggle a vote — `POST /api/quotes/{id}/vote`.

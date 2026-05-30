@@ -234,9 +234,7 @@ class _ExpressiveOwlState extends State<ExpressiveOwl> with TickerProviderStateM
       ];
     }
     if (widget.mood == OwlMood.reading) {
-      return [
-        _FloatingEmoji(emoji: '📖', controller: _bounceController, offsetX: 25, offsetY: -5, size: 13),
-      ];
+      return [];
     }
     if (widget.mood == OwlMood.happy) {
       return [
@@ -300,9 +298,10 @@ class _ExpressiveOwlState extends State<ExpressiveOwl> with TickerProviderStateM
 
   String _owlAsset() {
     switch (widget.mood) {
-      case OwlMood.happy:
       case OwlMood.waving:
         return 'assets/images/owl_happy.png';
+      case OwlMood.happy:
+        return 'assets/images/owl.png';
       case OwlMood.celebrating:
         return 'assets/images/owl_celebrating.png';
       case OwlMood.sad:

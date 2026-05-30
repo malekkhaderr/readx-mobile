@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/datasources/quotes_remote_datasource.dart';
 import '../../data/models/quote_model.dart';
@@ -264,8 +265,13 @@ class QuotesBloc extends Bloc<QuotesEvent, QuotesState> {
     }
     try {
       await dataSource.deleteQuote(event.quoteId);
-    } catch (_) {
-      // re-fetch on failure to recover state
+      // Success — re-fetch to sync with server (the optimistic removal
+      // above already shows the right UI, this just confirms it).
+      await _fetchMy(emit);
+    } catch (e) {
+      // Delete failed (auth, ownership, network) — re-fetch to restore
+      // the quote that was optimistically removed.
+      debugPrint('Delete quote ${event.quoteId} failed: $e');
       await _fetchMy(emit);
       await _fetchFeed(emit);
     }

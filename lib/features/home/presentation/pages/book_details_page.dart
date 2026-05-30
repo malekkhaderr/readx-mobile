@@ -262,6 +262,18 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   }
 
   /// Re-fetches both the book detail (for the new aggregate `averageRating`)
+  /// Pull-to-refresh: reloads everything (book detail, ratings, comments,
+  /// user's own rating) in parallel.
+  Future<void> _refreshAll() async {
+    final book = _book;
+    if (book == null) return;
+    await Future.wait([
+      _refreshBookAndRatings(),
+      _loadComments(),
+      _loadMyRating(),
+    ]);
+  }
+
   /// and the paged review list. Done in parallel so the user isn't waiting
   /// twice.
   Future<void> _refreshBookAndRatings() async {
@@ -904,12 +916,17 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               children: [
                 _buildTopBar(transparent: true),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
+                  child: RefreshIndicator(
+                    onRefresh: _refreshAll,
+                    color: AppColors.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      padding: const EdgeInsets.only(bottom: 120),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
                         const SizedBox(height: 16),
                         // Hero cover (Hero animation handled inside)
                         _buildHeroCover(book),
@@ -948,6 +965,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                         const SizedBox(height: 32),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],

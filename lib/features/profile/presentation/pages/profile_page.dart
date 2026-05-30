@@ -1314,7 +1314,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
             )
           else
             SizedBox(
-              height: 90,
+              height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _avatars.length,
@@ -1322,30 +1322,29 @@ class _EditProfilePageState extends State<_EditProfilePage> {
                   final avatar = _avatars[i];
                   final id = avatar['id'] as int;
                   final imageUrl = avatar['imageUrl'] as String? ?? '';
-                  final name = avatar['name'] as String? ?? '';
                   final isSelected = _selectedAvatarId == id;
                   return GestureDetector(
                     onTap: () => setState(() => _selectedAvatarId = isSelected ? null : id),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      width: 72,
-                      margin: const EdgeInsets.only(right: 12),
+                      width: 64,
+                      height: 64,
+                      margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: isSelected ? AppColors.primary : AppColors.divider, width: isSelected ? 2.5 : 1),
-                        boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10)] : null,
-                      ),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: imageUrl.startsWith('http')
-                              ? Image.network(imageUrl, width: 44, height: 44, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.face_rounded, size: 36, color: AppColors.primary))
-                              : Icon(Icons.face_rounded, size: 36, color: AppColors.primary),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.divider,
+                          width: isSelected ? 3 : 1,
                         ),
-                        const SizedBox(height: 4),
-                        Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: isSelected ? AppColors.primary : AppColors.textGrey, fontWeight: FontWeight.w600)),
-                      ]),
+                        boxShadow: isSelected ? [
+                          BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 12, spreadRadius: 1),
+                        ] : null,
+                      ),
+                      child: ClipOval(
+                        child: imageUrl.startsWith('http')
+                            ? Image.network(imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.primaryLight, child: Icon(Icons.person_rounded, size: 28, color: AppColors.primary)))
+                            : Container(color: AppColors.primaryLight, child: Icon(Icons.person_rounded, size: 28, color: AppColors.primary)),
+                      ),
                     ),
                   );
                 },
