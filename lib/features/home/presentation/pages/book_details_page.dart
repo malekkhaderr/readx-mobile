@@ -2209,6 +2209,22 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                   ],
                 ),
               ),
+              // Edit + Delete buttons for the user's own review
+              if (isMine) ...[
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _openRateSheet,
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _confirmDeleteRating(),
+                ),
+              ],
             ],
           ),
           if (body.isNotEmpty) ...[
@@ -2222,6 +2238,45 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteRating() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Delete your review?', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textDark)),
+        content: Text('This will remove your star rating and review text permanently.', style: TextStyle(color: AppColors.textGrey)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await sl<BooksService>().deleteMyRating(_book!.id);
+                setState(() => _myRating = null);
+                await _refreshBookAndRatings();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Review deleted'), backgroundColor: AppColors.textGrey, behavior: SnackBarBehavior.floating),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete review'), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
