@@ -431,10 +431,15 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
     if (!mounted) return;
     debugPrint('DEBUG READER: Initializing EpubController...');
     try {
+      // We wrap the raw EpubDocument.openFile future so we can patch books
+      // whose TOC is incomplete (only 1-2 entries while the spine has dozens
+      // of content files). Without this fix, epub_view only renders chapters
+      // listed in the navigation — the rest of the book would be invisible.
+      final rawFuture = EpubDocument.openFile(File(_localFile!.path));
+      final patchedFuture = rawFuture.then((book) => _patchChaptersFromSpine(book));
+
       setState(() {
-        _epubController = EpubController(
-          document: EpubDocument.openFile(File(_localFile!.path)),
-        );
+        _epubController = EpubController(document: patchedFuture);
         _isLoading = false;
       });
       // Listen for page/chapter changes and play page-turn sound
@@ -444,6 +449,66 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       debugPrint('DEBUG READER: ERROR parsing/opening EPUB file: $e');
       _showError('Opening Error', 'Failed to open local EPUB file: $e');
     }
+  }
+
+  /// If the EPUB's navigation (TOC) lists fewer chapters than the spine
+  /// actually contains, the epub_view library will only render the TOC
+  /// entries and skip the rest. This happens with scanned/OCR'd books
+  /// that have a minimal or broken navigation document.
+  ///
+  /// Fix: synthesize EpubChapter objects from the Content.Html map (which
+  /// mirrors the spine) and inject them into the book's Chapters list so
+  /// epub_view renders everything.
+  EpubBook _patchChaptersFromSpine(EpubBook book) {
+    final chapters = book.Chapters;
+    final htmlContent = book.Content?.Html;
+    if (htmlContent == null || htmlContent.isEmpty) return book;
+
+    // Count how many unique content files the TOC already covers.
+    final tocFiles = <String>{};
+    if (chapters != null) {
+      for (final ch in chapters) {
+        if (ch.ContentFileName != null) tocFiles.add(ch.ContentFileName!);
+        if (ch.SubChapters != null) {
+          for (final sub in ch.SubChapters!) {
+            if (sub.ContentFileName != null) tocFiles.add(sub.ContentFileName!);
+          }
+        }
+      }
+    }
+
+    final spineFiles = htmlContent.keys.toList();
+    final missingFromToc = spineFiles.where((f) => !tocFiles.contains(f)).toList();
+
+    if (missingFromToc.isEmpty) {
+      debugPrint('DEBUG READER: TOC covers all ${spineFiles.length} spine files — no patch needed.');
+      return book;
+    }
+
+    debugPrint(
+        'DEBUG READER: TOC only covers ${tocFiles.length}/${spineFiles.length} spine files. '
+        'Injecting ${missingFromToc.length} synthetic chapters.');
+
+    // Build synthetic chapters for every missing spine file.
+    final syntheticChapters = <EpubChapter>[];
+    for (int i = 0; i < missingFromToc.length; i++) {
+      final fileName = missingFromToc[i];
+      final ch = EpubChapter();
+      ch.Title = 'Page ${i + 1}';
+      ch.ContentFileName = fileName;
+      ch.HtmlContent = htmlContent[fileName]?.Content ?? '';
+      ch.SubChapters = [];
+      syntheticChapters.add(ch);
+    }
+
+    // Append after existing chapters (or replace if TOC was empty).
+    final merged = <EpubChapter>[
+      if (chapters != null) ...chapters,
+      ...syntheticChapters,
+    ];
+    book.Chapters = merged;
+
+    return book;
   }
 
   void _onEpubPageChanged() {
