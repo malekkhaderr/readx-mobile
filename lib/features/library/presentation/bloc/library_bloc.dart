@@ -54,13 +54,11 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     try {
       await dataSource.updateStatus(event.bookId, event.newStatus);
       await _fetchLibrary(emit);
-      // When a book is marked as "Read", refresh the profile so the
-      // completed books section on the profile page updates immediately.
-      if (event.newStatus == ReadingStatus.read) {
-        try {
-          sl<ProfileBloc>().add(const RefreshProfileEvent());
-        } catch (_) {}
-      }
+      // Refresh the profile on any status change so the completed books
+      // section stays in sync (adding to or removing from "Read").
+      try {
+        sl<ProfileBloc>().add(const RefreshProfileEvent());
+      } catch (_) {}
     } catch (e) {
       emit(LibraryError(message: 'Failed to update status'));
       await _fetchLibrary(emit);
