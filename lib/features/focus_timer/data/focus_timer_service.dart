@@ -39,13 +39,20 @@ class FocusTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Tokens per hour rate — should match the backend's `TokensPerHour`
+  /// admin setting. The backend uses the same formula when crediting tokens
+  /// via the reading-session /progress endpoint. Current backend setting
+  /// awards ~2 tokens per minute (120/hr).
+  static const int _tokensPerHour = 120;
+
   void stop() {
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
     _lastSessionSeconds = _seconds;
-    // Award 1 token per 5 minutes of focused reading
-    _tokensEarned = _seconds ~/ 300;
+    // Same formula as the backend: round(tokensPerHour * minutes / 60)
+    final minutes = _seconds / 60.0;
+    _tokensEarned = ((_tokensPerHour * minutes) / 60.0).round();
     notifyListeners();
   }
 
