@@ -65,7 +65,7 @@ class SoundService {
   Future<void> quoteSaved() => play('quote-saved.mp3');
 
   /// 📖 Soft paper rustle on every page turn in the EPUB reader.
-  Future<void> pageTurn() => play('page-turn.mp3', volume: 0.45);
+  Future<void> pageTurn() async {}
 
   /// 📚 Gentle creak when opening a book to read.
   Future<void> bookOpen() => play('book-open.mp3', volume: 0.6);
@@ -74,16 +74,16 @@ class SoundService {
   Future<void> timerStart() => play('timer-start.mp3', volume: 0.65);
 
   /// 🦉 Gentle owl hoot when the AI chat FAB is tapped.
-  Future<void> owlHoot() => play('owl-hoot.mp3');
+  Future<void> owlHoot() => tabClick();
 
   /// 🔲 Very subtle click on bottom nav tab switch.
   Future<void> tabClick() => play('tab-click.mp3', volume: 0.28);
 
   /// 🔓 Happy chime on successful login or register.
-  Future<void> authSuccess() => play('auth-success.mp3', volume: 0.7);
+  Future<void> authSuccess() async {}
 
   /// ❌ Error or invalid action buzz.
-  Future<void> error() => play('error.mp3', volume: 0.5);
+  Future<void> error() async {}
 
   /// 💬 New incoming notification ping.
   Future<void> notification() => play('notification.mp3');

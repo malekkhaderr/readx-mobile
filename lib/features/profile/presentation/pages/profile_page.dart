@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -7,7 +7,7 @@ import '../../domain/entities/user_profile_entity.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
-// Reward store imports removed (the section was hidden — see below).
+// Reward store imports removed (the section was hidden â€” see below).
 import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
 import '../../../quotes/presentation/bloc/quotes_bloc.dart';
@@ -88,7 +88,7 @@ class _ProfileView extends StatelessWidget {
   }
 }
 
-// ── Error View ───────────────────────────────────────────────
+// â”€â”€ Error View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -115,7 +115,7 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// ── Main Profile Body ────────────────────────────────────────
+// â”€â”€ Main Profile Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ProfileBody extends StatefulWidget {
   final UserProfileEntity profile;
   const _ProfileBody({required this.profile});
@@ -139,14 +139,14 @@ class _ProfileBodyState extends State<_ProfileBody> {
   Widget build(BuildContext context) {
     final profile = widget.profile;
 
-    // ── Route to the appropriate profile view based on role ──
+    // â”€â”€ Route to the appropriate profile view based on role â”€â”€
     if (profile.isAuthor) {
       return _AuthorProfileBody(profile: profile, onLogout: () {
         context.read<AuthBloc>().add(const LogoutEvent());
       });
     }
 
-    // ── Reader profile — Dark Glass Dashboard ─────────────────
+    // â”€â”€ Reader profile â€” Dark Glass Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     final dashboard = profile.readerDashboard;
 
     return RefreshIndicator(
@@ -159,7 +159,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // ── Email verification banner ──────────────────
+              // â”€â”€ Email verification banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (!profile.isEmailVerified)
                 Container(
                   width: double.infinity,
@@ -190,7 +190,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 24),
 
-              // ── Hero Card — Avatar + Name + Level + Stats ──
+              // â”€â”€ Hero Card â€” Avatar + Name + Level + Stats â”€â”€
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
@@ -241,14 +241,14 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    // Stats row — glass cards + streak ring
+                    // Stats row â€” glass cards + streak ring
                     if (dashboard != null)
                       Row(children: [
                         _GlassStat(value: '${dashboard.booksRead}', label: 'Books', icon: Icons.menu_book_rounded, color: AppColors.primary),
                         const SizedBox(width: 10),
                         _GlassStat(value: dashboard.totalReadingTime, label: 'Read', icon: Icons.schedule_rounded, color: AppColors.successGreen),
                       ]),
-                    // Streak fire test — tap to cycle levels
+                    // Streak fire test â€” tap to cycle levels
                     const SizedBox(height: 14),
                     _StreakFireTest(),
                   ],
@@ -257,7 +257,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 16),
 
-              // ── Action Button ─────────────────────────────
+              // â”€â”€ Action Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _GlassActionButton(label: 'Edit Profile', icon: Icons.edit_outlined, onTap: _showEditProfile),
@@ -265,7 +265,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 16),
 
-              // ── Reading Progress (daily goal) ──────────────
+              // â”€â”€ Reading Progress (daily goal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (dashboard != null && dashboard.dailyGoal > 0)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -298,7 +298,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 8),
 
-              // ── Sections ───────────────────────────────────
+              // â”€â”€ Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (dashboard != null) ...[
                 _ReadingRitualsSection(dashboard: dashboard),
                 const ReadingHistorySection(),
@@ -320,7 +320,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 16),
 
-              // ── Settings ───────────────────────────────────
+              // â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -367,7 +367,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
 
               const SizedBox(height: 16),
 
-              // ── Logout ─────────────────────────────────────
+              // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: GestureDetector(
@@ -397,10 +397,10 @@ class _ProfileBodyState extends State<_ProfileBody> {
   }
 }
 
-// ── Author Profile Body ──────────────────────────────────────
-// Clean, dedicated author profile — shows only author-relevant
-// information. Reader sections (streaks, rituals, feathers,
-// trophies) are never rendered here.
+// â”€â”€ Author Profile Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Clean, dedicated author profile â€” shows only author-relevant
+// information. Design mirrors the reader profile for visual
+// consistency across roles.
 class _AuthorProfileBody extends StatelessWidget {
   final UserProfileEntity profile;
   final VoidCallback onLogout;
@@ -422,199 +422,160 @@ class _AuthorProfileBody extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Email verification banner ──────────────────
+              // â”€â”€ Email verification banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (!profile.isEmailVerified)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  color: AppColors.warningOrange.withOpacity(0.15),
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningOrange.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.warningOrange.withOpacity(0.3)),
+                  ),
                   child: Row(children: [
-                    Icon(Icons.mail_outline, size: 18, color: AppColors.warningOrange),
+                    Icon(Icons.mail_outline, size: 16, color: AppColors.warningOrange),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Please verify your email address.', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.w500))),
+                    Expanded(child: Text('Verify your email', style: TextStyle(fontSize: 12, color: AppColors.warningOrange, fontWeight: FontWeight.w600))),
                     GestureDetector(
                       onTap: () {
-                        context.read<AuthBloc>().add(SendOtpEvent(
-                              email: profile.email,
-                              purpose: OtpPurpose.emailVerification,
-                            ));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Sending verification code…'),
-                          ),
-                        );
+                        context.read<AuthBloc>().add(SendOtpEvent(email: profile.email, purpose: OtpPurpose.emailVerification));
                         context.go('/otp', extra: profile.email);
                       },
-                      child: Text('Verify', style: TextStyle(fontSize: 13, color: AppColors.warningOrange, fontWeight: FontWeight.bold)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: AppColors.warningOrange, borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Verify', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w700)),
+                      ),
                     ),
                   ]),
                 ),
 
-              // ── Author Info Header Card ────────────────────
+              const SizedBox(height: 24),
+
+              // â”€â”€ Hero Card â€” Avatar + Name + Badges + Stats â”€â”€
               Container(
-                margin: EdgeInsets.fromLTRB(20, 24, 20, 0),
-                padding: EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: Offset(0, 6))],
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.divider, width: 0.8),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 8)),
+                  ],
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    // Avatar
+                    // Avatar with glow ring
                     Container(
-                      width: 72,
-                      height: 72,
+                      width: 86,
+                      height: 86,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.2),
-                        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.4), width: 3),
+                        boxShadow: [
+                          BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 20, spreadRadius: 2),
+                        ],
                       ),
-                      child: profile.hasAvatar
-                          ? ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: profile.avatarImageUrl!,
-                                width: 72,
-                                height: 72,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Center(
-                                  child: Text(profile.avatarInitial,
-                                      style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(profile.avatarInitial,
-                                  style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold))),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd]),
+                        ),
+                        child: profile.hasAvatar
+                            ? ClipOval(child: CachedNetworkImage(imageUrl: profile.avatarImageUrl!, width: 80, height: 80, fit: BoxFit.cover, errorWidget: (_, __, ___) => Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)))))
+                            : Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold))),
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    // Name + role
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            profile.fullName,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    const SizedBox(height: 14),
+                    // Name
+                    Text(profile.fullName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark, letterSpacing: -0.3)),
+                    const SizedBox(height: 8),
+                    // Author badge + verified status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
+                          child: Text('âœï¸  Author', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (profile.isEmailVerified ? AppColors.successGreen : AppColors.accent).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  '✍️  Author',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                                ),
+                              Icon(
+                                profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
+                                size: 14,
+                                color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
-                                      size: 14,
-                                      color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      profile.isEmailVerified ? 'Verified' : 'Not Verified',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(width: 4),
+                              Text(
+                                profile.isEmailVerified ? 'Verified' : 'Not Verified',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: profile.isEmailVerified ? AppColors.successGreen : AppColors.accent,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            profile.email,
-                            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w500),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Email
+                    Text(
+                      profile.email,
+                      style: TextStyle(fontSize: 12, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 20),
+                    // Stats row â€” glass cards
+                    if (authorBloc != null)
+                      BlocBuilder<AuthorDashboardBloc, AuthorDashboardState>(
+                        builder: (context, state) {
+                          final books = authorBloc!.cachedBooks;
+                          final bookCount = books?.length ?? 0;
+                          final avgRating = books != null && books.isNotEmpty
+                              ? (books.fold<double>(0, (sum, b) => sum + b.averageRating) / books.length)
+                              : 0.0;
+                          return Row(children: [
+                            _GlassStat(value: '$bookCount', label: 'Books', icon: Icons.menu_book_rounded, color: AppColors.primary),
+                            const SizedBox(width: 10),
+                            _GlassStat(value: avgRating.toStringAsFixed(1), label: 'Avg Rating', icon: Icons.star_rounded, color: AppColors.warningOrange),
+                          ]);
+                        },
                       ),
-                    ),
                   ],
                 ),
               ),
 
-              // ── Profile Info Grid ────────────────────────
+              const SizedBox(height: 16),
+
+              // â”€â”€ Action Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.2,
-                  children: [
-                    _ModernGridTile(
-                      icon: Icons.badge_outlined,
-                      label: 'Author ID',
-                      value: '#${profile.id}',
-                      iconColor: AppColors.primary,
-                      iconBgColor: AppColors.primaryLight,
-                    ),
-                    _ModernGridTile(
-                      icon: Icons.email_outlined,
-                      label: 'Email',
-                      value: profile.email,
-                      iconColor: AppColors.primary,
-                      iconBgColor: AppColors.primaryLight,
-                    ),
-                    _ModernGridTile(
-                      icon: profile.isEmailVerified ? Icons.verified_rounded : Icons.cancel_outlined,
-                      label: 'Email Status',
-                      value: profile.isEmailVerified ? 'Verified' : 'Not Verified',
-                      iconColor: profile.isEmailVerified ? AppColors.successGreen : AppColors.error,
-                      iconBgColor: (profile.isEmailVerified ? AppColors.successGreen : AppColors.error).withOpacity(0.1),
-                      valueColor: profile.isEmailVerified ? AppColors.successGreen : AppColors.error,
-                    ),
-                    _ModernGridTile(
-                      icon: Icons.bar_chart_rounded,
-                      label: 'Statistics',
-                      value: 'View All',
-                      iconColor: AppColors.primary,
-                      iconBgColor: AppColors.primaryLight,
-                      onTap: () => context.push('/author/statistics'),
-                    ),
-                    _ModernGridTile(
-                      icon: Icons.report_gmailerrorred_rounded,
-                      label: 'My Reports',
-                      value: 'View & Submit',
-                      iconColor: AppColors.error,
-                      iconBgColor: AppColors.error.withOpacity(0.1),
-                      onTap: () => context.push('/reports'),
-                    ),
-                  ],
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _GlassActionButton(label: 'View Statistics', icon: Icons.bar_chart_rounded, onTap: () => context.push('/author/statistics')),
               ),
 
-              // ── Published Books ────────────────────────────
+              const SizedBox(height: 16),
+
+              // â”€â”€ Published Books â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Row(children: [
                   Text('Published Books', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
                   const Spacer(),
@@ -647,25 +608,25 @@ class _AuthorProfileBody extends StatelessWidget {
                     }
                     if (books == null || books.isEmpty) {
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        padding: const EdgeInsets.all(32),
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.all(28),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: Offset(0, 2))],
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.divider, width: 0.8),
                         ),
                         child: Column(children: [
-                          Text('📚', style: TextStyle(fontSize: 48)),
-                          SizedBox(height: 12),
-                          Text('No Books Yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                          SizedBox(height: 6),
+                          Icon(Icons.menu_book_rounded, size: 48, color: AppColors.primary.withOpacity(0.4)),
+                          const SizedBox(height: 14),
+                          Text('No Books Yet', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                          const SizedBox(height: 6),
                           Text('Your published books will appear here.', style: TextStyle(fontSize: 13, color: AppColors.textGrey), textAlign: TextAlign.center),
                         ]),
                       );
                     }
                     // 2-column grid of compact book cover cards
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -689,58 +650,78 @@ class _AuthorProfileBody extends StatelessWidget {
                 )
               else
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
+                  padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Center(child: Text('Books unavailable', style: TextStyle(color: AppColors.textGrey))),
                 ),
 
+              const SizedBox(height: 16),
 
-              const SizedBox(height: 28),
-
-              // ── Dark Mode Toggle ──────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.divider, width: 0.8),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Row(children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-                      child: Icon(sl<ThemeProvider>().isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded, color: AppColors.primary, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Dark Mode', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark)),
-                      const SizedBox(height: 2),
-                      Text('Switch appearance', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
-                    ])),
-                    Switch.adaptive(value: sl<ThemeProvider>().isDark, activeColor: AppColors.primary, onChanged: (_) => sl<ThemeProvider>().toggle()),
-                  ]),
+              // â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.divider, width: 0.8),
                 ),
+                child: Column(children: [
+                  _SettingsTile(
+                    icon: sl<ThemeProvider>().isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                    label: 'Dark Mode',
+                    trailing: Switch.adaptive(
+                      value: sl<ThemeProvider>().isDark,
+                      activeColor: AppColors.primary,
+                      onChanged: (_) => sl<ThemeProvider>().toggle(),
+                    ),
+                  ),
+                  Divider(height: 1, color: AppColors.divider, indent: 52),
+                  StatefulBuilder(
+                    builder: (ctx, setSoundState) => _SettingsTile(
+                      icon: sl<SoundService>().isEnabled
+                          ? Icons.volume_up_rounded
+                          : Icons.volume_off_rounded,
+                      label: 'Sound Effects',
+                      trailing: Switch.adaptive(
+                        value: sl<SoundService>().isEnabled,
+                        activeColor: AppColors.primary,
+                        onChanged: (v) async {
+                          await sl<SoundService>().setEnabled(v, sl());
+                          setSoundState(() {});
+                        },
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: AppColors.divider, indent: 52),
+                  _SettingsTile(
+                    icon: Icons.headset_mic_outlined,
+                    label: 'Support Tickets',
+                    trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textGrey, size: 20),
+                    onTap: () => context.push('/reports'),
+                  ),
+                ]),
               ),
 
               const SizedBox(height: 16),
 
-              // ── Logout Button ──────────────────────────────
+              // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: ElevatedButton.icon(
-                  onPressed: onLogout,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GestureDetector(
+                  onTap: onLogout,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.logout_rounded, color: AppColors.error, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Log Out', style: TextStyle(color: AppColors.error, fontSize: 14, fontWeight: FontWeight.w700)),
+                    ]),
                   ),
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                  label: const Text('Log Out', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 32),
@@ -750,75 +731,10 @@ class _AuthorProfileBody extends StatelessWidget {
       ),
     );
   }
-
-}
-
-class _ModernGridTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color iconColor;
-  final Color iconBgColor;
-  final Color? valueColor;
-  final VoidCallback? onTap;
-
-  const _ModernGridTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.iconColor,
-    required this.iconBgColor,
-    this.valueColor,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.divider.withOpacity(0.5)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 22, color: iconColor),
-            ),
-            const Spacer(),
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w600, letterSpacing: 0.3),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              value,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: valueColor ?? AppColors.textDark),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 
-// ── Author Book Grid Card ─────────────────────────────────────
+// â”€â”€ Author Book Grid Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Compact 2-per-row card: cover image + title + status + rating.
 // Tapping navigates to the full AuthorBookDetailPage.
 class _AuthorBookGridCard extends StatelessWidget {
@@ -845,7 +761,7 @@ class _AuthorBookGridCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cover Image ──────────────────────────────
+            // â”€â”€ Cover Image â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -887,7 +803,7 @@ class _AuthorBookGridCard extends StatelessWidget {
                 ),
               ),
             ),
-            // ── Info ─────────────────────────────────────
+            // â”€â”€ Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
@@ -941,8 +857,8 @@ class _AuthorBookGridCard extends StatelessWidget {
 }
 
 
-// ── Action Button ────────────────────────────────────────────
-// ── Glass Stat Card ──────────────────────────────────────────
+// â”€â”€ Action Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Glass Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GlassStat extends StatelessWidget {
   final String value, label;
   final IconData icon;
@@ -974,7 +890,7 @@ class _GlassStat extends StatelessWidget {
   }
 }
 
-// ── Glass Action Button ─────────────────────────────────────
+// â”€â”€ Glass Action Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GlassActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -1005,7 +921,7 @@ class _GlassActionButton extends StatelessWidget {
   }
 }
 
-// ── Settings Tile ───────────────────────────────────────────
+// â”€â”€ Settings Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1035,7 +951,7 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-// ── Completed Books ──────────────────────────────────────────
+// â”€â”€ Completed Books â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CompletedBooksSection extends StatelessWidget {
   final List<CompletedBookEntity> books;
   const _CompletedBooksSection({required this.books});
@@ -1108,7 +1024,7 @@ class _CompletedBooksSection extends StatelessWidget {
   }
 }
 
-// ── Reading Rituals — Modern Weekly View ─────────────────────
+// â”€â”€ Reading Rituals â€” Modern Weekly View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ReadingRitualsSection extends StatelessWidget {
   final ReaderDashboardEntity dashboard;
   const _ReadingRitualsSection({required this.dashboard});
@@ -1211,12 +1127,12 @@ class _ReadingRitualsSection extends StatelessWidget {
   }
 }
 
-// ── Reward Store ─────────────────────────────────────────────
-// _RewardStoreSection removed — backend rewards system isn't implemented
+// â”€â”€ Reward Store â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// _RewardStoreSection removed â€” backend rewards system isn't implemented
 // yet and the section was driven entirely by MockShopData. The Reward Store
 // will return when there's a real /api/rewards endpoint.
 
-// ── Trophy Grid ──────────────────────────────────────────────
+// â”€â”€ Trophy Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _TrophyGridSection extends StatelessWidget {
   final List<TrophyEntity> trophies;
   const _TrophyGridSection({required this.trophies});
@@ -1254,13 +1170,13 @@ class _TrophyItem extends StatelessWidget {
                     imageUrl: trophy.iconUrl!,
                     width: 64,
                     height: 64,
-                    errorWidget: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 48)),
+                    errorWidget: (_, __, ___) => const Text('ðŸ†', style: TextStyle(fontSize: 48)),
                   )
-                : const Text('🏆', style: TextStyle(fontSize: 48)),
+                : const Text('ðŸ†', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text(trophy.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(trophy.earned ? 'Achievement unlocked! 🎉' : 'Keep reading to unlock this trophy!', style: TextStyle(color: AppColors.textGrey, fontSize: 13), textAlign: TextAlign.center),
+            Text(trophy.earned ? 'Achievement unlocked! ðŸŽ‰' : 'Keep reading to unlock this trophy!', style: TextStyle(color: AppColors.textGrey, fontSize: 13), textAlign: TextAlign.center),
           ]),
           actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('Close'))],
         ),
@@ -1277,13 +1193,13 @@ class _TrophyItem extends StatelessWidget {
                       width: 36,
                       height: 36,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Text('🏆',
+                      errorWidget: (_, __, ___) => Text('ðŸ†',
                           style: TextStyle(
                               fontSize: 22,
                               color: trophy.earned ? null : Colors.grey)),
                     ),
                   )
-                : Text('🏆',
+                : Text('ðŸ†',
                     style: TextStyle(
                         fontSize: 22,
                         color: trophy.earned ? null : Colors.grey)),
@@ -1298,7 +1214,7 @@ class _TrophyItem extends StatelessWidget {
 
 
 
-// ── Edit Profile Page (full-screen, avoids InheritedWidget conflicts) ──
+// â”€â”€ Edit Profile Page (full-screen, avoids InheritedWidget conflicts) â”€â”€
 class _EditProfilePage extends StatefulWidget {
   final UserProfileEntity profile;
   const _EditProfilePage({required this.profile});
@@ -1515,7 +1431,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
     );
   }
 }
-// ── TEST — Streak Fire cycle (remove after testing) ──────────
+// â”€â”€ TEST â€” Streak Fire cycle (remove after testing) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StreakFireTest extends StatefulWidget {
   @override
   State<_StreakFireTest> createState() => _StreakFireTestState();
