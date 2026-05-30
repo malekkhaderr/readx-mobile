@@ -1393,13 +1393,21 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-// â”€â”€ Completed Books â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _CompletedBooksSection extends StatelessWidget {
+// â”€â”€ Completed Books (Triangle Stack → Expandable Grid) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _CompletedBooksSection extends StatefulWidget {
   final List<CompletedBookEntity> books;
   const _CompletedBooksSection({required this.books});
 
   @override
+  State<_CompletedBooksSection> createState() => _CompletedBooksSectionState();
+}
+
+class _CompletedBooksSectionState extends State<_CompletedBooksSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final books = widget.books;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -1435,118 +1443,202 @@ class _CompletedBooksSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          // Grid — same style as author books
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.72,
-            ),
-            itemCount: books.length,
-            itemBuilder: (context, index) {
-              final book = books[index];
-              return GestureDetector(
-                onTap: () => context.push('/book/${book.id}'),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.07),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+          // Collapsed: triangle fan of 3 covers. Expanded: full grid.
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 350),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: _buildCollapsedStack(books),
+            secondChild: _buildExpandedGrid(books),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCollapsedStack(List<CompletedBookEntity> books) {
+    return GestureDetector(
+      onTap: () => setState(() => _expanded = true),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                // Right book (back layer)
+                if (books.length > 2)
+                  Transform.translate(
+                    offset: const Offset(55, 15),
+                    child: Transform.rotate(
+                      angle: 0.22,
+                      child: _buildCover(books[2], width: 95, height: 140),
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Cover image
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: book.coverImageUrl!,
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => Container(color: AppColors.primaryLight),
-                                      errorWidget: (_, __, ___) => _coverPlaceholder(book.title),
-                                    )
-                                  : _coverPlaceholder(book.title),
-                              // Completed badge
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.successGreen,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_circle_rounded, size: 10, color: Colors.white),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'Done',
-                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Book info
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                // Left book (middle layer)
+                if (books.length > 1)
+                  Transform.translate(
+                    offset: const Offset(-55, 15),
+                    child: Transform.rotate(
+                      angle: -0.22,
+                      child: _buildCover(books[1], width: 95, height: 140),
+                    ),
+                  ),
+                // Center book (front)
+                _buildCover(books[0], width: 105, height: 155),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Tap hint
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.divider),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.touch_app_rounded, size: 15, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Tap to see all ${books.length} books',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandedGrid(List<CompletedBookEntity> books) {
+    return Column(
+      children: [
+        // Collapse button
+        Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: () => setState(() => _expanded = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.close_fullscreen_rounded, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Text('Collapse', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 0.72,
+          ),
+          itemCount: books.length,
+          itemBuilder: (context, index) {
+            final book = books[index];
+            return GestureDetector(
+              onTap: () => context.push('/book/${book.id}'),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 14, offset: const Offset(0, 5)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        child: Stack(
+                          fit: StackFit.expand,
                           children: [
-                            Text(
-                              book.title,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textDark,
-                                height: 1.25,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.check_circle_rounded, size: 11, color: AppColors.successGreen),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Completed',
-                                  style: TextStyle(fontSize: 10, color: AppColors.successGreen, fontWeight: FontWeight.w600),
+                            book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: book.coverImageUrl!,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, __) => Container(color: AppColors.primaryLight),
+                                    errorWidget: (_, __, ___) => _coverPlaceholder(book.title),
+                                  )
+                                : _coverPlaceholder(book.title),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(color: AppColors.successGreen, borderRadius: BorderRadius.circular(8)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, size: 10, color: Colors.white),
+                                    const SizedBox(width: 3),
+                                    Text('Done', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                                  ],
                                 ),
-                                const Spacer(),
-                                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.textGrey),
-                              ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                      child: Text(
+                        book.title,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textDark, height: 1.25),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCover(CompletedBookEntity book, {double width = 100, double height = 145}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 12, spreadRadius: 1, offset: const Offset(0, 6)),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+            ? CachedNetworkImage(imageUrl: book.coverImageUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => _coverPlaceholder(book.title))
+            : _coverPlaceholder(book.title),
       ),
     );
   }
