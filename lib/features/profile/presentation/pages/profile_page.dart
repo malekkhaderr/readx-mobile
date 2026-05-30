@@ -1460,62 +1460,66 @@ class _CompletedBooksSectionState extends State<_CompletedBooksSection> {
   Widget _buildCollapsedStack(List<CompletedBookEntity> books) {
     return GestureDetector(
       onTap: () => setState(() => _expanded = true),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 180,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                // Right book (back layer)
-                if (books.length > 2)
-                  Transform.translate(
-                    offset: const Offset(55, 15),
-                    child: Transform.rotate(
-                      angle: 0.22,
-                      child: _buildCover(books[2], width: 95, height: 140),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 180,
+              width: 260,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  // Right book (back layer)
+                  if (books.length > 2)
+                    Transform.translate(
+                      offset: const Offset(55, 15),
+                      child: Transform.rotate(
+                        angle: 0.22,
+                        child: _buildCover(books[2], width: 95, height: 140),
+                      ),
                     ),
-                  ),
-                // Left book (middle layer)
-                if (books.length > 1)
-                  Transform.translate(
-                    offset: const Offset(-55, 15),
-                    child: Transform.rotate(
-                      angle: -0.22,
-                      child: _buildCover(books[1], width: 95, height: 140),
+                  // Left book (middle layer)
+                  if (books.length > 1)
+                    Transform.translate(
+                      offset: const Offset(-55, 15),
+                      child: Transform.rotate(
+                        angle: -0.22,
+                        child: _buildCover(books[1], width: 95, height: 140),
+                      ),
                     ),
+                  // Center book (front)
+                  _buildCover(books[0], width: 105, height: 155),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            // Tap hint
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.divider),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.touch_app_rounded, size: 15, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Tap to see all ${books.length} books',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
                   ),
-                // Center book (front)
-                _buildCover(books[0], width: 105, height: 155),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          // Tap hint
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.divider),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.touch_app_rounded, size: 15, color: AppColors.primary),
-                const SizedBox(width: 6),
-                Text(
-                  'Tap to see all ${books.length} books',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
