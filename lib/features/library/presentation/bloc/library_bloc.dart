@@ -1,4 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
 import '../../data/datasources/library_remote_datasource.dart';
 import '../../data/models/library_book_model.dart';
 import 'library_event.dart';
@@ -51,6 +54,13 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     try {
       await dataSource.updateStatus(event.bookId, event.newStatus);
       await _fetchLibrary(emit);
+      // When a book is marked as "Read", refresh the profile so the
+      // completed books section on the profile page updates immediately.
+      if (event.newStatus == ReadingStatus.read) {
+        try {
+          sl<ProfileBloc>().add(const RefreshProfileEvent());
+        } catch (_) {}
+      }
     } catch (e) {
       emit(LibraryError(message: 'Failed to update status'));
       await _fetchLibrary(emit);

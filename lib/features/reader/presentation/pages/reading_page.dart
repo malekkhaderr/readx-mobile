@@ -7,6 +7,9 @@ import 'package:readx/features/home/data/datasources/books_service.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_event.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_state.dart';
+import 'package:readx/features/library/presentation/bloc/library_bloc.dart';
+import 'package:readx/features/library/presentation/bloc/library_event.dart';
+import 'package:readx/features/library/data/models/library_book_model.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/data/book_repository.dart';
 import '../../../../core/data/quotes_repository.dart';
@@ -223,6 +226,13 @@ class _ReadingPageState extends State<ReadingPage> {
       if (result.isCompleted) {
         _sessionCompleted = true;
         _progressTimer?.cancel();
+        try {
+          sl<LibraryBloc>().add(UpdateBookStatusEvent(
+            bookId: int.tryParse(widget.bookId.replaceAll('api_', '')) ?? 0,
+            newStatus: ReadingStatus.read,
+          ));
+          sl<ProfileBloc>().add(const RefreshProfileEvent());
+        } catch (_) {}
       }
       debugPrint(
           'DEBUG READING: Saved progress delta=${deltaMinutes}m, tokensEarned=${result.tokensEarned}.');

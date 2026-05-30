@@ -17,6 +17,7 @@ import 'package:readx/features/home/data/models/book_detail_model.dart';
 import 'package:readx/features/library/presentation/bloc/library_bloc.dart';
 import 'package:readx/features/library/presentation/bloc/library_event.dart';
 import 'package:readx/features/library/presentation/bloc/library_state.dart';
+import 'package:readx/features/library/data/models/library_book_model.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:readx/features/profile/presentation/bloc/profile_event.dart';
 import 'package:readx/features/quotes/presentation/pages/add_quote_page.dart';
@@ -576,6 +577,15 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
       if (result.isCompleted) {
         _sessionCompleted = true;
         _progressTimer?.cancel();
+        // Book just finished — update library status to "Read" and
+        // refresh profile so completed books list updates.
+        try {
+          sl<LibraryBloc>().add(UpdateBookStatusEvent(
+            bookId: widget.bookId,
+            newStatus: ReadingStatus.read,
+          ));
+          sl<ProfileBloc>().add(const RefreshProfileEvent());
+        } catch (_) {}
       }
 
       await BookRepository.updateProgress(
