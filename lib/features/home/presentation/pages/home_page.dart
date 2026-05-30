@@ -21,6 +21,7 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../../data/models/home_response_model.dart';
+import '../../../notifications/data/datasources/notifications_remote_datasource.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,19 +32,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _unreadNotificationCount = 0;
+
   @override
   void initState() {
     super.initState();
     sl<LibraryBloc>().add(const LoadLibraryEvent());
+    _loadUnreadCount();
     // Show daily quote splash on every app open
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) DailyQuoteSplash.show(context);
     });
   }
 
+  Future<void> _loadUnreadCount() async {
+    final profileState = sl<ProfileBloc>().state;
+    if (profileState is! ProfileLoaded) return;
+    try {
+      final ds = sl<NotificationsRemoteDataSource>();
+      final notifications = await ds.getNotifications(profileState.profile.id);
+      final unread = notifications.where((n) => !n.isRead).length;
+      if (mounted) setState(() => _unreadNotificationCount = unread);
+    } catch (_) {}
+  }
+
   Future<void> _onRefresh() async {
     context.read<HomeBloc>().add(const RefreshHomeEvent());
     sl<LibraryBloc>().add(const RefreshLibraryEvent());
+    _loadUnreadCount();
   }
 
   @override
@@ -66,7 +82,7 @@ class _HomePageState extends State<HomePage> {
           slivers: [
             // ── Gradient Header ─────────────────
             SliverToBoxAdapter(
-              child: _GradientHeader(profile: profile),
+              child: _GradientHeader(profile: profile, unreadCount: _unreadNotificationCount),
             ),
 
             // ── Expressive Owl (TEST — tap to cycle) ────
@@ -274,7 +290,8 @@ class _HomePageState extends State<HomePage> {
 
 class _GradientHeader extends StatelessWidget {
   final UserProfileEntity? profile;
-  const _GradientHeader({this.profile});
+  final int unreadCount;
+  const _GradientHeader({this.profile, this.unreadCount = 0});
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -427,23 +444,36 @@ class _GradientHeader extends StatelessWidget {
                 border: Border.all(color: Colors.white.withOpacity(0.25)),
               ),
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
                   const Center(
                     child: Icon(Icons.notifications_rounded,
                         color: Colors.white, size: 20),
                   ),
-                  Positioned(
-                    top: 10,
-                    right: 11,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF6B6B),
-                        shape: BoxShape.circle,
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF4444),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
