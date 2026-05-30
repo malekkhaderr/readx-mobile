@@ -163,34 +163,6 @@ class _ProfileBodyState extends State<_ProfileBody> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // â”€â”€ Email verification banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              if (!profile.isEmailVerified)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.warningOrange.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.warningOrange.withOpacity(0.3)),
-                  ),
-                  child: Row(children: [
-                    Icon(Icons.mail_outline, size: 16, color: AppColors.warningOrange),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('Verify your email', style: TextStyle(fontSize: 12, color: AppColors.warningOrange, fontWeight: FontWeight.w600))),
-                    GestureDetector(
-                      onTap: () {
-                        context.read<AuthBloc>().add(SendOtpEvent(email: profile.email, purpose: OtpPurpose.emailVerification));
-                        context.go('/otp', extra: profile.email);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: AppColors.warningOrange, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Verify', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ]),
-                ),
 
               const SizedBox(height: 24),
 
@@ -430,34 +402,6 @@ class _AuthorProfileBody extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // â”€â”€ Email verification banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              if (!profile.isEmailVerified)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.warningOrange.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.warningOrange.withOpacity(0.3)),
-                  ),
-                  child: Row(children: [
-                    Icon(Icons.mail_outline, size: 16, color: AppColors.warningOrange),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('Verify your email', style: TextStyle(fontSize: 12, color: AppColors.warningOrange, fontWeight: FontWeight.w600))),
-                    GestureDetector(
-                      onTap: () {
-                        context.read<AuthBloc>().add(SendOtpEvent(email: profile.email, purpose: OtpPurpose.emailVerification));
-                        context.go('/otp', extra: profile.email);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: AppColors.warningOrange, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Verify', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ]),
-                ),
 
               const SizedBox(height: 24),
 
