@@ -108,11 +108,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // ── Expressive Owl (TEST — tap to cycle) ────
-            SliverToBoxAdapter(
-              child: _OwlTestWidget(),
-            ),
-
             // ── Search Bar ─────────────────────
             SliverToBoxAdapter(
               child: Padding(

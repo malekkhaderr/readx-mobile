@@ -317,9 +317,25 @@ class _ProfileBodyState extends State<_ProfileBody> {
                           ),
                         ],
                       ),
-                    // Streak fire test â€” tap to cycle levels
-                    const SizedBox(height: 14),
-                    _StreakFireTest(),
+                    // Streak fire — shows real streak from dashboard
+                    if (dashboard != null && dashboard.streakDays > 0) ...[
+                      const SizedBox(height: 14),
+                      StreakFire(
+                        streakDays: dashboard.streakDays,
+                        maxStreak: 14,
+                        isBroken: false,
+                        size: 60,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${dashboard.streakDays} day streak',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.warningOrange,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
