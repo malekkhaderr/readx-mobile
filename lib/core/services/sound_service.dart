@@ -73,22 +73,38 @@ class SoundService {
 
   // ─── Core player ────────────────────────────────────────────
 
-  /// Plays a pre-loaded audio clip by filename.
-  /// Returns immediately; the player is disposed on completion.
+  /// Plays an audio clip by filename using AssetSource (relies on Flutter's
+  /// asset bundling). MediaPlayer mode is used since it supports all source
+  /// types on Android without restriction.
   Future<void> play(String assetName, {double volume = 1.0}) async {
     if (!_enabled) return;
 
-    final bytes = _cache[assetName];
-    if (bytes == null) {
+    // Verify the file was pre-loaded (i.e. exists in the bundle)
+    if (!_cache.containsKey(assetName)) {
       debugPrint('SoundService: $assetName not in cache, skipping');
       return;
     }
 
     try {
       final player = AudioPlayer();
+      player.setAudioContext(AudioContext(
+        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: false,
+          audioMode: AndroidAudioMode.normal,
+          usageType: AndroidUsageType.media,
+          contentType: AndroidContentType.music,
+          audioFocus: AndroidAudioFocus.none,
+        ),
+      ));
       await player.setVolume(volume);
-      await player.play(BytesSource(bytes));
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
+      await player.play(AssetSource('audio/$assetName'));
       player.onPlayerComplete.listen((_) => player.dispose());
+      // Auto-dispose after 10s in case onPlayerComplete never fires
+      Future.delayed(const Duration(seconds: 10), () {
+        try { player.dispose(); } catch (_) {}
+      });
     } catch (e) {
       debugPrint('SoundService: failed to play $assetName — $e');
     }
