@@ -113,6 +113,7 @@ class _LevelBadgeCardState extends State<LevelBadgeCard> {
                       child: CachedNetworkImage(
                         imageUrl: level.iconUrl!,
                         fit: BoxFit.cover,
+                        placeholder: (_, __) => _iconFallback(),
                         errorWidget: (_, __, ___) => _iconFallback(),
                       ),
                     )
