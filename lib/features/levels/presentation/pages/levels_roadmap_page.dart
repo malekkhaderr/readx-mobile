@@ -112,8 +112,17 @@ class _LevelsRoadmapPageState extends State<LevelsRoadmapPage> with TickerProvid
                           (context, index) {
                             final level = _levels[index];
                             final current = _currentLevel;
-                            final isUnlocked = current != null && level.levelNumber < current.levelNumber;
-                            final isCurrent = level.id == current?.id;
+                            // A level is "unlocked" (green check) if:
+                            // 1. Its levelNumber is below the current level, OR
+                            // 2. It IS the current level AND it's the max level
+                            //    (maxTokens == null means no ceiling — user has
+                            //    fully reached the top)
+                            final isMaxLevel = current != null &&
+                                level.id == current.id &&
+                                level.maxTokens == null;
+                            final isUnlocked = isMaxLevel ||
+                                (current != null && level.levelNumber < current.levelNumber);
+                            final isCurrent = level.id == current?.id && !isMaxLevel;
                             final isLocked = !isUnlocked && !isCurrent;
                             return _InteractiveTimelineItem(
                               level: level,
