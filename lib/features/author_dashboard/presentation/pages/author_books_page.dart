@@ -15,6 +15,9 @@ class AuthorBooksPage extends StatefulWidget {
 }
 
 class _AuthorBooksPageState extends State<AuthorBooksPage> {
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Pending', 'Resolved', 'Rejected'];
+
   @override
   void initState() {
     super.initState();
@@ -206,45 +209,93 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
           final bloc = context.read<AuthorDashboardBloc>();
           List<PublisherRequestModel> requests = bloc.cachedRequests ?? [];
 
-          if (state is PublisherRequestsLoading && requests.isEmpty) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primary));
-          }
-          
           if (state is PublisherRequestsLoaded) {
             requests = state.requests;
           }
 
-          if (requests.isEmpty && state is PublisherRequestsLoaded) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox_rounded, size: 64, color: AppColors.textLight),
-                  SizedBox(height: 16),
-                  Text(
-                    'No requests found',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Submit a new request to get started.',
-                    style: TextStyle(color: AppColors.textGrey),
-                  ),
-                ],
-              ),
-            );
-          }
+          List<PublisherRequestModel> filteredRequests = requests.where((req) {
+            final status = req.status.toLowerCase();
+            if (_selectedFilter == 'All') return true;
+            if (_selectedFilter == 'Pending') return status == 'pending';
+            if (_selectedFilter == 'Resolved') return status == 'approved' || status == 'resolved';
+            if (_selectedFilter == 'Rejected') return status == 'rejected';
+            return true;
+          }).toList();
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<AuthorDashboardBloc>().add(LoadPublisherRequestsEvent());
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(20),
-              itemCount: requests.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final req = requests[index];
+          return Column(
+            children: [
+              // Filter Chips
+              Container(
+                height: 54,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filters.length,
+                  itemBuilder: (context, index) {
+                    final filter = _filters[index];
+                    final isSelected = filter == _selectedFilter;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedFilter = filter),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppColors.primary : AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: isSelected ? null : Border.all(color: AppColors.divider),
+                          ),
+                          child: Center(
+                            child: Text(
+                              filter,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected ? Colors.white : AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Request List
+              Expanded(
+                child: state is PublisherRequestsLoading && requests.isEmpty
+                    ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    : filteredRequests.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.inbox_rounded, size: 64, color: AppColors.textLight),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No requests found',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  _selectedFilter == 'All' ? 'Submit a new request to get started.' : 'No $_selectedFilter requests.',
+                                  style: TextStyle(color: AppColors.textGrey),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: () async {
+                              context.read<AuthorDashboardBloc>().add(LoadPublisherRequestsEvent());
+                            },
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: filteredRequests.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final req = filteredRequests[index];
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -338,8 +389,11 @@ class _AuthorBooksPageState extends State<AuthorBooksPage> {
                 );
               },
             ),
-          );
-        },
+          ),
+        ),
+      ],
+    );
+  },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
