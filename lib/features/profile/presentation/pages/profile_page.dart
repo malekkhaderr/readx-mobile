@@ -428,36 +428,40 @@ class _ProfileBodyState extends State<_ProfileBody> {
                 _ReadingRitualsSection(dashboard: dashboard),
                 const ReadingHistorySection(),
                 // Show completed books from both reading sessions AND
-                // library books marked as "Read" (merged, deduped by title)
-                Builder(builder: (context) {
-                  final libraryState = sl<LibraryBloc>().state;
-                  final libraryReadBooks = libraryState is LibraryLoaded
-                      ? libraryState.books
-                          .where((b) => b.status == ReadingStatus.read)
-                          .map((b) => CompletedBookEntity(
-                                id: b.bookId.toString(),
-                                title: b.title,
-                                coverImageUrl: b.coverImageUrl,
-                              ))
-                          .toList()
-                      : <CompletedBookEntity>[];
+                // library books marked as "Read" (merged, deduped by id).
+                // Uses BlocBuilder so it reactively rebuilds when library
+                // status changes (e.g. user marks book as Read or un-marks it).
+                BlocBuilder<LibraryBloc, LibraryState>(
+                  bloc: sl<LibraryBloc>(),
+                  builder: (context, libraryState) {
+                    final libraryReadBooks = libraryState is LibraryLoaded
+                        ? libraryState.books
+                            .where((b) => b.status == ReadingStatus.read)
+                            .map((b) => CompletedBookEntity(
+                                  id: b.bookId.toString(),
+                                  title: b.title,
+                                  coverImageUrl: b.coverImageUrl,
+                                ))
+                            .toList()
+                        : <CompletedBookEntity>[];
 
-                  // Merge: start with dashboard completed, add library "Read"
-                  // books that aren't already in the list (dedupe by title)
-                  final dashboardTitles = dashboard.completedBooks
-                      .map((b) => b.title.toLowerCase())
-                      .toSet();
-                  final merged = <CompletedBookEntity>[
-                    ...dashboard.completedBooks,
-                    ...libraryReadBooks.where(
-                        (b) => !dashboardTitles.contains(b.title.toLowerCase())),
-                  ];
+                    // Merge: dashboard completed (from reading sessions) +
+                    // library "Read" books not already present. Dedupe by id.
+                    final dashboardIds = dashboard.completedBooks
+                        .map((b) => b.id)
+                        .toSet();
+                    final merged = <CompletedBookEntity>[
+                      ...dashboard.completedBooks,
+                      ...libraryReadBooks
+                          .where((b) => !dashboardIds.contains(b.id)),
+                    ];
 
-                  if (merged.isNotEmpty) {
-                    return _CompletedBooksSection(books: merged);
-                  }
-                  return const SizedBox.shrink();
-                }),
+                    if (merged.isNotEmpty) {
+                      return _CompletedBooksSection(books: merged);
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
                 _TrophyGridSection(trophies: dashboard.trophies),
               ] else
                 Container(
