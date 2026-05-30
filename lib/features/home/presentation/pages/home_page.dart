@@ -21,6 +21,7 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../../data/models/home_response_model.dart';
+import 'package:flutter/foundation.dart';
 import '../../../notifications/data/datasources/notifications_remote_datasource.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 
@@ -38,11 +39,27 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     sl<LibraryBloc>().add(const LoadLibraryEvent());
-    _loadUnreadCount();
+    // Wait for profile to be ready, then load unread count
+    _waitForProfileAndLoadCount();
     // Show daily quote splash on every app open
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) DailyQuoteSplash.show(context);
     });
+  }
+
+  void _waitForProfileAndLoadCount() async {
+    // If profile is already loaded, fetch immediately
+    if (sl<ProfileBloc>().state is ProfileLoaded) {
+      _loadUnreadCount();
+      return;
+    }
+    // Otherwise listen for it to load
+    await for (final state in sl<ProfileBloc>().stream) {
+      if (state is ProfileLoaded) {
+        _loadUnreadCount();
+        break;
+      }
+    }
   }
 
   Future<void> _loadUnreadCount() async {
@@ -53,7 +70,9 @@ class _HomePageState extends State<HomePage> {
       final notifications = await ds.getNotifications(profileState.profile.id);
       final unread = notifications.where((n) => !n.isRead).length;
       if (mounted) setState(() => _unreadNotificationCount = unread);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to load unread count: $e');
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -82,7 +101,11 @@ class _HomePageState extends State<HomePage> {
           slivers: [
             // ── Gradient Header ─────────────────
             SliverToBoxAdapter(
-              child: _GradientHeader(profile: profile, unreadCount: _unreadNotificationCount),
+              child: _GradientHeader(
+                profile: profile,
+                unreadCount: _unreadNotificationCount,
+                onNotificationsClosed: _loadUnreadCount,
+              ),
             ),
 
             // ── Expressive Owl (TEST — tap to cycle) ────
@@ -291,7 +314,8 @@ class _HomePageState extends State<HomePage> {
 class _GradientHeader extends StatelessWidget {
   final UserProfileEntity? profile;
   final int unreadCount;
-  const _GradientHeader({this.profile, this.unreadCount = 0});
+  final VoidCallback? onNotificationsClosed;
+  const _GradientHeader({this.profile, this.unreadCount = 0, this.onNotificationsClosed});
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -427,13 +451,14 @@ class _GradientHeader extends StatelessWidget {
 
           // Notification button
           GestureDetector(
-            onTap: () {
-              showModalBottomSheet(
+            onTap: () async {
+              await showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (_) => const NotificationsPage(),
               );
+              onNotificationsClosed?.call();
             },
             child: Container(
               width: 42,
