@@ -12,6 +12,8 @@ import '../bloc/profile_state.dart';
 // Reward store imports removed (the section was hidden â€” see below).
 import '../../../library/presentation/bloc/library_bloc.dart';
 import '../../../library/presentation/bloc/library_event.dart';
+import '../../../library/presentation/bloc/library_state.dart';
+import '../../../library/data/models/library_book_model.dart';
 import '../../../quotes/presentation/bloc/quotes_bloc.dart';
 import '../../../quotes/presentation/bloc/quotes_event.dart';
 import '../../../auth/data/datasources/auth_remote_datasource.dart'
@@ -425,8 +427,37 @@ class _ProfileBodyState extends State<_ProfileBody> {
               if (dashboard != null) ...[
                 _ReadingRitualsSection(dashboard: dashboard),
                 const ReadingHistorySection(),
-                if (dashboard.completedBooks.isNotEmpty)
-                  _CompletedBooksSection(books: dashboard.completedBooks),
+                // Show completed books from both reading sessions AND
+                // library books marked as "Read" (merged, deduped by title)
+                Builder(builder: (context) {
+                  final libraryState = sl<LibraryBloc>().state;
+                  final libraryReadBooks = libraryState is LibraryLoaded
+                      ? libraryState.books
+                          .where((b) => b.status == ReadingStatus.read)
+                          .map((b) => CompletedBookEntity(
+                                id: b.bookId.toString(),
+                                title: b.title,
+                                coverImageUrl: b.coverImageUrl,
+                              ))
+                          .toList()
+                      : <CompletedBookEntity>[];
+
+                  // Merge: start with dashboard completed, add library "Read"
+                  // books that aren't already in the list (dedupe by title)
+                  final dashboardTitles = dashboard.completedBooks
+                      .map((b) => b.title.toLowerCase())
+                      .toSet();
+                  final merged = <CompletedBookEntity>[
+                    ...dashboard.completedBooks,
+                    ...libraryReadBooks.where(
+                        (b) => !dashboardTitles.contains(b.title.toLowerCase())),
+                  ];
+
+                  if (merged.isNotEmpty) {
+                    return _CompletedBooksSection(books: merged);
+                  }
+                  return const SizedBox.shrink();
+                }),
                 _TrophyGridSection(trophies: dashboard.trophies),
               ] else
                 Container(
