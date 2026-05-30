@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -218,7 +218,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd]),
+                          color: profile.hasAvatar ? Colors.white : null,
+                          gradient: profile.hasAvatar ? null : LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd]),
                         ),
                         child: profile.hasAvatar
                             ? ClipOval(child: CachedNetworkImage(imageUrl: profile.avatarImageUrl!, width: 80, height: 80, fit: BoxFit.cover, errorWidget: (_, __, ___) => Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)))))
@@ -482,7 +483,8 @@ class _AuthorProfileBody extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd]),
+                          color: profile.hasAvatar ? Colors.white : null,
+                          gradient: profile.hasAvatar ? null : LinearGradient(colors: [AppColors.gradientStart, AppColors.gradientEnd]),
                         ),
                         child: profile.hasAvatar
                             ? ClipOval(child: CachedNetworkImage(imageUrl: profile.avatarImageUrl!, width: 80, height: 80, fit: BoxFit.cover, errorWidget: (_, __, ___) => Center(child: Text(profile.avatarInitial, style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)))))
@@ -1331,6 +1333,7 @@ class _EditProfilePageState extends State<_EditProfilePage> {
                       height: 64,
                       margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected ? AppColors.primary : AppColors.divider,

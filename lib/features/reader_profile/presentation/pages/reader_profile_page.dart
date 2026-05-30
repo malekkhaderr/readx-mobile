@@ -188,7 +188,10 @@ class _ReaderProfilePageState extends State<ReaderProfilePage> with TickerProvid
                 boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.2), blurRadius: 20, spreadRadius: 2)],
               ),
               child: Container(
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white12),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle, 
+                  color: profile.avatarImageUrl != null && profile.avatarImageUrl!.isNotEmpty ? Colors.white : Colors.white12,
+                ),
                 child: profile.avatarImageUrl != null && profile.avatarImageUrl!.isNotEmpty
                     ? ClipOval(child: CachedNetworkImage(imageUrl: profile.avatarImageUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => _avatarFallback(profile.initial)))
                     : _avatarFallback(profile.initial),
