@@ -1,4 +1,14 @@
 class ReaderLevel {
+  /// Maps level number to a local asset path so icons load instantly
+  /// without depending on the backend serving static files.
+  static const _localIcons = {
+    1: 'assets/images/owls-levels/TheNovice.png',
+    2: 'assets/images/owls-levels/TheVoyager.png',
+    3: 'assets/images/owls-levels/TheScholar.png',
+    4: 'assets/images/owls-levels/TheOverseer.png',
+    5: 'assets/images/owls-levels/TheOracle.png',
+  };
+
   final int id;
   final int levelNumber;
   final String name;
@@ -18,6 +28,9 @@ class ReaderLevel {
     this.maxTokens,
     required this.isDefault,
   });
+
+  /// Returns the local asset path for this level's icon.
+  String? get localIconAsset => _localIcons[levelNumber];
 
   factory ReaderLevel.fromJson(Map<String, dynamic> json) {
     return ReaderLevel(

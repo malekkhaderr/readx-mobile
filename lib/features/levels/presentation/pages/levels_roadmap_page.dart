@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/sound_service.dart';
@@ -178,8 +177,8 @@ class _LevelsRoadmapPageState extends State<LevelsRoadmapPage> with TickerProvid
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white.withOpacity(0.25)),
                       ),
-                      child: current?.iconUrl != null && current!.iconUrl!.isNotEmpty
-                          ? ClipRRect(borderRadius: BorderRadius.circular(14), child: CachedNetworkImage(imageUrl: current.iconUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => _shieldIcon()))
+                      child: current?.localIconAsset != null
+                          ? ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.asset(current!.localIconAsset!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _shieldIcon()))
                           : _shieldIcon(),
                     ),
                     const SizedBox(width: 16),
@@ -364,12 +363,12 @@ class _InteractiveTimelineItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(13),
                       border: isCurrent ? Border.all(color: AppColors.primary.withOpacity(0.2)) : null,
                     ),
-                    child: level.iconUrl != null && level.iconUrl!.isNotEmpty
+                    child: level.localIconAsset != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: ColorFiltered(
                               colorFilter: isLocked ? const ColorFilter.mode(Colors.grey, BlendMode.saturation) : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                              child: CachedNetworkImage(imageUrl: level.iconUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => _fallback()),
+                              child: Image.asset(level.localIconAsset!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _fallback()),
                             ))
                         : _fallback(),
                   ),
