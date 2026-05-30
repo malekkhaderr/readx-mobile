@@ -86,7 +86,6 @@ class SoundService {
     try {
       final player = AudioPlayer();
       await player.setVolume(volume);
-      await player.setPlayerMode(PlayerMode.lowLatency);
       await player.play(BytesSource(bytes));
       player.onPlayerComplete.listen((_) => player.dispose());
     } catch (e) {
