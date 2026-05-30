@@ -1365,45 +1365,34 @@ class _CompletedBooksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
               Text(
                 'Completed Books',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.successGreen.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.successGreen.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${books.length} books',
+                  '${books.length}',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.successGreen,
                   ),
                 ),
@@ -1411,100 +1400,142 @@ class _CompletedBooksSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: books.length,
-              itemBuilder: (context, index) {
-                final book = books[index];
-                return Container(
-                  width: 80,
-                  margin: EdgeInsets.only(
-                    right: index < books.length - 1 ? 12 : 0,
+          // Grid — same style as author books
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.72,
+            ),
+            itemCount: books.length,
+            itemBuilder: (context, index) {
+              final book = books[index];
+              return GestureDetector(
+                onTap: () => context.push('/book/${book.id}'),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.07),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: book.coverImageUrl != null
-                                ? CachedNetworkImage(
-                                    imageUrl: book.coverImageUrl!,
-                                    width: 72,
-                                    height: 72,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) =>
-                                        Shimmer.fromColors(
-                                          baseColor: AppColors.primaryLight,
-                                          highlightColor: AppColors.shimmer,
-                                          child: Container(
-                                            width: 72,
-                                            height: 72,
-                                            color: AppColors.primaryLight,
-                                          ),
-                                        ),
-                                    errorWidget: (_, __, ___) => Container(
-                                      width: 72,
-                                      height: 72,
-                                      color: AppColors.primaryLight,
-                                      child: Icon(
-                                        Icons.book,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    width: 72,
-                                    height: 72,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryLight,
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(
-                                      Icons.book,
-                                      color: AppColors.primary,
-                                    ),
+                      // Cover image
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: book.coverImageUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => Container(color: AppColors.primaryLight),
+                                      errorWidget: (_, __, ___) => _coverPlaceholder(book.title),
+                                    )
+                                  : _coverPlaceholder(book.title),
+                              // Completed badge
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.successGreen,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                          ),
-                          Positioned(
-                            bottom: 4,
-                            right: 4,
-                            child: Container(
-                              padding: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: AppColors.successGreen,
-                                shape: BoxShape.circle,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle_rounded, size: 10, color: Colors.white),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'Done',
+                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                              child: Icon(
-                                Icons.check,
-                                color: AppColors.surface,
-                                size: 10,
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        book.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textDark,
+                      // Book info
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              book.title,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textDark,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.check_circle_rounded, size: 11, color: AppColors.successGreen),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Completed',
+                                  style: TextStyle(fontSize: 10, color: AppColors.successGreen, fontWeight: FontWeight.w600),
+                                ),
+                                const Spacer(),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.textGrey),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _coverPlaceholder(String title) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+        ),
       ),
     );
   }
