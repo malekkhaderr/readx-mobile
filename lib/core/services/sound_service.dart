@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,11 +43,24 @@ class SoundService {
     if (!_enabled) return;
     try {
       final player = AudioPlayer();
+      // Set the audio context for short UI sounds — low latency, no
+      // focus/ducking, so it doesn't interfere with music apps.
+      await player.setAudioContext(AudioContext(
+        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: false,
+          audioMode: AndroidAudioMode.normal,
+          usageType: AndroidUsageType.assistanceSonification,
+          contentType: AndroidContentType.sonification,
+          audioFocus: AndroidAudioFocus.none,
+        ),
+      ));
       await player.setVolume(volume);
+      await player.setPlayerMode(PlayerMode.lowLatency);
       await player.play(AssetSource('audio/$assetName'));
       player.onPlayerComplete.listen((_) => player.dispose());
-    } catch (_) {
-      // Never crash the app over a missing / corrupt sound file.
+    } catch (e) {
+      debugPrint('SoundService: failed to play $assetName — $e');
     }
   }
 
@@ -65,7 +79,7 @@ class SoundService {
   Future<void> quoteSaved() => play('quote-saved.mp3');
 
   /// 📖 Soft paper rustle on every page turn in the EPUB reader.
-  Future<void> pageTurn() async {}
+  Future<void> pageTurn() => play('page-turn.mp3', volume: 0.3);
 
   /// 📚 Gentle creak when opening a book to read.
   Future<void> bookOpen() => play('book-open.mp3', volume: 0.6);
@@ -80,10 +94,10 @@ class SoundService {
   Future<void> tabClick() => play('tab-click.mp3', volume: 0.28);
 
   /// 🔓 Happy chime on successful login or register.
-  Future<void> authSuccess() async {}
+  Future<void> authSuccess() => play('auth-success.mp3', volume: 0.7);
 
   /// ❌ Error or invalid action buzz.
-  Future<void> error() async {}
+  Future<void> error() => play('error.mp3', volume: 0.5);
 
   /// 💬 New incoming notification ping.
   Future<void> notification() => play('notification.mp3');
