@@ -29,17 +29,17 @@ class AuthorDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileState = context.watch<ProfileBloc>().state;
-    final UserProfileEntity? profile =
-        profileState is ProfileLoaded ? profileState.profile : null;
+    final UserProfileEntity? profile = profileState is ProfileLoaded
+        ? profileState.profile
+        : null;
 
     return Scaffold(
-
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            context
-                .read<AuthorDashboardBloc>()
-                .add(RefreshAuthorDashboardEvent());
+            context.read<AuthorDashboardBloc>().add(
+              RefreshAuthorDashboardEvent(),
+            );
           },
           color: AppColors.primary,
           child: SingleChildScrollView(
@@ -53,8 +53,10 @@ class AuthorDashboardPage extends StatelessWidget {
 
                 // ── Header ───────────────────────────────────────────
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       // Avatar
@@ -65,8 +67,9 @@ class AuthorDashboardPage extends StatelessWidget {
                           color: AppColors.primaryLight,
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: AppColors.primary.withOpacity(0.3),
-                              width: 2),
+                            color: AppColors.primary.withOpacity(0.3),
+                            width: 2,
+                          ),
                         ),
                         child: profile != null && profile.hasAvatar
                             ? ClipOval(
@@ -76,16 +79,24 @@ class AuthorDashboardPage extends StatelessWidget {
                                   height: 46,
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Center(
-                                      child: Text(profile.avatarInitial,
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              color: AppColors.primary,
-                                              fontWeight: FontWeight.bold))),
+                                    child: Text(
+                                      profile.avatarInitial,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               )
                             : ClipOval(
-                                child: Image.asset('assets/images/owl.png',
-                                    width: 46, height: 46, fit: BoxFit.cover),
+                                child: Image.asset(
+                                  'assets/images/owl.png',
+                                  width: 46,
+                                  height: 46,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                       ),
                       const SizedBox(width: 12),
@@ -101,9 +112,10 @@ class AuthorDashboardPage extends StatelessWidget {
                                         ? 'Good ${_getGreeting()}, ${profile.firstName} ✍️'
                                         : 'Good ${_getGreeting()}! ✍️',
                                     style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textDark),
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textDark,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -113,9 +125,10 @@ class AuthorDashboardPage extends StatelessWidget {
                             Text(
                               'Author Dashboard',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textGrey,
-                                  fontWeight: FontWeight.w500),
+                                fontSize: 12,
+                                color: AppColors.textGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -126,7 +139,9 @@ class AuthorDashboardPage extends StatelessWidget {
                           final bloc = sl<NotificationsBloc>();
                           final profileState = sl<ProfileBloc>().state;
                           if (profileState is ProfileLoaded) {
-                            bloc.add(FetchNotificationsEvent(profileState.profile.id));
+                            bloc.add(
+                              FetchNotificationsEvent(profileState.profile.id),
+                            );
                           }
                           return bloc;
                         },
@@ -137,7 +152,10 @@ class AuthorDashboardPage extends StatelessWidget {
                           listener: (context, profileState) {
                             if (profileState is ProfileLoaded) {
                               context.read<NotificationsBloc>().add(
-                                  FetchNotificationsEvent(profileState.profile.id));
+                                FetchNotificationsEvent(
+                                  profileState.profile.id,
+                                ),
+                              );
                             }
                           },
                           child: BlocBuilder<NotificationsBloc, NotificationsState>(
@@ -158,11 +176,14 @@ class AuthorDashboardPage extends StatelessWidget {
                                     builder: (_) => const NotificationsPage(),
                                   ).then((_) {
                                     // Refresh notifications when sheet closes to reflect any marked-as-read changes
-                                    final profileState = sl<ProfileBloc>().state;
+                                    final profileState =
+                                        sl<ProfileBloc>().state;
                                     if (profileState is ProfileLoaded) {
                                       context.read<NotificationsBloc>().add(
-                                          FetchNotificationsEvent(
-                                              profileState.profile.id));
+                                        FetchNotificationsEvent(
+                                          profileState.profile.id,
+                                        ),
+                                      );
                                     }
                                   });
                                 },
@@ -177,10 +198,12 @@ class AuthorDashboardPage extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
+                                            color: Colors.black.withOpacity(
+                                              0.05,
+                                            ),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
-                                          )
+                                          ),
                                         ],
                                       ),
                                       child: Icon(
@@ -195,7 +218,9 @@ class AuthorDashboardPage extends StatelessWidget {
                                         right: -4,
                                         child: Container(
                                           padding: EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 2),
+                                            horizontal: 4,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppColors.error,
                                             shape: BoxShape.circle,
@@ -245,7 +270,8 @@ class AuthorDashboardPage extends StatelessWidget {
                         padding: EdgeInsets.symmetric(vertical: 80),
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: AppColors.primary),
+                            color: AppColors.primary,
+                          ),
                         ),
                       );
                     }
@@ -257,36 +283,43 @@ class AuthorDashboardPage extends StatelessWidget {
                         child: Center(
                           child: Column(
                             children: [
-                              Icon(Icons.wifi_off_rounded,
-                                  size: 52, color: AppColors.textGrey),
+                              Icon(
+                                Icons.wifi_off_rounded,
+                                size: 52,
+                                color: AppColors.textGrey,
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 'Couldn\'t load your dashboard',
                                 style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textDark),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textDark,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 state.message,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                    color: AppColors.textGrey, fontSize: 13),
+                                  color: AppColors.textGrey,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 20),
                               ElevatedButton.icon(
                                 onPressed: () {
-                                  context
-                                      .read<AuthorDashboardBloc>()
-                                      .add(RefreshAuthorDashboardEvent());
+                                  context.read<AuthorDashboardBloc>().add(
+                                    RefreshAuthorDashboardEvent(),
+                                  );
                                 },
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Retry'),
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size(140, 44),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ],
@@ -309,13 +342,15 @@ class AuthorDashboardPage extends StatelessWidget {
                           // ── Impact Banner ─────────────────────────
                           Container(
                             margin: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
                             padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
                                   AppColors.gradientStart,
-                                  AppColors.gradientEnd
+                                  AppColors.gradientEnd,
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -339,24 +374,27 @@ class AuthorDashboardPage extends StatelessWidget {
                                     const Text(
                                       'Reader Impact',
                                       style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600),
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.2),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
                                         'Goal: $nextMilestone reads',
                                         style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700),
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -376,13 +414,16 @@ class AuthorDashboardPage extends StatelessWidget {
                                     ),
                                     const Padding(
                                       padding: EdgeInsets.only(
-                                          left: 8, bottom: 6),
+                                        left: 8,
+                                        bottom: 6,
+                                      ),
                                       child: Text(
                                         'total reads',
                                         style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500),
+                                          color: Colors.white70,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -393,27 +434,29 @@ class AuthorDashboardPage extends StatelessWidget {
                                   child: LinearProgressIndicator(
                                     value: progressPercent,
                                     minHeight: 8,
-                                    backgroundColor:
-                                        Colors.white.withOpacity(0.25),
+                                    backgroundColor: Colors.white.withOpacity(
+                                      0.25,
+                                    ),
                                     valueColor:
                                         const AlwaysStoppedAnimation<Color>(
-                                            Colors.white),
+                                          Colors.white,
+                                        ),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
                                     Icon(
-                                        Icons.local_fire_department,
-                                        color: Colors.orangeAccent,
-                                        size: 15),
+                                      Icons.local_fire_department,
+                                      color: Colors.orangeAccent,
+                                      size: 15,
+                                    ),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
                                         '"Your words are making an impact. Keep writing!"',
                                         style: TextStyle(
-                                          color:
-                                              Colors.white.withOpacity(0.8),
+                                          color: Colors.white.withOpacity(0.8),
                                           fontSize: 11,
                                           fontStyle: FontStyle.italic,
                                         ),
@@ -430,7 +473,9 @@ class AuthorDashboardPage extends StatelessWidget {
                           // ── Stats Grid (2×2) ─────────────────────
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
                             child: Column(
                               children: [
                                 Row(
@@ -438,8 +483,7 @@ class AuthorDashboardPage extends StatelessWidget {
                                     Expanded(
                                       child: _StatCard(
                                         icon: Icons.menu_book_rounded,
-                                        value: dashboard
-                                            .totalPublishedBooks
+                                        value: dashboard.totalPublishedBooks
                                             .toString(),
                                         label: 'Books Published',
                                         color: AppColors.primary,
@@ -449,8 +493,9 @@ class AuthorDashboardPage extends StatelessWidget {
                                     Expanded(
                                       child: _StatCard(
                                         icon: Icons.visibility_rounded,
-                                        value: _formatCount(dashboard
-                                            .totalViewsAcrossAllBooks),
+                                        value: _formatCount(
+                                          dashboard.totalViewsAcrossAllBooks,
+                                        ),
                                         label: 'Total Views',
                                         color: const Color(0xFF2196F3),
                                       ),
@@ -463,8 +508,9 @@ class AuthorDashboardPage extends StatelessWidget {
                                     Expanded(
                                       child: _StatCard(
                                         icon: Icons.auto_stories_rounded,
-                                        value: _formatCount(dashboard
-                                            .totalReadsAcrossAllBooks),
+                                        value: _formatCount(
+                                          dashboard.totalReadsAcrossAllBooks,
+                                        ),
                                         label: 'Total Reads',
                                         color: AppColors.successGreen,
                                       ),
@@ -474,18 +520,19 @@ class AuthorDashboardPage extends StatelessWidget {
                                     Expanded(
                                       child: _StatCard(
                                         icon: Icons.star_rounded,
-                                        value: dashboard
-                                                .booksPerformance.isNotEmpty
-                                            ? (dashboard.booksPerformance
-                                                        .map((b) =>
-                                                            b.averageRating)
-                                                        .reduce((a, b) =>
-                                                            a + b) /
-                                                    dashboard
-                                                        .booksPerformance
-                                                        .length)
-                                                .toStringAsFixed(1)
-                                            : '—',
+                                        value: () {
+                                          final ratedBooks = dashboard
+                                              .booksPerformance
+                                              .where((b) => b.averageRating > 0.0)
+                                              .toList();
+                                          return ratedBooks.isNotEmpty
+                                              ? (ratedBooks
+                                                          .map((b) => b.averageRating)
+                                                          .reduce((a, b) => a + b) /
+                                                      ratedBooks.length)
+                                                  .toStringAsFixed(1)
+                                              : '0.0';
+                                        }(),
                                         label: 'Avg Rating',
                                         color: AppColors.warningOrange,
                                       ),
@@ -498,14 +545,17 @@ class AuthorDashboardPage extends StatelessWidget {
                                     Expanded(
                                       child: _StatCard(
                                         icon: Icons.format_quote_rounded,
-                                        value: _formatCount(quotesStats?.totalQuotesCount ?? 0),
+                                        value: _formatCount(
+                                          quotesStats?.totalQuotesCount ?? 0,
+                                        ),
                                         label: 'Total Quotes',
                                         color: Colors.purpleAccent,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: const SizedBox(), // Empty for now, but balances the grid
+                                      child:
+                                          const SizedBox(), // Empty for now, but balances the grid
                                     ),
                                   ],
                                 ),
@@ -517,11 +567,9 @@ class AuthorDashboardPage extends StatelessWidget {
 
                           // ── My Books Section ────────────────────
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'My Books',
@@ -533,7 +581,9 @@ class AuthorDashboardPage extends StatelessWidget {
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryLight,
                                     borderRadius: BorderRadius.circular(10),
@@ -552,14 +602,13 @@ class AuthorDashboardPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
                               'Tap any book to view full details and reader comments',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textGrey
-                                      .withOpacity(0.8)),
+                                fontSize: 12,
+                                color: AppColors.textGrey.withOpacity(0.8),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -568,32 +617,40 @@ class AuthorDashboardPage extends StatelessWidget {
                           if (books == null || books.isEmpty)
                             Center(
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 48),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 48,
+                                ),
                                 child: Column(
                                   children: [
                                     Container(
                                       padding: EdgeInsets.all(20),
                                       decoration: BoxDecoration(
-                                          color: AppColors.primaryLight,
-                                          shape: BoxShape.circle),
+                                        color: AppColors.primaryLight,
+                                        shape: BoxShape.circle,
+                                      ),
                                       child: Icon(
-                                          Icons.library_books_rounded,
-                                          size: 40,
-                                          color: AppColors.primary),
+                                        Icons.library_books_rounded,
+                                        size: 40,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
                                     SizedBox(height: 16),
-                                    Text('No books yet',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.textDark)),
+                                    Text(
+                                      'No books yet',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textDark,
+                                      ),
+                                    ),
                                     SizedBox(height: 8),
                                     Text(
-                                        'Your published books will appear here.',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            color: AppColors.textGrey)),
+                                      'Your published books will appear here.',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -603,23 +660,35 @@ class AuthorDashboardPage extends StatelessWidget {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 20),
+                                horizontal: 20,
+                              ),
                               itemCount: books.length,
                               itemBuilder: (context, index) {
                                 final book = books[index];
-                                final quoteCount = quotesStats?.bookQuoteCounts.firstWhere(
-                                  (q) => q.bookId == book.id,
-                                  orElse: () => BookQuoteCountModel(bookId: book.id, bookTitle: '', quotesCount: 0),
-                                ).quotesCount ?? 0;
-                                
+                                final quoteCount =
+                                    quotesStats?.bookQuoteCounts
+                                        .firstWhere(
+                                          (q) => q.bookId == book.id,
+                                          orElse: () => BookQuoteCountModel(
+                                            bookId: book.id,
+                                            bookTitle: '',
+                                            quotesCount: 0,
+                                          ),
+                                        )
+                                        .quotesCount ??
+                                    0;
+
                                 return AuthorBookListCard(
                                   book: book,
                                   quotesCount: quoteCount,
                                   onTap: () {
-                                    context.push('/author/book_detail', extra: {
-                                      'book': book,
-                                      'quotesCount': quoteCount,
-                                    });
+                                    context.push(
+                                      '/author/book_detail',
+                                      extra: {
+                                        'book': book,
+                                        'quotesCount': quoteCount,
+                                      },
+                                    );
                                   },
                                 );
                               },
