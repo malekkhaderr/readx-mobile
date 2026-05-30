@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -152,7 +154,9 @@ class _ProfileBodyState extends State<_ProfileBody> {
     return RefreshIndicator(
       onRefresh: () async {
         context.read<ProfileBloc>().add(const RefreshProfileEvent());
-        await context.read<ProfileBloc>().stream.firstWhere((s) => s is! ProfileLoading);
+        await context.read<ProfileBloc>().stream
+            .firstWhere((s) => s is! ProfileLoading)
+            .timeout(const Duration(seconds: 6), onTimeout: () => context.read<ProfileBloc>().state);
       },
       child: SafeArea(
         child: SingleChildScrollView(
@@ -416,7 +420,9 @@ class _AuthorProfileBody extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () async {
         context.read<ProfileBloc>().add(const RefreshProfileEvent());
-        await context.read<ProfileBloc>().stream.firstWhere((s) => s is! ProfileLoading);
+        await context.read<ProfileBloc>().stream
+            .firstWhere((s) => s is! ProfileLoading)
+            .timeout(const Duration(seconds: 6), onTimeout: () => context.read<ProfileBloc>().state);
       },
       child: SafeArea(
         child: SingleChildScrollView(
