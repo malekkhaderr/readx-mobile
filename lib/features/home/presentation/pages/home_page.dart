@@ -477,23 +477,28 @@ class _GradientHeader extends StatelessWidget {
                   ),
                   if (unreadCount > 0)
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: -4,
+                      right: -4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF4444),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white, width: 1.5),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: Colors.white, width: 1.8),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFFFF4444).withOpacity(0.4), blurRadius: 4, offset: const Offset(0, 1)),
+                          ],
                         ),
                         child: Center(
                           child: Text(
                             unreadCount > 99 ? '99+' : '$unreadCount',
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.w800,
+                              height: 1.0,
                             ),
                           ),
                         ),

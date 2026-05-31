@@ -203,9 +203,9 @@ class _EyeOverlayPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    final leftCenter = Offset(w * 0.326 + eyeOffsetX, h * 0.338 + eyeOffsetY);
-    final rightCenter = Offset(w * 0.668 + eyeOffsetX, h * 0.334 + eyeOffsetY);
-    final pupilR = w * 0.080;
+    final leftCenter = Offset(w * 0.345 + eyeOffsetX, h * 0.365 + eyeOffsetY);
+    final rightCenter = Offset(w * 0.655 + eyeOffsetX, h * 0.365 + eyeOffsetY);
+    final pupilR = w * 0.070;
     final blink = blinkProgress.clamp(0.05, 1.0);
 
     // ── Pupils ────────────────────────────────────────
@@ -248,24 +248,24 @@ class _EyeOverlayPainter extends CustomPainter {
 
     // ── Eyelid ────────────────────────────────────────
     if (blinkProgress < 0.90) {
-      final lidH = (1.0 - blinkProgress) * pupilR * 2.8;
+      final lidH = (1.0 - blinkProgress) * pupilR * 2.6;
 
       for (final center in [leftCenter, rightCenter]) {
         canvas.drawOval(
           Rect.fromCenter(
             center: Offset(center.dx, center.dy - pupilR + lidH / 2),
-            width: pupilR * 3.0,
+            width: pupilR * 2.8,
             height: lidH,
           ),
-          Paint()..color = const Color(0xFF4A2878),
+          Paint()..color = const Color(0xFF5B3A8A),
         );
         canvas.drawOval(
           Rect.fromCenter(
             center: Offset(center.dx, center.dy - pupilR + lidH * 0.85),
-            width: pupilR * 3.0,
-            height: pupilR * 0.25,
+            width: pupilR * 2.8,
+            height: pupilR * 0.2,
           ),
-          Paint()..color = const Color(0xFF6B3D9A),
+          Paint()..color = const Color(0xFF7B4DB0),
         );
       }
     }

@@ -155,8 +155,8 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
     final timeStr = mins > 0 ? '${mins}m ${secs}s' : '${secs}s';
 
     return Column(children: [
-      Image.asset('assets/images/owl_celebrating.png', width: 170, height: 170, fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Image.asset('assets/images/owl_happy.png', width: 170, height: 170)),
+      Image.asset('assets/images/owl_celebrating.png', width: 180, height: 180, fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Image.asset('assets/images/owl_happy.png', width: 180, height: 180)),
       const SizedBox(height: 14),
       // Speech
       Container(
