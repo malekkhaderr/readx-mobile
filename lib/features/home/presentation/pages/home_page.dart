@@ -1712,7 +1712,6 @@ class _OwlMoodWidget extends StatefulWidget {
 
 class _OwlMoodWidgetState extends State<_OwlMoodWidget> {
   int _i = 0;
-  int _quoteIndex = 0;
   final _moods = OwlMood.values;
   final _labels = ['Wave', 'Happy', 'Sad', 'Celebrate', 'Read', 'Sleep'];
 
@@ -1723,28 +1722,14 @@ class _OwlMoodWidgetState extends State<_OwlMoodWidget> {
       child: Column(children: [
         ExpressiveOwl(mood: _moods[_i], size: 140),
         const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          GestureDetector(
-            onTap: () => setState(() => _i = (_i + 1) % _moods.length),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
-              child: Text('Owl: ${_labels[_i]}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
-            ),
+        GestureDetector(
+          onTap: () => setState(() => _i = (_i + 1) % _moods.length),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+            child: Text('Owl: ${_labels[_i]}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              DailyQuoteSplash.showByIndex(context, _quoteIndex);
-              setState(() => _quoteIndex = (_quoteIndex + 1) % 50);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(color: AppColors.successGreen, borderRadius: BorderRadius.circular(16)),
-              child: Text('Quote #${_quoteIndex + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ]),
+        ),
       ]),
     );
   }

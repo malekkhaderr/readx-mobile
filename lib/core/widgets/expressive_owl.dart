@@ -284,13 +284,15 @@ class _ExpressiveOwlState extends State<ExpressiveOwl> with TickerProviderStateM
     final v = _bounceController.value;
     switch (widget.mood) {
       case OwlMood.celebrating:
-        return 1.0 + v * 0.1;
+        // 888px source has more internal whitespace — scale up to match 500px owls
+        return 1.25 + v * 0.1;
+      case OwlMood.waving:
+        // Same 888px source (owl_happy.png)
+        return 1.25 + v * 0.04;
       case OwlMood.happy:
         return 1.0 + v * 0.05;
       case OwlMood.sad:
         return 0.92 + v * 0.03;
-      case OwlMood.waving:
-        return 1.0 + v * 0.04;
       default:
         return 1.0;
     }
