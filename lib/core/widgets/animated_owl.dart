@@ -157,17 +157,6 @@ class _AnimatedOwlState extends State<AnimatedOwl>
                   fit: BoxFit.contain,
                 ),
 
-                // ── Animated eyes ─────────────────────
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _EyeOverlayPainter(
-                      blinkProgress: _blinkAnimation.value,
-                      eyeOffsetX: _eyeXAnimation.value,
-                      eyeOffsetY: _eyeYAnimation.value,
-                    ),
-                  ),
-                ),
-
                 // ── Wings cover eyes when password field focused ──
                 if (_wingAnimation.value > 0)
                   Positioned.fill(
