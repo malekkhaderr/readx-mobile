@@ -108,6 +108,11 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
+            // ── Expressive Owl ────────────────────
+            SliverToBoxAdapter(
+              child: _OwlMoodWidget(),
+            ),
+
             // ── Search Bar ─────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -1700,12 +1705,12 @@ class _FocusTimerCardState extends State<_FocusTimerCard> with SingleTickerProvi
 
 
 // ── TEST — Owl mood cycle (remove after testing) ────────────
-class _OwlTestWidget extends StatefulWidget {
+class _OwlMoodWidget extends StatefulWidget {
   @override
-  State<_OwlTestWidget> createState() => _OwlTestWidgetState();
+  State<_OwlMoodWidget> createState() => _OwlMoodWidgetState();
 }
 
-class _OwlTestWidgetState extends State<_OwlTestWidget> {
+class _OwlMoodWidgetState extends State<_OwlMoodWidget> {
   int _i = 0;
   int _quoteIndex = 0;
   final _moods = OwlMood.values;
