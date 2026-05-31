@@ -173,7 +173,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'Readora',
+                          'ReadX',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 24,
@@ -211,7 +211,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Join Readora and start your reading adventure.',
+                            'Join ReadX and start your reading adventure.',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textGrey,

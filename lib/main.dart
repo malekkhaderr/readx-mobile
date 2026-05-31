@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
     AppColors.updateBrightness(brightness);
 
     return MaterialApp.router(
-      title: 'Readora',
+      title: 'ReadX',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

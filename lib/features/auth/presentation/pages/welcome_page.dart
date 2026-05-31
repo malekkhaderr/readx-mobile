@@ -62,7 +62,7 @@ class WelcomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        'Readora',
+                        'ReadX',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 36,

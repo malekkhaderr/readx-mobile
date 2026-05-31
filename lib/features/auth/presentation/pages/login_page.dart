@@ -137,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'Readora',
+                          'ReadX',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 24,
@@ -303,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'New to Readora? ',
+                                'New to ReadX? ',
                                 style: TextStyle(color: AppColors.textGrey),
                               ),
                               TextButton(
