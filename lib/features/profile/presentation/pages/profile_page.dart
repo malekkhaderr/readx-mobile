@@ -296,10 +296,26 @@ class _ProfileBodyState extends State<_ProfileBody> {
                     const SizedBox(height: 20),
                     // Stats row â€” glass cards + streak ring
                     if (dashboard != null)
-                      Row(
+                      BlocBuilder<LibraryBloc, LibraryState>(
+                        bloc: sl<LibraryBloc>(),
+                        builder: (context, libraryState) {
+                          // Count completed books from both sources (same logic
+                          // as the completed books section below)
+                          final libraryReadCount = libraryState is LibraryLoaded
+                              ? libraryState.books.where((b) => b.status == ReadingStatus.read).length
+                              : 0;
+                          final dashboardIds = dashboard.completedBooks.map((b) => b.id).toSet();
+                          final libraryOnlyCount = libraryState is LibraryLoaded
+                              ? libraryState.books
+                                  .where((b) => b.status == ReadingStatus.read && !dashboardIds.contains(b.bookId.toString()))
+                                  .length
+                              : 0;
+                          final totalCompleted = dashboard.completedBooks.length + libraryOnlyCount;
+
+                          return Row(
                         children: [
                           _GlassStat(
-                            value: '${dashboard.booksRead}',
+                            value: '$totalCompleted',
                             label: 'Books',
                             icon: Icons.auto_stories_rounded,
                             color: AppColors.primary,
@@ -318,6 +334,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             iconSize: 20,
                           ),
                         ],
+                      );
+                        },
                       ),
                     // Streak fire — shows real streak from dashboard
                     if (dashboard != null && dashboard.streakDays > 0) ...[
