@@ -157,6 +157,17 @@ class _AnimatedOwlState extends State<AnimatedOwl>
                   fit: BoxFit.contain,
                 ),
 
+                // ── Animated eyes ─────────────────────
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _EyeOverlayPainter(
+                      blinkProgress: _blinkAnimation.value,
+                      eyeOffsetX: _eyeXAnimation.value,
+                      eyeOffsetY: _eyeYAnimation.value,
+                    ),
+                  ),
+                ),
+
                 // ── Wings cover eyes when password field focused ──
                 if (_wingAnimation.value > 0)
                   Positioned.fill(
@@ -176,6 +187,8 @@ class _AnimatedOwlState extends State<AnimatedOwl>
 }
 
 // ── Eye Overlay Painter ──────────────────────────────────
+// Covers the static PNG eyes with the face color, then draws
+// animated pupils that follow a slow gaze pattern + blink.
 class _EyeOverlayPainter extends CustomPainter {
   final double blinkProgress;
   final double eyeOffsetX;
@@ -192,70 +205,64 @@ class _EyeOverlayPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    final leftCenter = Offset(w * 0.345 + eyeOffsetX, h * 0.365 + eyeOffsetY);
-    final rightCenter = Offset(w * 0.655 + eyeOffsetX, h * 0.365 + eyeOffsetY);
-    final pupilR = w * 0.070;
+    // Eye socket centers (matches the owl.png eye positions)
+    final leftEyeCenter = Offset(w * 0.345, h * 0.365);
+    final rightEyeCenter = Offset(w * 0.655, h * 0.365);
+    final eyeRadius = w * 0.095;
+    final pupilR = w * 0.050;
+
+    // 1. Cover original PNG eyes with face color
+    final facePaint = Paint()..color = const Color(0xFFD4A574);
+    canvas.drawCircle(leftEyeCenter, eyeRadius, facePaint);
+    canvas.drawCircle(rightEyeCenter, eyeRadius, facePaint);
+
+    // 2. Draw eye whites
+    final whitePaint = Paint()..color = const Color(0xFFFFFDF5);
+    canvas.drawCircle(leftEyeCenter, eyeRadius * 0.92, whitePaint);
+    canvas.drawCircle(rightEyeCenter, eyeRadius * 0.92, whitePaint);
+
+    // 3. Draw moving pupils (clamped within eye bounds)
     final blink = blinkProgress.clamp(0.05, 1.0);
+    final maxOffset = eyeRadius * 0.35;
+    final clampedX = eyeOffsetX.clamp(-maxOffset, maxOffset);
+    final clampedY = eyeOffsetY.clamp(-maxOffset, maxOffset);
 
-    // ── Pupils ────────────────────────────────────────
-    canvas.drawCircle(
-      leftCenter,
-      pupilR * blink,
-      Paint()..color = const Color(0xFF0A0A0A),
-    );
-    canvas.drawCircle(
-      rightCenter,
-      pupilR * blink,
-      Paint()..color = const Color(0xFF0A0A0A),
-    );
+    final leftPupil = Offset(leftEyeCenter.dx + clampedX, leftEyeCenter.dy + clampedY);
+    final rightPupil = Offset(rightEyeCenter.dx + clampedX, rightEyeCenter.dy + clampedY);
 
-    // ── Shine ─────────────────────────────────────────
-    if (blinkProgress > 0.25) {
-      final s = Paint()..color = Colors.white;
+    final pupilPaint = Paint()..color = const Color(0xFF1A1A2E);
+    canvas.drawCircle(leftPupil, pupilR * blink, pupilPaint);
+    canvas.drawCircle(rightPupil, pupilR * blink, pupilPaint);
 
+    // 4. Shine highlights
+    if (blinkProgress > 0.3) {
+      final shinePaint = Paint()..color = Colors.white.withOpacity(0.9);
       canvas.drawCircle(
-        Offset(leftCenter.dx - pupilR * 0.30, leftCenter.dy - pupilR * 0.30),
-        pupilR * 0.28,
-        s,
+        Offset(leftPupil.dx - pupilR * 0.3, leftPupil.dy - pupilR * 0.3),
+        pupilR * 0.3,
+        shinePaint,
       );
       canvas.drawCircle(
-        Offset(rightCenter.dx - pupilR * 0.30, rightCenter.dy - pupilR * 0.30),
-        pupilR * 0.28,
-        s,
-      );
-      canvas.drawCircle(
-        Offset(leftCenter.dx + pupilR * 0.20, leftCenter.dy + pupilR * 0.18),
-        pupilR * 0.12,
-        s,
-      );
-      canvas.drawCircle(
-        Offset(rightCenter.dx + pupilR * 0.20, rightCenter.dy + pupilR * 0.18),
-        pupilR * 0.12,
-        s,
+        Offset(rightPupil.dx - pupilR * 0.3, rightPupil.dy - pupilR * 0.3),
+        pupilR * 0.3,
+        shinePaint,
       );
     }
 
-    // ── Eyelid ────────────────────────────────────────
+    // 5. Eyelids (blink animation)
     if (blinkProgress < 0.90) {
-      final lidH = (1.0 - blinkProgress) * pupilR * 2.6;
+      final lidProgress = 1.0 - blinkProgress;
+      final lidPaint = Paint()..color = const Color(0xFFD4A574);
 
-      for (final center in [leftCenter, rightCenter]) {
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(center.dx, center.dy - pupilR + lidH / 2),
-            width: pupilR * 2.8,
-            height: lidH,
-          ),
-          Paint()..color = const Color(0xFF5B3A8A),
+      for (final center in [leftEyeCenter, rightEyeCenter]) {
+        // Top eyelid comes down
+        final lidRect = Rect.fromLTWH(
+          center.dx - eyeRadius,
+          center.dy - eyeRadius,
+          eyeRadius * 2,
+          eyeRadius * 2 * lidProgress,
         );
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(center.dx, center.dy - pupilR + lidH * 0.85),
-            width: pupilR * 2.8,
-            height: pupilR * 0.2,
-          ),
-          Paint()..color = const Color(0xFF7B4DB0),
-        );
+        canvas.drawArc(lidRect, 0, 3.14159, true, lidPaint);
       }
     }
   }
