@@ -91,7 +91,7 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
       // Owl — big, outside the circle
       Image.asset(
         isRunning ? 'assets/images/owl_reading.png' : 'assets/images/owl_sleeping.png',
-        width: 120, height: 120, fit: BoxFit.contain,
+        width: 140, height: 140, fit: BoxFit.contain,
       ),
       const SizedBox(height: 14),
       // Owl speech bubble
@@ -155,8 +155,8 @@ class _FocusTimerPageState extends State<FocusTimerPage> with SingleTickerProvid
     final timeStr = mins > 0 ? '${mins}m ${secs}s' : '${secs}s';
 
     return Column(children: [
-      Image.asset('assets/images/owl_celebrating.png', width: 110, height: 110, fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Image.asset('assets/images/owl_happy.png', width: 110, height: 110)),
+      Image.asset('assets/images/owl_celebrating.png', width: 140, height: 140, fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Image.asset('assets/images/owl_happy.png', width: 140, height: 140)),
       const SizedBox(height: 14),
       // Speech
       Container(

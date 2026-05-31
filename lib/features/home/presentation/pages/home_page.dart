@@ -1721,7 +1721,7 @@ class _OwlMoodWidgetState extends State<_OwlMoodWidget> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Column(children: [
-        ExpressiveOwl(mood: _moods[_i], size: 100),
+        ExpressiveOwl(mood: _moods[_i], size: 140),
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           GestureDetector(
