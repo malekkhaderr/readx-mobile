@@ -22,6 +22,7 @@ import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../../data/models/home_response_model.dart';
 import 'package:flutter/foundation.dart';
+import '../../data/datasources/books_service.dart';
 import '../../../notifications/data/datasources/notifications_remote_datasource.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 
@@ -34,13 +35,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _unreadNotificationCount = 0;
+  Map<String, dynamic>? _activeSession;
 
   @override
   void initState() {
     super.initState();
     sl<LibraryBloc>().add(const LoadLibraryEvent());
-    // Wait for profile to be ready, then load unread count
     _waitForProfileAndLoadCount();
+    _loadActiveSession();
     // Show daily quote splash on every app open
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) DailyQuoteSplash.show(context);
@@ -75,10 +77,29 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadActiveSession() async {
+    try {
+      final response = await sl<BooksService>().dioClient.dio.get(
+        '/reading-sessions',
+        queryParameters: {'completed': false, 'pageNumber': 1, 'pageSize': 1},
+      );
+      final code = response.statusCode ?? 0;
+      if (code >= 200 && code < 300 && response.data is Map<String, dynamic>) {
+        final items = response.data['items'] as List?;
+        if (items != null && items.isNotEmpty) {
+          if (mounted) setState(() => _activeSession = items.first as Map<String, dynamic>);
+          return;
+        }
+      }
+      if (mounted) setState(() => _activeSession = null);
+    } catch (_) {}
+  }
+
   Future<void> _onRefresh() async {
     context.read<HomeBloc>().add(const RefreshHomeEvent());
     sl<LibraryBloc>().add(const RefreshLibraryEvent());
     _loadUnreadCount();
+    _loadActiveSession();
   }
 
   @override
@@ -134,6 +155,20 @@ class _HomePageState extends State<HomePage> {
             SliverToBoxAdapter(
               child: _FocusTimerCard(),
             ),
+
+            // ── Continue Reading ──────────────────
+            if (_activeSession != null)
+              SliverToBoxAdapter(
+                child: _ContinueReadingCard(
+                  session: _activeSession!,
+                  onResume: () {
+                    final bookId = _activeSession!['bookId'] as int;
+                    final title = _activeSession!['bookTitle'] as String? ?? '';
+                    final epubUrl = _activeSession!['coverImageUrl'] as String? ?? '';
+                    context.push('/book/$bookId');
+                  },
+                ),
+              ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
@@ -1736,6 +1771,169 @@ class _OwlMoodWidgetState extends State<_OwlMoodWidget> {
           ),
         ),
       ]),
+    );
+  }
+}
+
+// ── Continue Reading Card ─────────────────────────────────────
+class _ContinueReadingCard extends StatelessWidget {
+  final Map<String, dynamic> session;
+  final VoidCallback onResume;
+
+  const _ContinueReadingCard({required this.session, required this.onResume});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = session['bookTitle'] as String? ?? 'Untitled';
+    final author = session['authorName'] as String? ?? '';
+    final coverUrl = session['coverImageUrl'] as String? ?? '';
+    final currentPage = session['currentPage'] as int? ?? 0;
+    final totalPages = session['totalPages'] as int? ?? 1;
+    final progress = totalPages > 0 ? (currentPage / totalPages).clamp(0.0, 1.0) : 0.0;
+    final progressPercent = (progress * 100).toInt();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: GestureDetector(
+        onTap: onResume,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Book cover
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: coverUrl.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: coverUrl,
+                        width: 52,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => _coverFallback(title),
+                      )
+                    : _coverFallback(title),
+              ),
+              const SizedBox(width: 14),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.auto_stories_rounded, size: 13, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Continue Reading',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    if (author.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'by $author',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    // Progress bar
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 5,
+                              backgroundColor: AppColors.divider,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '$progressPercent%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Play button
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _coverFallback(String title) {
+    return Container(
+      width: 52,
+      height: 72,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: Text(
+          title.isNotEmpty ? title[0].toUpperCase() : '?',
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }
