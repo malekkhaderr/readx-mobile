@@ -1923,7 +1923,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       onTap: () => setState(() => _activeTab = tab),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(11),
@@ -1933,23 +1933,26 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 14,
               color: selected ? Colors.white : AppColors.primary,
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: selected ? Colors.white : AppColors.textDark,
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? Colors.white : AppColors.textDark,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (count > 0) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
                   color: selected
                       ? Colors.white.withOpacity(0.2)
@@ -1959,7 +1962,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 child: Text(
                   '$count',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: selected ? Colors.white : AppColors.primary,
                   ),
