@@ -359,6 +359,19 @@ class BooksService {
       return false;
     }
   }
+
+  Future<List<BookQuoteItem>> getBookQuotes(int bookId) async {
+    try {
+      final response = await dioClient.dio.get('/quotes/book/$bookId');
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => BookQuoteItem.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 }
 
 /// Lightweight projection of `ReadingSessionResponse` returned by the
@@ -422,4 +435,32 @@ class RatingException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class BookQuoteItem {
+  final int id;
+  final int bookId;
+  final String content;
+  final int pageNumber;
+  final DateTime createdAt;
+
+  BookQuoteItem({
+    required this.id,
+    required this.bookId,
+    required this.content,
+    required this.pageNumber,
+    required this.createdAt,
+  });
+
+  factory BookQuoteItem.fromJson(Map<String, dynamic> json) {
+    return BookQuoteItem(
+      id: json['id'] as int? ?? 0,
+      bookId: json['bookId'] as int? ?? 0,
+      content: json['content'] as String? ?? '',
+      pageNumber: json['pageNumber'] as int? ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
+          : DateTime.now(),
+    );
+  }
 }

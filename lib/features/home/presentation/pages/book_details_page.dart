@@ -36,7 +36,7 @@ class BookDetailsPage extends StatefulWidget {
 }
 
 /// Which engagement tab the user is currently viewing.
-enum _EngagementTab { ratings, discussions }
+enum _EngagementTab { ratings, discussions, bookQuotes }
 
 class _BookDetailsPageState extends State<BookDetailsPage> {
   BookDetail? _book;
@@ -65,6 +65,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   /// and toggles the rate button between "Rate this book" and "Update rating".
   RatingReviewItem? _myRating;
   bool _loadingMyRating = false;
+
+  // Book Quotes State
+  List<BookQuoteItem> _bookQuotes = [];
+  bool _loadingBookQuotes = false;
 
   /// Active engagement tab (Ratings & Reviews vs Discussions). Defaults to
   /// Ratings because that's the more authoritative signal a buyer wants
@@ -156,6 +160,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       _loadComments();
       _loadRatings();
       _loadMyRating();
+      _loadBookQuotes();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -271,6 +276,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
       _refreshBookAndRatings(),
       _loadComments(),
       _loadMyRating(),
+      _loadBookQuotes(),
     ]);
   }
 
@@ -317,6 +323,22 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
           _loadingComments = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadBookQuotes() async {
+    if (_book == null) return;
+    setState(() => _loadingBookQuotes = true);
+    try {
+      final quotes = await sl<BooksService>().getBookQuotes(_book!.id);
+      if (mounted) {
+        setState(() {
+          _bookQuotes = quotes;
+          _loadingBookQuotes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingBookQuotes = false);
     }
   }
 
@@ -1834,8 +1856,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               key: ValueKey(_activeTab),
               child: _activeTab == _EngagementTab.ratings
                   ? _buildRatingsTab()
-                  : _buildDiscussionsTab(
-                      currentUserId, currentUserFullName),
+                  : _activeTab == _EngagementTab.discussions
+                      ? _buildDiscussionsTab(
+                          currentUserId, currentUserFullName)
+                      : _buildBookQuotesTab(),
             ),
           ),
         ],
@@ -1846,6 +1870,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   Widget _buildEngagementTabBar() {
     final ratingsCount = _ratingsResponse?.totalCount ?? 0;
     final discussionsCount = _comments.length;
+    final quotesCount = _bookQuotes.length;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -1870,6 +1895,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               icon: Icons.forum_rounded,
               label: 'Discussions',
               count: discussionsCount,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _engagementTabButton(
+              tab: _EngagementTab.bookQuotes,
+              icon: Icons.format_quote_rounded,
+              label: 'Quotes',
+              count: quotesCount,
             ),
           ),
         ],
@@ -2093,6 +2127,112 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
             'Ask a question or share your thoughts on this book.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookQuotesTab() {
+    if (_loadingBookQuotes) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+    if (_bookQuotes.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.format_quote_rounded,
+                color: AppColors.primary,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No quotes yet',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Highlights from readers will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: _bookQuotes.map(_buildBookQuoteCard).toList(),
+    );
+  }
+
+  Widget _buildBookQuoteCard(BookQuoteItem quote) {
+    final dateStr = DateFormat('MMM d, yyyy').format(quote.createdAt);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider.withOpacity(0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.format_quote_rounded, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              if (quote.pageNumber > 0)
+                Text(
+                  'Page ${quote.pageNumber}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              const Spacer(),
+              Text(
+                dateStr,
+                style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            quote.content,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textDark,
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),
