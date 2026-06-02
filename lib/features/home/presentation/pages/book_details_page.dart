@@ -2192,6 +2192,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   Widget _buildBookQuoteCard(BookQuoteItem quote) {
     final dateStr = DateFormat('MMM d, yyyy').format(quote.createdAt);
+    final initial = quote.readerName.isNotEmpty
+        ? quote.readerName[0].toUpperCase()
+        : '?';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -2205,22 +2208,52 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.format_quote_rounded, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              if (quote.pageNumber > 0)
-                Text(
-                  'Page ${quote.pageNumber}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              const Spacer(),
-              Text(
-                dateStr,
-                style: TextStyle(fontSize: 11, color: AppColors.textGrey),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  quote.readerName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (quote.pageNumber > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'p.${quote.pageNumber}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -2233,6 +2266,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               height: 1.5,
               fontStyle: FontStyle.italic,
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            dateStr,
+            style: TextStyle(fontSize: 11, color: AppColors.textGrey),
           ),
         ],
       ),

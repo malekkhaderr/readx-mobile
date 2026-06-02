@@ -362,8 +362,16 @@ class BooksService {
 
   Future<List<BookQuoteItem>> getBookQuotes(int bookId) async {
     try {
-      final response = await dioClient.dio.get('/quotes/book/$bookId');
+      final response = await dioClient.dio.get('/quotes', queryParameters: {
+        'bookId': bookId,
+        'pageSize': 50,
+        'sortBy': 'date',
+      });
       final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final items = data['items'] as List<dynamic>? ?? [];
+        return items.map((e) => BookQuoteItem.fromJson(e as Map<String, dynamic>)).toList();
+      }
       if (data is List) {
         return data.map((e) => BookQuoteItem.fromJson(e as Map<String, dynamic>)).toList();
       }
@@ -440,6 +448,7 @@ class RatingException implements Exception {
 class BookQuoteItem {
   final int id;
   final int bookId;
+  final String readerName;
   final String content;
   final int pageNumber;
   final DateTime createdAt;
@@ -447,6 +456,7 @@ class BookQuoteItem {
   BookQuoteItem({
     required this.id,
     required this.bookId,
+    required this.readerName,
     required this.content,
     required this.pageNumber,
     required this.createdAt,
@@ -456,6 +466,7 @@ class BookQuoteItem {
     return BookQuoteItem(
       id: json['id'] as int? ?? 0,
       bookId: json['bookId'] as int? ?? 0,
+      readerName: json['readerName'] as String? ?? 'Anonymous',
       content: json['content'] as String? ?? '',
       pageNumber: json['pageNumber'] as int? ?? 0,
       createdAt: json['createdAt'] != null
